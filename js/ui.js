@@ -11,6 +11,10 @@ const ERROR_MESSAGES = {
   NO_FOLDER_SELECTED: '请先选择目标文件夹。',
   SCREENSHOT_UNSUPPORTED: '当前系统暂不支持「立即截图」按钮，请使用系统截图工具（结果需进剪贴板）。',
   SCREENSHOT_FAILED: '调用系统截图工具失败，请稍后重试。',
+  BACKFILL_FAILED: '索引现有文件夹内容失败，将仅按本次会话内的图片去重。',
+  POLL_FAILED: '剪贴板监听出错，5 秒后自动重试。',
+  IMPORT_FAILED: '导入到 Eagle 失败，请检查目标文件夹是否仍存在。',
+  TMP_WRITE_FAILED: '写入临时文件失败，请检查磁盘可用空间。',
   UNKNOWN: '发生未知错误，请查看 Eagle 日志面板。',
 }
 
@@ -27,7 +31,10 @@ function renderStatus(snapshot) {
   const text = $('cw-status-text')
   const count = $('cw-status-count')
   dot.dataset.status = snapshot.runtimeStatus
-  if (snapshot.runtimeStatus === 'running') {
+  if (snapshot.indexing) {
+    const { progress, total } = snapshot.indexing
+    text.textContent = total > 0 ? `索引中 ${progress}/${total}` : '索引中…'
+  } else if (snapshot.runtimeStatus === 'running') {
     text.textContent = '监听中'
   } else if (snapshot.runtimeStatus === 'error') {
     text.textContent = '出错'
@@ -122,11 +129,21 @@ function renderAdvanced(snapshot) {
 function renderRecent(snapshot) {
   const box = $('cw-recent')
   if (!snapshot.lastImport) {
+    box.classList.add('cw-recent-empty')
     box.textContent = '尚无导入记录'
     return
   }
+  box.classList.remove('cw-recent-empty')
   const { name, folderLabel, importedAt } = snapshot.lastImport
-  box.textContent = `${importedAt} · ${name} → ${folderLabel || '—'}`
+  box.innerHTML = ''
+  const title = document.createElement('div')
+  title.className = 'cw-recent-title'
+  title.textContent = name
+  const meta = document.createElement('div')
+  meta.className = 'cw-recent-meta'
+  meta.textContent = `${importedAt} → ${folderLabel || '—'}`
+  box.appendChild(title)
+  box.appendChild(meta)
 }
 
 function render() {
@@ -183,7 +200,7 @@ function bindEvents() {
   })
   $('cw-interval').addEventListener('change', (e) => {
     const ms = Math.round(Number(e.target.value) * 1000)
-    safeAction('intervalMs', () => CW.saveConfig({ intervalMs: ms }))
+    safeAction('intervalMs', () => CW.updateIntervalMs(ms))
   })
 
   $('cw-tags').addEventListener('change', (e) => {

@@ -38,6 +38,20 @@ Format: [Keep a Changelog](https://keepachangelog.com) | Versioning: Major.Minor
 - `plugin.js` 顶部注释加入 M3 实现指引（`availableFormats()` 预判 + hash 比对）
 - 新增 K12 知识条目（剪贴板权限与横幅缓解策略）
 
+### Added (M3)
+
+- 剪贴板轮询主循环（`setTimeout` 链 + `pollInFlight` 自锁，避免任务堆积）
+- macOS Sonoma 横幅缓解：先 `clipboard.availableFormats()` 过滤 + formatsKey 缓存（不变直接跳过）+ 仅在含 `image/*` 时才 `readImage()`
+- 按 folderId 维度的进程内 `Map<folderId, Set<hash>>` 去重（ADR-009 / F4 v1.1）
+- 启动 / 切换文件夹时的索引回填：`eagle.item.get({ folders })` → 逐个读 `item.filePath` → 计算 hash 入 Set；每 20 条让出主线程；UI「索引中 N/M」
+- `duplicateStrategy` 分支落地：skip 查 hashSet 短路 / allow 启用 30s 滑动窗口防抖
+- 导入管道：`os.tmpdir()/eagle-cw/clip-{stamp}.png` 写盘 → `addFromPath(path, {name, folders:[id], tags, annotation})` → 计数 / lastImport / hashSet 更新 → finally 删 tmp
+- 通知：`eagle.notification.show` 接入 + 1.5s 节流；可在高级设置关闭
+- 错误兜底：连续 3 次轮询错误自动暂停 + 5s 后重试
+- UI：状态行支持"索引中 N/M"；「最近导入」卡片样式从 empty 切到 filled
+- 错误码扩展：BACKFILL_FAILED / POLL_FAILED / IMPORT_FAILED / TMP_WRITE_FAILED 对应中文提示
+- 间隔变更通过新接口 `updateIntervalMs` 触发轮询重启
+
 ---
 
 ## [0.0.0] - 2026-05-30

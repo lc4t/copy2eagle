@@ -8,22 +8,26 @@
 |---|---|---|---|---|
 | M1 | 项目初始化 | ✅ Done | 治理文件、目录、README、LICENSE、`.gitignore` | - |
 | M2 | 插件骨架 + 配置面板 | ✅ Done | `manifest.json` / `index.html` / `js/ui.js` / 文件夹选择 / 开关 / 配置持久化 | - |
-| M2.1 | M2 bug 修复 + scope 变更（剪贴板单路径） | 🔄 In Progress | localStorage、窗口尺寸、hostname tag、theme、PRD F2 重写、ADR-010/011 | - |
-| M3 | 剪贴板监听 + 导入 + 截图按钮 | ⬜ Todo | 轮询 + 按文件夹 hash 集合 + 启动期回填 + `duplicateStrategy` 分支 + tmp 文件 + `addFromPath` + macOS `screencapture -ic` | - |
+| M2.1 | M2 bug 修复 + scope 变更（剪贴板单路径） | ✅ Done | localStorage、窗口尺寸、hostname tag、theme、PRD F2 重写、ADR-010/011 | - |
+| M2.2 | 间隔单位改秒 + 剪贴板权限 K12 | ✅ Done | 0.5–5s slider、macOS Sonoma 横幅缓解策略 | - |
+| M3 | 剪贴板监听 + 导入 + 截图按钮 | ✅ Done | 轮询 + 按文件夹 hash 集合 + 启动期回填 + `duplicateStrategy` 分支 + tmp 文件 + `addFromPath` + 5s 重试 | - |
 | ~~M4~~ | ~~macOS 截图目录监听~~ | ❌ 弃用（ADR-004 修订） | 合并入 M3 截图按钮 | - |
-| M4(新) | 状态/通知/错误处理（F8/F9 + §5） | ⬜ Todo | 状态指示灯、今日计数、最近导入、通知开关、错误展示 | - |
+| M4(新) | 状态/通知/错误处理增强 | ⬜ Todo | 多条最近导入列表、重试倒计时、清除配置按钮、通知细节、错误展示文案 | - |
 | M5(新) | 打包 + 本地端到端验证 | ⬜ Todo | `.eagleplugin` 包、安装文档、截图证据 | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | README 完善、CHANGELOG v1.0.0、Plugin Center 提交材料 | - |
 
-## 当前里程碑：M2.1 — bug 修复 + scope 变更
+## 当前里程碑：M4（新）— 状态/通知/错误处理增强
 
-- [x] 4 项 M2 bug：localStorage / 窗口尺寸 / hostname tag / theme
-- [x] PRD F2 重写为剪贴板单路径 + 截图按钮（v1.1 修订）
-- [x] architecture 移除截图 watcher，新增截图按钮路径
-- [x] 修订 ADR-004 + 新增 ADR-010 / ADR-011
-- [x] UI 移除截图目录字段，新增「立即截图」按钮
-- [ ] 更新 progress / CHANGELOG / knowledge
-- [ ] commit + push
+> 详见 progress.md 的 M3 验收清单——若 M3 验收发现具体 bug 优先修复，再做 M4 增强。
+
+候选增强项：
+- 多条最近导入列表（最多 5 条），滚动展示
+- 错误重试倒计时（"将在 4s 后重试…"）
+- 「清除当前文件夹索引」按钮（用户手动 invalidate hashSet）
+- 「打开 Eagle 日志」快捷入口
+- 通知细节：导入失败时也通知（一次性，可关闭）
+- 「打开最近导入」点击跳转 Eagle item
+- macOS 横幅频度统计（可选，给用户透明度）
 
 ## 下一里程碑：M2 — 插件骨架 + 配置面板
 

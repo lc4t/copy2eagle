@@ -157,6 +157,27 @@
       border: 1px dashed var(--cw-border);
       border-radius: 6px;
     }
+    #cw-recent:not(.cw-recent-empty) {
+      padding: 10px 12px;
+      background: var(--cw-card);
+      border: 1px solid var(--cw-border);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .cw-recent-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--cw-fg);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .cw-recent-meta {
+      font-size: 11px;
+      color: var(--cw-muted);
+    }
     .cw-advanced summary {
       cursor: pointer;
       font-size: 12px;
