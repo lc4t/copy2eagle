@@ -2,6 +2,40 @@
 
 > 通过 MCP / 搜索 / Eagle 官方文档 / 实测获取的、对项目决策有影响的外部知识。
 
+### K7: Eagle 公开 API 不含 `eagle.extraData`
+
+- **来源**：https://developer.eagle.cool/plugin-api/llms-full.txt + https://developer.eagle.cool/plugin-api/api/folder
+- **获取时间**：2026-05-30
+- **知识摘要**：PRD §3.4 列举的 `eagle.extraData` 在 Eagle 官方文档中查无此 API。M2 真机运行时 `await eagle.extraData.set(...)` 抛错，导致"配置保存失败"。Eagle 文档原话：「To ensure data security, use the API-provided save() method ... avoid directly modifying any files under the Eagle resource library」——但只覆盖了 item/folder 等 Eagle 自身资源，并未提供插件自身配置的持久化 API。
+- **项目影响**：ADR-010 决定改用 webview 原生 `localStorage`（同步、按 origin 隔离、10MB+ 容量）。**所有 PRD 中 `eagle.extraData` 字样应理解为 localStorage（PRD §2.2 / §3.4 已修订）。**
+- **时效性**：长期有效，除非 Eagle 后续公开新的 storage API。
+
+### K8: Eagle 主题 API 不是 `eagle.app.isDarkMode`
+
+- **来源**：https://developer.eagle.cool/plugin-api/llms-full.txt
+- **获取时间**：2026-05-30
+- **知识摘要**：PRD §4.1 写的 `eagle.app.isDarkMode` 不存在。实际 API：
+  - `const theme = await eagle.app.theme` → 返回 `'Auto' | 'LIGHT' | 'LIGHTGRAY' | 'GRAY' | 'DARK' | 'BLUE' | 'PURPLE'`
+  - `eagle.onThemeChanged((theme) => {...})` 监听切换
+- **项目影响**：M2.1 plugin.js / ui.js 已改用此 API；判定 dark 的逻辑：`/DARK|GRAY|BLUE|PURPLE/i.test(theme)`（深色系列主题都按 dark CSS 渲染）。
+- **时效性**：长期有效。
+
+### K9: Eagle 插件 manifest `main` 支持 maxWidth / maxHeight
+
+- **来源**：https://developer.eagle.cool/plugin-api/llms-full.txt 引用 "minWidth, minHeight, maxWidth, maxHeight"
+- **获取时间**：2026-05-30
+- **知识摘要**：M2 反馈"插件窗口全屏"，原 manifest 只写了 width/height/minWidth/minHeight。修订时加入 `maxWidth: 460, maxHeight: 640`，并缩小默认 width: 380, height: 540。Eagle 在 serviceMode 下窗口仍是独立 popup，不约束就会被 Eagle 给出过大默认。
+- **项目影响**：M2.1 manifest.json 已调整。
+- **时效性**：长期有效。
+
+### K10: Eagle 文档明确 `addFromPath` 等方法 options 形态
+
+- **来源**：https://developer.eagle.cool/plugin-api/llms-full.txt
+- **获取时间**：2026-05-30
+- **知识摘要**：`addFromURL` / `addFromBase64` / `addFromPath` 的 options 统一为 `{ name, website, tags: string[], folders: string[], annotation }`。`folders` 是 `string[]`（数组）—— 与 K1 一致，再次确认。`get(options)` 也接受 `folders: string[]`，可用于 M3 启动期回填查询。
+- **项目影响**：M3 实现时 `eagle.item.get({ folders: [folderId] })` 是回填的主要入口。
+- **时效性**：长期有效。
+
 ### K1: Eagle `addFromPath` 的 `folders` 是数组
 
 - **来源**：PRD §3.7（用户已踩坑）
@@ -10,13 +44,24 @@
 - **项目影响**：M3 实现 + 所有相关代码审查清单的强制项。
 - **时效性**：长期有效（Eagle API 公开契约）。
 
-### K2: macOS 截图默认目录读取
+### K2: macOS 截图默认目录读取（v1.1 弃用）
 
-- **来源**：PRD §3.6
+- **来源**：PRD §3.6（v1.0 草案）
 - **获取时间**：2026-05-30
-- **知识摘要**：`defaults read com.apple.screencapture location` 可读取用户设置；命令失败或返回空时回退 `~/Desktop`。
-- **项目影响**：M4 截图目录自动检测实现。
-- **时效性**：依赖 macOS 系统命令，长期有效。
+- **知识摘要（已作废）**：`defaults read com.apple.screencapture location` 可读取用户设置；命令失败或返回空时回退 `~/Desktop`。**v1.1 改剪贴板单路径后（ADR-004 修订 / ADR-011），此知识不再使用。**
+- **替代方案**：macOS 截图改用 `screencapture -ic`（interactive selection → clipboard），由插件主面板「立即截图」按钮触发。
+- **时效性**：归档保留，未来若重新做文件夹监听可再次启用。
+
+### K11: macOS `screencapture -ic` 直接进剪贴板
+
+- **来源**：macOS 系统命令 `man screencapture`
+- **获取时间**：2026-05-30
+- **知识摘要**：`screencapture -ic`
+  - `-i` interactive，弹选区光标
+  - `-c` capture to clipboard，不写文件
+  - 用户取消（ESC）时命令以 0 退出但剪贴板不更新，需由轮询自然忽略
+- **项目影响**：M2.1 主面板「立即截图」按钮 + M3 轮询接力。
+- **时效性**：长期有效。
 
 ### K3: 剪贴板轻量 hash 算法
 

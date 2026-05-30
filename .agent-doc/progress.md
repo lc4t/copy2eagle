@@ -8,25 +8,47 @@
 |---|---|---|---|---|
 | M1 | 项目初始化 | ✅ Done | 2026-05-30 | - |
 | M2 | 插件骨架 + 配置面板 | ✅ Done | 2026-05-30 | - |
-| M3 | 剪贴板监听 + 导入（含 F4 修订：按文件夹去重 + skip/allow） | ⬜ Todo | - | - |
-| M4 | macOS 截图监听 | ⬜ Todo | - | - |
-| M5 | 状态/通知/错误处理 | ⬜ Todo | - | - |
-| M6 | 打包 + 端到端验证 | ⬜ Todo | - | - |
-| M7 | 开源发布准备 | ⬜ Todo | - | - |
+| M2.1 | bug 修复 + scope 变更（剪贴板单路径） | ✅ Done | 2026-05-30 | - |
+| M3 | 剪贴板监听 + 导入 + 截图按钮接入 | ⬜ Todo | - | - |
+| ~~M4~~ | ~~macOS 截图目录监听~~ | ❌ 弃用 | 合并入 M3 | - |
+| M4(新) | 状态/通知/错误处理 | ⬜ Todo | - | - |
+| M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
+| M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
-## 当前里程碑：M3 — 剪贴板监听 + 导入
+## M2.1 完成回顾（2026-05-30）
+
+**触发**：用户在 M2 真机验证后反馈 4 点：
+1. 配置保存失败（PRD 假设的 `eagle.extraData` API 实际不存在）
+2. 窗口默认全屏，应该小一点
+3. 默认 tag 应附加 hostname
+4. 截图监听语义不对——应像 Alfred/Raycast 走剪贴板，不要监听目录
+
+**Bug 修复**：
+- `js/plugin.js`：`eagle.extraData.get/set` → `localStorage.getItem/setItem`（ADR-010），`eagle.app.isDarkMode` → `await eagle.app.theme` + `onThemeChanged`（K8），默认 tag 加 `os.hostname()`
+- `manifest.json`：宽高 380×540 + maxWidth/maxHeight，避免被默认成全屏
+
+**Scope 变更**（§4.6 里程碑边界变更）：
+- 弃用文件夹 `fs.watch` 方案（ADR-004 修订）
+- 主面板新增「立即截图（到剪贴板）」按钮，macOS 调 `screencapture -ic`（K11）
+- 所有图片输入收敛到剪贴板单路径（ADR-011）
+- UI 移除截图目录字段；M4 合并入 M3
+
+**沉淀的新 Knowledge**：K7（无 extraData）/ K8（theme API）/ K9（manifest maxWidth）/ K10（addFromPath options 形态）/ K11（screencapture -ic）
+
+## 当前里程碑：M3 — 剪贴板监听 + 导入 + 截图按钮
 
 > 详见 [.agent-doc/plan.md](plan.md) 的 M3 段。
 
 ### M3 任务清单（首次进入 Session 时由 Agent 细化）
 
-- [ ] 实现 `setInterval` 轮询 + 开关响应（暂停/恢复）
+- [ ] 实现 `setInterval` 剪贴板轮询 + 开关响应（暂停/恢复）
 - [ ] 实现按 folderId 维度的进程内 `Map<folderId, Set<hash>>`（ADR-009 / F4 v1.1）
-- [ ] 实现启动 / 切换文件夹时的 `eagle.item.get` 回填 + UI「索引中…」状态
+- [ ] 实现启动 / 切换文件夹时的 `eagle.item.get({ folders: [folderId] })` 回填 + UI「索引中…」状态（K10）
 - [ ] 实现 `duplicateStrategy` 分支：skip 短路 / allow 仍导入并启用 30s 防抖
-- [ ] 实现 tmp 文件写入 + `addFromPath`（`folders:[folderId]` 数组 / ADR-003）+ 失败分支清理
+- [ ] 实现 tmp 文件写入 + `addFromPath`（`folders:[folderId]` 数组 / ADR-003 / K10）+ 失败分支清理
+- [ ] 接入截图按钮 → 调 `screencapture -ic`（K11）→ 由轮询自动接力
 - [ ] 错误捕获 → UI 错误状态 → 5s 重试
-- [ ] 真实 Eagle 中验证：复制图 → 出现在文件夹；同图 30s/跨 Session 重复 → 按策略表现
+- [ ] 真实 Eagle 中验证：复制图 / 按钮截图 → 出现在文件夹；同图重复 → 按策略表现
 
 ## M1 完成回顾（2026-05-30）
 

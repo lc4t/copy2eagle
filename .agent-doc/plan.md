@@ -6,24 +6,24 @@
 
 | # | 名称 | 状态 | 预计产物 | GitHub Issue |
 |---|---|---|---|---|
-| M1 | 项目初始化 | 🔄 In Progress | 治理文件、目录、README、LICENSE、`.gitignore` | - |
-| M2 | 插件骨架 + 配置面板 | ⬜ Todo | `manifest.json` / `index.html` / `js/ui.js` / 文件夹选择 / 开关 / 配置持久化 | - |
-| M3 | 剪贴板监听 + 导入（核心 F1/F3/F4 修订版） | ⬜ Todo | 轮询 + 按文件夹 hash 集合 + 启动期回填 + `duplicateStrategy` 用户开关 + tmp 文件 + `addFromPath` | - |
-| M4 | macOS 截图监听（F2） | ⬜ Todo | 截图目录自动检测 + 文件监听 + 500ms 节流 + 文件名正则 | - |
-| M5 | 状态/通知/错误处理（F8/F9 + §5） | ⬜ Todo | 状态指示灯、今日计数、最近导入、通知开关、错误展示 | - |
-| M6 | 打包 + 本地端到端验证 | ⬜ Todo | `.eagleplugin` 包、安装文档、截图证据 | - |
-| M7 | 开源发布准备 | ⬜ Todo | README 完善、CHANGELOG v1.0.0、Plugin Center 提交材料 | - |
+| M1 | 项目初始化 | ✅ Done | 治理文件、目录、README、LICENSE、`.gitignore` | - |
+| M2 | 插件骨架 + 配置面板 | ✅ Done | `manifest.json` / `index.html` / `js/ui.js` / 文件夹选择 / 开关 / 配置持久化 | - |
+| M2.1 | M2 bug 修复 + scope 变更（剪贴板单路径） | 🔄 In Progress | localStorage、窗口尺寸、hostname tag、theme、PRD F2 重写、ADR-010/011 | - |
+| M3 | 剪贴板监听 + 导入 + 截图按钮 | ⬜ Todo | 轮询 + 按文件夹 hash 集合 + 启动期回填 + `duplicateStrategy` 分支 + tmp 文件 + `addFromPath` + macOS `screencapture -ic` | - |
+| ~~M4~~ | ~~macOS 截图目录监听~~ | ❌ 弃用（ADR-004 修订） | 合并入 M3 截图按钮 | - |
+| M4(新) | 状态/通知/错误处理（F8/F9 + §5） | ⬜ Todo | 状态指示灯、今日计数、最近导入、通知开关、错误展示 | - |
+| M5(新) | 打包 + 本地端到端验证 | ⬜ Todo | `.eagleplugin` 包、安装文档、截图证据 | - |
+| M6(新) | 开源发布准备 | ⬜ Todo | README 完善、CHANGELOG v1.0.0、Plugin Center 提交材料 | - |
 
-## 当前里程碑：M1
+## 当前里程碑：M2.1 — bug 修复 + scope 变更
 
-- [x] 创建 `docs/` `.agent-doc/` 目录骨架
-- [x] 把 `PRD.md` 移入 `docs/prd.md`
-- [x] 生成 `AGENTS.md` / `CLAUDE.md` / `AGENT.RULES.md`
-- [x] 生成 `docs/architecture.md` / `decisions.md` / `CHANGELOG.md`
-- [x] 生成 `.agent-doc/` 最小集（plan / progress / chat-summary / knowledge / relearning-log）
-- [ ] 生成 `README.md` / `LICENSE` / `.gitignore`
-- [ ] 用户确认后初始 commit
-- [ ] 用户确认是否启用 GitHub Issues / entire / frontend-design Skill
+- [x] 4 项 M2 bug：localStorage / 窗口尺寸 / hostname tag / theme
+- [x] PRD F2 重写为剪贴板单路径 + 截图按钮（v1.1 修订）
+- [x] architecture 移除截图 watcher，新增截图按钮路径
+- [x] 修订 ADR-004 + 新增 ADR-010 / ADR-011
+- [x] UI 移除截图目录字段，新增「立即截图」按钮
+- [ ] 更新 progress / CHANGELOG / knowledge
+- [ ] commit + push
 
 ## 下一里程碑：M2 — 插件骨架 + 配置面板
 
@@ -44,9 +44,9 @@
   - 切换 folderId 时旧 hashSet 是否保留（建议丢弃，新文件夹重新回填，避免内存膨胀）
   - tmp 文件命名（含时间戳避免冲突）、`addFromPath` 完成后异步清理、轮询暂停（开关关闭时停 setInterval）
   - `duplicateStrategy` UI 切换时要清晰告诉用户「skip = 不重复进该文件夹 / allow = 允许重复但 30s 内同图不连击」
-- **M4** 难点：`fs.watch` 在 macOS 上的事件去重（同一文件可能多次触发），`com.apple.screencapture` 用户改默认目录后的热更新（v1.x 接受重启生效）。
-- **M5** 难点：错误展示要 actionable，不只是 stacktrace；通知节流避免连续导入炸推送。
-- **M6** 必须在干净的 Eagle 环境下测试（避免开发期残留 `extraData`）。
+  - macOS 截图按钮调 `screencapture -ic` 是 fire-and-forget，结果通过轮询拾取——要注意快速连点的体验（v1.x 不做防抖，由 hash 去重兜底）
+- **M4（新）** 难点：错误展示要 actionable，不只是 stacktrace；通知节流避免连续导入炸推送。
+- **M5（新）** 必须在干净的 Eagle 环境下测试（避免开发期残留 localStorage / item 索引）。
 
 ## 遗留问题
 

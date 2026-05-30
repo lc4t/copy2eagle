@@ -2,36 +2,37 @@
 
 > 模块边界、数据流、关键时序。代码落地后随时更新。
 
-## 1. 模块划分
+## 1. 模块划分（v1.1 修订：剪贴板单路径）
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ Eagle Plugin Runtime (Electron + Node.js)                    │
 │                                                              │
 │  ┌─────────────────┐         ┌───────────────────────────┐  │
-│  │   index.html    │ ◀────── │  Eagle Host UI / Theme    │  │
-│  │   js/ui.js      │         └───────────────────────────┘  │
+│  │   index.html    │ ◀────── │  eagle.app.theme          │  │
+│  │   js/ui.js      │ ◀────── │  eagle.onThemeChanged     │  │
 │  │   (Panel UI)    │                                         │
 │  └────────┬────────┘                                         │
-│           │ state events                                     │
+│           │ snapshot / saveConfig(patch)                     │
 │           ▼                                                  │
 │  ┌─────────────────┐         ┌───────────────────────────┐  │
 │  │   js/plugin.js  │ ──────▶ │ eagle.item.addFromPath    │  │
-│  │ (Background     │         │ eagle.folder.getAll       │  │
-│  │  Service)       │ ──────▶ │ eagle.extraData (config)  │  │
+│  │                 │         │ eagle.folder.getAll       │  │
+│  │                 │ ──────▶ │ localStorage (config)     │  │
 │  │                 │ ──────▶ │ eagle.notification        │  │
 │  │  ┌───────────┐  │         │ eagle.log                 │  │
 │  │  │ Clipboard │  │         └───────────────────────────┘  │
 │  │  │  Poller   │  │                                         │
 │  │  └─────┬─────┘  │         ┌───────────────────────────┐  │
 │  │        │        │ ──────▶ │ electron.clipboard        │  │
-│  │  ┌─────┴─────┐  │         │   .readImage()            │  │
-│  │  │ Screenshot│  │         └───────────────────────────┘  │
-│  │  │  Watcher  │  │         ┌───────────────────────────┐  │
-│  │  │ (darwin)  │  │ ──────▶ │ fs.watch(screenshotDir)   │  │
-│  │  └─────┬─────┘  │         │ defaults read … location  │  │
-│  │        │        │         └───────────────────────────┘  │
-│  │  ┌─────┴─────┐  │                                         │
+│  │        │        │         │   .readImage()            │  │
+│  │  ┌─────┴─────┐  │         └───────────────────────────┘  │
+│  │  │ Screenshot│  │         ┌───────────────────────────┐  │
+│  │  │  Trigger  │  │ ──────▶ │ child_process.execFile    │  │
+│  │  │ (darwin)  │  │         │   screencapture -ic       │  │
+│  │  └─────┬─────┘  │         │   （结果进剪贴板，由       │  │
+│  │        │        │         │    Clipboard Poller 接力） │  │
+│  │  ┌─────┴─────┐  │         └───────────────────────────┘  │
 │  │  │ Import    │  │         ┌───────────────────────────┐  │
 │  │  │ Pipeline  │  │ ──────▶ │ os.tmpdir() / fs.writeFile│  │
 │  │  └───────────┘  │         └───────────────────────────┘  │
@@ -59,20 +60,15 @@ setInterval(intervalMs)
             → UI 状态推送（最近导入卡片）
 ```
 
-### 2.2 macOS 截图触发的导入
+### 2.2 截图按钮触发的导入（v1.1 修订）
 
 ```
-启动时：defaults read com.apple.screencapture location → screenshotDir
-fs.watch(screenshotDir, { persistent: true })
-  → 文件名匹配 ^(截屏|Screenshot) … \.png$
-  → setTimeout(500ms) 等待写盘完成
-  → 读文件计算 hash
-  → 去重判定（见 §2.4）
-      ├─ skip 命中 → 不导入，保留源文件不动
-      └─ 允许导入
-            → eagle.item.addFromPath(filePath, { … })  ← 直接用原路径
-            → 写入 hashSetByFolder[folderId]
-            → 更新计数 + 通知 + UI 状态
+用户点击「立即截图」按钮（macOS 限定）
+  → child_process.execFile('screencapture', ['-ic'])
+  → 用户选择截图区域
+  → 系统将结果写入剪贴板（不落盘）
+  → §2.1 剪贴板轮询 1s 内捕获 → 走标准导入流程
+（Windows：按钮置灰，提示用户用 Win+Shift+S，效果等价）
 ```
 
 ### 2.4 去重判定（F4 / ADR-009）
@@ -100,11 +96,12 @@ import 成功后：
   lastClipboardHash / lastClipboardAt 更新
 ```
 
-### 2.3 配置读写
+### 2.3 配置读写（v1.1 修订）
 
 ```
-启动：eagle.extraData.get('clipboardWatcher') → 反序列化 → 恢复 enabled / folderId / ...
-变更：UI 触发 → 内存状态 → eagle.extraData.set('clipboardWatcher', JSON)
+启动：localStorage.getItem('clipboardWatcher') → JSON.parse → normalizeConfig
+变更：UI 触发 → saveConfig(patch) → normalizeConfig → localStorage.setItem
+（PRD 原写的 eagle.extraData 在 Eagle 公开 API 中不存在；改用 webview 原生 localStorage，详见 ADR-010）
 ```
 
 ## 3. 模块职责
@@ -142,7 +139,7 @@ detect → dedupe → write-tmp → addFromPath → cleanup
 | Eagle API 不可用 | 捕获 → ERROR 状态 → 5s 重试 |
 | 临时文件写入失败 | 跳过本次 → 错误计入 UI |
 | `addFromPath` 抛错 | 删除已写 tmp → 错误计入 UI，不崩溃 |
-| 截图目录消失 | 回退 `~/Desktop` → UI 提示用户 |
+| `screencapture` 调用失败 | UI 错误状态 + 提示，不阻塞其他功能 |
 | 配置反序列化失败 | 重置为默认 → 警告日志 + UI 提示 |
 | 启动期回填读取 item 文件失败（部分 item）| 跳过失败 item，记录到日志，不阻塞其他 item 入索引 |
 

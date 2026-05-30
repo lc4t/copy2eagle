@@ -38,8 +38,8 @@
     .cw-app {
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      padding: 16px 18px 24px;
+      gap: 12px;
+      padding: 14px 16px 18px;
     }
     .cw-header {
       display: flex;
@@ -195,6 +195,25 @@
       font-size: 12px;
     }
     .cw-button:hover { border-color: var(--cw-primary); }
+    .cw-primary-button {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--cw-primary);
+      color: #ffffff;
+      border: 1px solid var(--cw-primary);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: opacity 0.15s ease, background 0.15s ease;
+    }
+    .cw-primary-button:hover:not(:disabled) { opacity: 0.9; }
+    .cw-primary-button:disabled {
+      background: var(--cw-idle);
+      border-color: var(--cw-idle);
+      color: var(--cw-muted);
+      cursor: not-allowed;
+    }
     .cw-slider-row {
       display: flex;
       align-items: center;
@@ -275,6 +294,15 @@
       </label>
     </section>
 
+    <section>
+      <button type="button" class="cw-primary-button" id="cw-screenshot" disabled>
+        立即截图（到剪贴板）
+      </button>
+      <span class="cw-hint" id="cw-screenshot-hint">
+        macOS：选区截图直接进剪贴板 · Windows：请用 Win+Shift+S
+      </span>
+    </section>
+
     <section class="cw-field">
       <label>最近导入</label>
       <div class="cw-recent-empty" id="cw-recent">尚无导入记录</div>
@@ -294,15 +322,6 @@
         <div class="cw-field">
           <label for="cw-tags">自动添加标签（逗号分隔）</label>
           <input type="text" id="cw-tags" placeholder="clipboard-watcher" />
-        </div>
-
-        <div class="cw-field">
-          <label for="cw-screenshot-dir">截图监听目录（macOS）</label>
-          <div class="cw-row">
-            <input type="text" id="cw-screenshot-dir" placeholder="自动检测" />
-            <button type="button" class="cw-button" id="cw-detect-dir">自动检测</button>
-          </div>
-          <span class="cw-hint">留空则使用系统设置（fallback 到 ~/Desktop）</span>
         </div>
 
         <div class="cw-field">

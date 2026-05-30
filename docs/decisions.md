@@ -45,15 +45,62 @@
 
 ---
 
-## ADR-004：截图监听仅在 macOS 实现，Windows 用剪贴板覆盖
+## ADR-004：截图统一走剪贴板（v1.1 修订，原方案弃用）
+
+- **Date**：2026-05-30（原决策）/ 2026-05-30（修订）
+- **Context（修订）**：用户澄清意图——所有图片获取走剪贴板，参考 Alfred/Raycast 的工作流。文件夹监听复杂度高且与心智模型不符：用户复制图片和按截图键应进入同一流水线。
+- **Decision（修订）**：
+  - 放弃 `fs.watch(screenshotDir)` 方案
+  - macOS：主面板「立即截图」按钮 → `screencapture -ic`（结果进剪贴板）
+  - Windows：按钮置灰，提示用户用 `Win+Shift+S`（系统截图默认进剪贴板）
+  - 所有路径汇入 §2.1 剪贴板轮询（单一导入入口）
+- **Consequences**：
+  - 心智模型统一：所有图片走剪贴板
+  - 实现复杂度大幅降低：不再需要文件名正则 / 写盘延迟 / 目录可达性检测
+  - 用户需养成习惯：截图快捷键应配置为"到剪贴板"（macOS 默认是到桌面文件，要加 Ctrl 修饰键）
+  - 没有按钮的用户路径同样可用——系统截图到剪贴板后会被轮询拾起
+- **被否决方案（原方案）**：
+  - 监听截图目录 + 文件名正则匹配：维护成本高，且与"剪贴板单路径"心智不一致
+- **Why**：用户原话「ctrl+c 后就自动获取截图」+ 提及 Alfred/Raycast，清楚指向"剪贴板是唯一输入"。详见 ADR-011。
+
+---
+
+## ADR-010：配置持久化用 localStorage，PRD 中的 eagle.extraData 不存在
 
 - **Date**：2026-05-30
-- **Context**：Windows 默认 `PrintScreen` 进剪贴板，Snipping Tool 存文件路径不固定。
-- **Decision**：v1.x 仅 macOS 实现 `fs.watch(screenshotDir)`；Windows 仅靠 F1 剪贴板监听。
+- **Context**：PRD §3.4 / §2.2 描述用 `eagle.extraData.get/set` 持久化配置；实际查 Eagle 官方文档（developer.eagle.cool/plugin-api/api/folder 等）没有 `eagle.extraData` 这个 API。M2 真实运行时 `await eagle.extraData.set(...)` 抛出，导致"配置保存失败"。
+- **Decision**：用 webview 原生 `localStorage` 持久化配置：
+  - `localStorage.getItem(CONFIG_KEY)` → `JSON.parse` → `normalizeConfig`
+  - `saveConfig(patch)` → `normalizeConfig` → `localStorage.setItem(CONFIG_KEY, JSON.stringify(config))`
+  - 同步 API，无 async 噪音
 - **Consequences**：
-  - macOS 用户：截图 + 剪贴板双路径。
-  - Windows 用户：截图通过 `PrintScreen` 路径仍覆盖；Snipping Tool 存文件场景遗漏。
-- **Why**：避免 Windows 上猜测截图工具的复杂度，集中精力做好 macOS 体验。Snipping Tool 路径延后 v1.1 评估。
+  - 立即修复"配置保存失败"
+  - localStorage 在 Electron webview 中按 origin 隔离，相当于"每个插件独立 sandbox"，符合预期
+  - 容量 10MB+，远超 10KB 限制
+  - 不再依赖 Eagle 未公开 API（更稳）
+- **被否决方案**：
+  - **Node `fs` 写 JSON 文件**：需选目录（`os.homedir()/.eagle-clipboard-watcher/`），增加文件系统复杂度
+  - **等 Eagle 官方出 storage API**：阻塞 v1.0 发布，不可取
+- **Why**：localStorage 是 Web 标准，零依赖，同步且可靠。**PRD 中所有 `eagle.extraData` 字样需替换为 localStorage（已修订）。**
+
+---
+
+## ADR-011：剪贴板为唯一图片输入路径
+
+- **Date**：2026-05-30
+- **Context**：M2.1 用户反馈澄清意图——所有图片应走剪贴板（参考 Alfred / Raycast）。原 PRD F2 的"监听截图保存目录 + 文件名正则"实现复杂度高、跨平台行为差异大、且与用户心智不一致。
+- **Decision**：
+  - **剪贴板**是 v1.x 唯一图片输入路径（剪贴板复制 / 系统截图到剪贴板 / 插件触发的 `screencapture -ic` 全部汇入）
+  - 主面板提供「立即截图」按钮（macOS：`screencapture -ic`，Windows：置灰 + 提示 `Win+Shift+S`）
+  - 不实现全局快捷键（Eagle 插件 API 未公开此能力，引入第三方 hook 监听复杂度高且影响性能）
+- **Consequences**：
+  - 架构大幅简化：剪贴板轮询 + 一个截图触发按钮 = 全部输入
+  - 用户需理解：截图快捷键应配置为"到剪贴板"模式
+  - README / 面板 hint 中给出 macOS 推荐快捷键（`Cmd+Shift+Ctrl+4`）
+- **被否决方案**：
+  - 文件夹 `fs.watch`（见 ADR-004 修订）
+  - 全局快捷键库（如 `electron-localshortcut`）：增加依赖，且 Eagle 插件运行时未开放注册全局快捷键的能力
+- **Why**：单一输入路径心智成本最低；Alfred / Raycast 已验证这种模式的可用性。
 
 ---
 

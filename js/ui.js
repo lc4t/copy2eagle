@@ -9,6 +9,8 @@ const ERROR_MESSAGES = {
   CONFIG_SAVE_FAILED: '配置保存失败，请稍后重试。',
   FOLDER_FETCH_FAILED: '无法获取 Eagle 文件夹列表，请确认 Eagle 正在运行。',
   NO_FOLDER_SELECTED: '请先选择目标文件夹。',
+  SCREENSHOT_UNSUPPORTED: '当前系统暂不支持「立即截图」按钮，请使用系统截图工具（结果需进剪贴板）。',
+  SCREENSHOT_FAILED: '调用系统截图工具失败，请稍后重试。',
   UNKNOWN: '发生未知错误，请查看 Eagle 日志面板。',
 }
 
@@ -16,9 +18,8 @@ function $(id) {
   return document.getElementById(id)
 }
 
-function applyTheme() {
-  const dark = typeof eagle !== 'undefined' && eagle.app && eagle.app.isDarkMode
-  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+function applyTheme(snapshot) {
+  document.documentElement.setAttribute('data-theme', snapshot.isDark ? 'dark' : 'light')
 }
 
 function renderStatus(snapshot) {
@@ -81,15 +82,29 @@ function renderToggle(snapshot) {
   toggle.disabled = !snapshot.config.folderId
 }
 
+function renderScreenshotButton(snapshot) {
+  const btn = $('cw-screenshot')
+  const hint = $('cw-screenshot-hint')
+  const macSupported = snapshot.platform === 'darwin'
+  btn.disabled = !macSupported || !snapshot.config.folderId
+  if (!macSupported) {
+    hint.textContent = 'Windows：请用 Win+Shift+S 截图（结果会自动进剪贴板，监听开启后自动导入）'
+  } else if (!snapshot.config.folderId) {
+    hint.textContent = '选择目标文件夹后即可点击截图（结果自动进剪贴板，监听开启时自动入库）'
+  } else if (!snapshot.config.enabled) {
+    hint.textContent = '截图将进入剪贴板，开启监听后才会自动入库'
+  } else {
+    hint.textContent = '点击后选择区域截图，结果自动进剪贴板并入库'
+  }
+}
+
 function renderAdvanced(snapshot) {
   $('cw-interval').value = snapshot.config.intervalMs
   $('cw-interval-value').textContent = `${snapshot.config.intervalMs} ms`
-  $('cw-tags').value = snapshot.config.tags
-  const dirInput = $('cw-screenshot-dir')
-  dirInput.value = snapshot.config.screenshotDir
-  dirInput.placeholder = snapshot.detectedScreenshotDir
-    ? `自动检测：${snapshot.detectedScreenshotDir}`
-    : '自动检测'
+
+  const tagsInput = $('cw-tags')
+  tagsInput.value = snapshot.config.tags
+  tagsInput.placeholder = snapshot.defaults.tags
 
   const radios = document.getElementsByName('cw-duplicate')
   for (const r of radios) {
@@ -113,11 +128,12 @@ function render() {
   const CW = window.ClipboardWatcher
   if (!CW) return
   const snapshot = CW.getSnapshot()
-  applyTheme()
+  applyTheme(snapshot)
   renderStatus(snapshot)
   renderError(snapshot)
   renderFolders(snapshot)
   renderToggle(snapshot)
+  renderScreenshotButton(snapshot)
   renderAdvanced(snapshot)
   renderRecent(snapshot)
 }
@@ -128,7 +144,7 @@ async function safeAction(label, fn) {
     await fn()
   } catch (err) {
     eagle.log.error(`[clipboard-watcher] ui action "${label}" failed: ${err && err.message ? err.message : err}`)
-    if (CW) CW.state.lastError = CW.state.lastError || 'UNKNOWN'
+    if (CW && !CW.state.lastError) CW.state.lastError = 'UNKNOWN'
   } finally {
     render()
   }
@@ -143,13 +159,17 @@ function bindEvents() {
   })
 
   $('cw-enabled').addEventListener('change', (e) => {
-    safeAction('toggleEnabled', async () => {
+    safeAction('toggleEnabled', () => {
       if (e.target.checked) {
-        await CW.enableWatcher()
+        CW.enableWatcher()
       } else {
-        await CW.disableWatcher()
+        CW.disableWatcher()
       }
     })
+  })
+
+  $('cw-screenshot').addEventListener('click', () => {
+    safeAction('screenshot', () => CW.triggerScreenshot())
   })
 
   $('cw-interval').addEventListener('input', (e) => {
@@ -161,21 +181,6 @@ function bindEvents() {
 
   $('cw-tags').addEventListener('change', (e) => {
     safeAction('tags', () => CW.saveConfig({ tags: e.target.value }))
-  })
-
-  $('cw-screenshot-dir').addEventListener('change', (e) => {
-    safeAction('screenshotDir', () => CW.saveConfig({ screenshotDir: e.target.value.trim() }))
-  })
-
-  $('cw-detect-dir').addEventListener('click', () => {
-    safeAction('detectDir', async () => {
-      const detected = CW.detectScreenshotDir()
-      if (detected) {
-        await CW.saveConfig({ screenshotDir: '' })
-        $('cw-screenshot-dir').value = ''
-        $('cw-screenshot-dir').placeholder = `自动检测：${detected}`
-      }
-    })
   })
 
   for (const r of document.getElementsByName('cw-duplicate')) {
