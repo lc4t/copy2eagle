@@ -1,0 +1,33 @@
+{
+  "name": "eagle-clipboard-watcher",
+  "version": "0.0.0",
+  "description": "Eagle plugin that auto-imports clipboard images and macOS screenshots into a chosen Eagle folder.",
+  "private": true,
+  "author": "lc4t <lc4t0.0@gmail.com>",
+  "license": "SEE LICENSE IN LICENSE",
+  "homepage": "https://github.com/lc4t/copy2eagle",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lc4t/copy2eagle.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lc4t/copy2eagle/issues"
+  },
+  "keywords": [
+    "eagle",
+    "eagle-plugin",
+    "clipboard",
+    "screenshot",
+    "macos",
+    "auto-import"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "pack": "rm -f eagle-clipboard-watcher.eagleplugin && zip -r eagle-clipboard-watcher.zip manifest.json index.html logo.png js -x '*.DS_Store' && mv eagle-clipboard-watcher.zip eagle-clipboard-watcher.eagleplugin",
+    "clean": "rm -f eagle-clipboard-watcher.eagleplugin eagle-clipboard-watcher.zip"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -1,0 +1,32 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (按需)
+node_modules/
+
+# 插件打包产物
+*.eagleplugin
+*.zip
+__MACOSX/
+
+# Eagle 调试残留
+*.log
+
+# 模板母版（不入项目仓库，仅本地保留供 relearning 读写）
+AGENT.template.md
+
+# 过程证据（截图等，不入库）
+.agent-doc/evidence/
+.agent-doc/drafts/*.tmp
+
+# 环境变量与密钥（本项目当前不用，预留）
+.env
+.env.*
+!.env.example
