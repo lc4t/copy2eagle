@@ -342,15 +342,24 @@ mv eagle-clipboard-watcher.zip eagle-clipboard-watcher.eagleplugin
 
 ### 7.2 调试建议
 - `plugin.js` 中用 `eagle.log.info()` 替代 `console.log`，日志在 Eagle 日志面板可见
-- 用 `eagle.extraData` 存配置时，建议在面板加「清除配置」按钮方便测试重置
-- `serviceMode` 插件在调试阶段建议先作为普通 Window Plugin 开发，功能稳定后再切换
+- 配置存在 `localStorage`（key=`clipboardWatcher`），DevTools Console 一句 `localStorage.removeItem('clipboardWatcher')` 即可重置（ADR-010）
+- `serviceMode` 插件在调试阶段建议临时把 `manifest.json` 里 `devTools` 改为 `true`，commit 前必须切回 `false`
 
 ---
 
 ## 八、已知限制与注意事项
 
-1. **Windows 截图监听**：Windows 使用 `PrintScreen` 键截图默认进剪贴板，F1 已覆盖；Snipping Tool 存文件的场景暂不处理（v1.1 考虑）
+1. **Windows 截图监听**：Windows 使用 `PrintScreen` / `Win+Shift+S` 截图默认进剪贴板，F1 已覆盖；Snipping Tool 存文件的场景暂不处理（v1.2+ 考虑）
 2. **Eagle 必须运行**：插件是 Eagle 的子进程，Eagle 关闭则监听停止，这是合理预期
-3. **`eagle.extraData` 容量**：存储配置的 JSON 应控制在 10KB 以内
+3. **配置存储**：使用 webview 原生 `localStorage`（ADR-010 / K7），容量 10MB+ 远超 PRD 早期写的 10KB；配置 JSON 仍应保持小（< 10KB 量级）以便打印日志
 4. **隐私**：插件只在本地运行，不向任何外部服务器发送数据，需在 Plugin Center 描述中注明
 5. **`clipboard.readImage()` 性能**：每秒调用不会有明显性能问题，但面板关闭期间 `serviceMode` 后台运行时 CPU 占用应低于 0.5%
+6. **剪贴板权限与 macOS Sonoma 横幅（v1.1 新增，K12）**：
+   - macOS / Windows 都**不需要显式申请权限**——没有"剪贴板访问"开关，插件随 Eagle 进程运行
+   - **macOS 14+ (Sonoma) 起读剪贴板内容会触发"已粘贴自 Eagle"系统横幅**，1Hz 轮询会刷屏
+   - 实现策略（M3 必做）：
+     - 先调 `clipboard.availableFormats()` 查格式（轻量元数据查询，业界默认不触发横幅）
+     - 仅在含 `image/*` 时才调 `clipboard.readImage()`
+     - 上一帧 formats 不变时可直接跳过本轮（额外节流）
+     - hash 比对放在 readImage 之后，相同 hash 直接退出
+   - README 与面板需提示用户：横幅是 macOS 系统行为，不代表插件偷窥；如不接受可调大间隔或关闭监听

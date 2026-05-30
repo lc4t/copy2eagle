@@ -98,9 +98,14 @@ function renderScreenshotButton(snapshot) {
   }
 }
 
+function formatSeconds(ms) {
+  return `${(ms / 1000).toFixed(1)} s`
+}
+
 function renderAdvanced(snapshot) {
-  $('cw-interval').value = snapshot.config.intervalMs
-  $('cw-interval-value').textContent = `${snapshot.config.intervalMs} ms`
+  const intervalSec = snapshot.config.intervalMs / 1000
+  $('cw-interval').value = intervalSec
+  $('cw-interval-value').textContent = formatSeconds(snapshot.config.intervalMs)
 
   const tagsInput = $('cw-tags')
   tagsInput.value = snapshot.config.tags
@@ -173,10 +178,12 @@ function bindEvents() {
   })
 
   $('cw-interval').addEventListener('input', (e) => {
-    $('cw-interval-value').textContent = `${e.target.value} ms`
+    const sec = Number(e.target.value)
+    $('cw-interval-value').textContent = `${sec.toFixed(1)} s`
   })
   $('cw-interval').addEventListener('change', (e) => {
-    safeAction('intervalMs', () => CW.saveConfig({ intervalMs: Number(e.target.value) }))
+    const ms = Math.round(Number(e.target.value) * 1000)
+    safeAction('intervalMs', () => CW.saveConfig({ intervalMs: ms }))
   })
 
   $('cw-tags').addEventListener('change', (e) => {

@@ -30,6 +30,14 @@ Format: [Keep a Changelog](https://keepachangelog.com) | Versioning: Major.Minor
   - PRD F2 重写，M4 合并入 M3
   - ADR-004 修订 + 新增 ADR-011
 
+### Changed (M2.2)
+
+- 监听间隔 UI 单位由 ms 改为秒（slider 0.5–5s，步长 0.5）；存储仍用 ms（兼容 schema）
+- PRD §8 新增第 6 条剪贴板权限与 macOS Sonoma "已粘贴自" 横幅说明；§7.2 修正残留的 `eagle.extraData` 引用为 `localStorage`
+- 高级设置增加 hint：「轮询越快越及时；macOS 14+ 读剪贴板会触发系统横幅，可调大间隔减少触发」
+- `plugin.js` 顶部注释加入 M3 实现指引（`availableFormats()` 预判 + hash 比对）
+- 新增 K12 知识条目（剪贴板权限与横幅缓解策略）
+
 ---
 
 ## [0.0.0] - 2026-05-30

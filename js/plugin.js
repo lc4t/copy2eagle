@@ -1,9 +1,15 @@
 /*
  * Clipboard Watcher — plugin.js
  *
- * M2 / M2.1 范围：配置 schema + localStorage 持久化 + 文件夹拉取 + 生命周期钩子
- *                + 立即截图按钮（macOS screencapture -ic → 剪贴板）
+ * M2 / M2.1 / M2.2 范围：配置 schema + localStorage 持久化 + 文件夹拉取
+ *                       + 生命周期钩子 + 立即截图按钮（macOS screencapture -ic → 剪贴板）
  * M3 起追加：剪贴板轮询、按 folderId 维度 hash 去重、addFromPath 导入
+ *
+ * M3 实装时必读（K12 / PRD §8.6）：
+ *   - macOS 14+ (Sonoma) 读剪贴板内容会触发"已粘贴自 Eagle"系统横幅
+ *   - 必须先 clipboard.availableFormats() 过滤格式，仅在含 image/* 时才 readImage()
+ *   - 上一帧 formats 不变时直接跳过本轮（额外节流），降低横幅触发频率
+ *   - hash 比对放在 readImage 之后，相同 hash 直接退出
  */
 
 const os = require('os')

@@ -36,6 +36,35 @@
 - **项目影响**：M3 实现时 `eagle.item.get({ folders: [folderId] })` 是回填的主要入口。
 - **时效性**：长期有效。
 
+### K12: 剪贴板权限与 macOS Sonoma "已粘贴自" 横幅
+
+- **来源**：
+  - https://www.electronjs.org/docs/latest/api/clipboard（Electron clipboard 全量 API）
+  - macOS 14 Sonoma 隐私行为（Apple 2023 WWDC 公开材料）
+  - 业界做法（Maccy / Paste / Raycast / 1Password 等长期运行的剪贴板工具）
+- **获取时间**：2026-05-30
+- **知识摘要**：
+
+  **权限层面**：
+  - macOS / Windows 均**不需要显式申请权限**——没有 entitlement 或 TCC 提示
+  - 插件运行在 Eagle 进程内，剪贴板访问署名为 Eagle，不需要单独申请
+
+  **macOS 14+ 横幅问题（真正的痛点）**：
+  - macOS 14 Sonoma 起，应用读取剪贴板**内容**（`NSPasteboard.dataForType:`）会触发"已粘贴自 XXX"横幅
+  - 1Hz 轮询 `clipboard.readImage()` 会刷屏，UX 灾难
+  - 触发的是「读内容」，**不是「查格式」**——`availableFormats()` 是轻量元数据查询，业界默认认为不触发横幅
+
+  **Electron clipboard API 现状**：
+  - 没有 `changeCount`（macOS 原生 `NSPasteboard.changeCount` 未透出）
+  - 可用：`availableFormats()` / `has(format)`（experimental）/ `readImage()`
+  - 业界 OK 的代理方案：先 `availableFormats()` 过滤 → 仅在含 `image/*` 时 `readImage()` → 再用 hash 比对，相同 hash 直接退出
+
+- **项目影响**：
+  - M3 实现时**必须**：先 `availableFormats()` 预判，仅在 `formats.some(f => f.startsWith('image/'))` 时 `readImage()`
+  - 进一步：把上一帧的 formats 也缓存，formats 不变时连 `availableFormats()` 都可省（额外节流）
+  - README 与面板加 macOS 用户提示，避免用户误以为"插件在偷窥"
+- **时效性**：依赖 macOS / Electron 行为；macOS 15 / Electron 后续版本若改变，需重新评估。
+
 ### K1: Eagle `addFromPath` 的 `folders` 是数组
 
 - **来源**：PRD §3.7（用户已踩坑）

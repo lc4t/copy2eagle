@@ -312,11 +312,14 @@
       <summary>高级设置</summary>
       <div class="cw-advanced-body">
         <div class="cw-field">
-          <label for="cw-interval">监听间隔</label>
+          <label for="cw-interval">监听间隔（秒）</label>
           <div class="cw-slider-row">
-            <input type="range" id="cw-interval" min="500" max="5000" step="100" value="1000" />
-            <span class="cw-slider-value" id="cw-interval-value">1000 ms</span>
+            <input type="range" id="cw-interval" min="0.5" max="5" step="0.5" value="1" />
+            <span class="cw-slider-value" id="cw-interval-value">1.0 s</span>
           </div>
+          <span class="cw-hint" id="cw-interval-hint">
+            轮询越快越及时；macOS 14+ 读剪贴板会触发"已粘贴自 Eagle"系统横幅，可调大间隔减少触发
+          </span>
         </div>
 
         <div class="cw-field">

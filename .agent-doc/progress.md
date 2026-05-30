@@ -9,6 +9,7 @@
 | M1 | 项目初始化 | ✅ Done | 2026-05-30 | - |
 | M2 | 插件骨架 + 配置面板 | ✅ Done | 2026-05-30 | - |
 | M2.1 | bug 修复 + scope 变更（剪贴板单路径） | ✅ Done | 2026-05-30 | - |
+| M2.2 | 间隔单位改秒 + 剪贴板权限知识沉淀（K12） | ✅ Done | 2026-05-30 | - |
 | M3 | 剪贴板监听 + 导入 + 截图按钮接入 | ⬜ Todo | - | - |
 | ~~M4~~ | ~~macOS 截图目录监听~~ | ❌ 弃用 | 合并入 M3 | - |
 | M4(新) | 状态/通知/错误处理 | ⬜ Todo | - | - |
@@ -35,6 +36,21 @@
 
 **沉淀的新 Knowledge**：K7（无 extraData）/ K8（theme API）/ K9（manifest maxWidth）/ K10（addFromPath options 形态）/ K11（screencapture -ic）
 
+## M2.2 完成回顾（2026-05-30）
+
+**触发**：用户两个新问题：
+1. 间隔单位用 ms 反人类
+2. 剪贴板要不要申请系统权限
+
+**改动**：
+- UI 间隔滑块改为秒（0.5–5s 步长 0.5），内部仍存 ms（兼容 schema）；显示「1.0 s」
+- 新增 K12 沉淀剪贴板权限调研：macOS / Windows 都不需要显式权限，但 macOS 14+ 有"已粘贴自"横幅，需用 `availableFormats()` 预判 + hash 比对降低触发
+- PRD §8 新增第 6 条隐私说明；§7.2 调试建议中 `eagle.extraData` 残留改为 `localStorage`
+- 高级设置 UI 加 hint 提示用户："轮询越快越及时；macOS 14+ 读剪贴板会触发系统横幅"
+- `plugin.js` 顶部注释加 M3 实现指引（formats 预判 + hash 比对）
+
+**沉淀的新 Knowledge**：K12（剪贴板权限 + Sonoma 横幅 + availableFormats 策略）
+
 ## 当前里程碑：M3 — 剪贴板监听 + 导入 + 截图按钮
 
 > 详见 [.agent-doc/plan.md](plan.md) 的 M3 段。
@@ -42,6 +58,7 @@
 ### M3 任务清单（首次进入 Session 时由 Agent 细化）
 
 - [ ] 实现 `setInterval` 剪贴板轮询 + 开关响应（暂停/恢复）
+- [ ] **轮询内必须**：先 `clipboard.availableFormats()` 过滤；仅在含 `image/*` 时 `readImage()`；formats 不变时跳过本轮（K12 / PRD §8.6）
 - [ ] 实现按 folderId 维度的进程内 `Map<folderId, Set<hash>>`（ADR-009 / F4 v1.1）
 - [ ] 实现启动 / 切换文件夹时的 `eagle.item.get({ folders: [folderId] })` 回填 + UI「索引中…」状态（K10）
 - [ ] 实现 `duplicateStrategy` 分支：skip 短路 / allow 仍导入并启用 30s 防抖
