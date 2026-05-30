@@ -1,29 +1,49 @@
 /*
  * Clipboard Watcher — plugin.js
  *
- * M2 / M2.1 / M2.2 / M3 范围：
+ * M2 / M2.1 / M2.2 / M3 / M3.1 范围：
  *   - 配置 schema + localStorage 持久化
  *   - 文件夹拉取（含二级路径）
  *   - 生命周期钩子
  *   - 立即截图按钮（macOS screencapture -ic → 剪贴板）
- *   - 剪贴板轮询（带 macOS Sonoma 横幅缓解）
+ *   - 剪贴板轮询（先 eagle.clipboard.has 多 format 探测，再 readImage）
  *   - 按 folderId 维度的 hash 去重 + 启动期回填
  *   - duplicateStrategy 分支（skip 短路 / allow 30s 防抖）
  *   - 临时文件 + addFromPath + 失败清理
  *   - 错误兜底 + 5s 自动重试
  *
- * macOS 14+ (Sonoma) 横幅缓解策略（K12 / PRD §8.6）：
- *   - 每轮先调 clipboard.availableFormats()（轻量元数据，业界默认不触发横幅）
- *   - formats 数组未变化 → 整轮跳过
- *   - 仅在含 image/* 时才 clipboard.readImage()
- *   - readImage 后立即 hash 比对，相同 hash 直接退出
+ * M3.1 API 修正（K7/K12/K13）：
+ *   - PRD §3.4 写的 require('electron').clipboard 在 Eagle 插件 webview 不可用
+ *     → 改用 eagle.clipboard
+ *   - eagle.clipboard 仅有 has(format) / readImage()，没有 availableFormats()
+ *     → 改用对多个图片 format 字符串依次 has() 探测
+ *   - 没有 NSPasteboard.changeCount 透出，"image format 已存在"不等于"图片已变"
+ *     → 仍需每轮 readImage + hash 比对（相同 hash 不重复导入）
+ *
+ * macOS 14+ 横幅现实（K12 修订）：
+ *   - has() 不读 buffer，业界默认不触发横幅
+ *   - readImage() 读 buffer，每次调用可能触发一次横幅
+ *   - 剪贴板里始终有图片时，1Hz 轮询会按周期触发横幅；推荐用户调大间隔
+ *   - M4 候选项：adaptive polling（同 hash 持续 N 轮则放慢）
  */
 
 const os = require('os')
 const fs = require('fs')
 const path = require('path')
 const { execFile } = require('child_process')
-const { clipboard } = require('electron')
+
+// 图片 format 候选（先试 Electron MIME 风格，再试 macOS UTI）
+const IMAGE_FORMAT_CANDIDATES = [
+  'image/png',
+  'image/jpeg',
+  'image/tiff',
+  'image/bmp',
+  'image/gif',
+  'public.png',
+  'public.tiff',
+  'public.jpeg',
+  'public.image',
+]
 
 const CONFIG_KEY = 'clipboardWatcher'
 const CONFIG_VERSION = 1
@@ -307,29 +327,56 @@ function schedulePoll(immediate = false) {
   }, delay)
 }
 
+function probeImageFormat() {
+  if (!eagle.clipboard || typeof eagle.clipboard.has !== 'function') {
+    return { available: false, format: null }
+  }
+  for (const fmt of IMAGE_FORMAT_CANDIDATES) {
+    try {
+      if (eagle.clipboard.has(fmt)) {
+        return { available: true, format: fmt }
+      }
+    } catch (err) {
+      // 不识别的 format 字符串可能抛错，忽略继续试下一个
+    }
+  }
+  return { available: true, format: null } // has() 可用但当前没图
+}
+
 async function runPoll() {
   if (pollInFlight) return
   pollInFlight = true
   try {
     if (!state.config.enabled || !state.config.folderId) return
 
-    // 1. formats 预判（不触发 macOS 横幅）
-    const formats = clipboard.availableFormats() || []
-    const formatsKey = formats.join('|')
-    if (formatsKey === state.lastFormatsKey) {
-      return // 与上一帧一致，整轮跳过
+    // 1. format 探测：用 eagle.clipboard.has(fmt) 依次试候选，找到第一个返回 true 的
+    //    不存在图片格式 → 整轮跳过（不触发 readImage，不触发 macOS 横幅）
+    const probe = probeImageFormat()
+    if (!probe.available) {
+      // 极端：eagle.clipboard 或 has 不可用，直接报错让用户感知
+      throw new Error('eagle.clipboard.has is unavailable')
     }
-    state.lastFormatsKey = formatsKey
-
-    const hasImage = formats.some((f) => typeof f === 'string' && f.startsWith('image/'))
-    if (!hasImage) return
+    if (!probe.format) {
+      // 剪贴板内没有任何已知图片 format
+      state.lastFormatsKey = null
+      return
+    }
 
     // 2. 读图 + hash
-    const img = clipboard.readImage()
-    if (!img || img.isEmpty()) return
+    //    注意：这里每轮都 readImage 是必要的——has() 只能告诉我们"有图"，不能告诉
+    //    我们"图是否变了"。Eagle/Electron 未透出 NSPasteboard.changeCount。
+    const img = eagle.clipboard.readImage()
+    if (!img || typeof img.isEmpty !== 'function' || img.isEmpty()) return
     const buffer = img.toPNG()
     const hash = computeHash(buffer)
     if (!hash) return
+
+    // 同 hash 立即返回（剪贴板里还是上次那张图）
+    if (hash === state.lastClipboardHash) {
+      state.lastFormatsKey = probe.format
+      return
+    }
+    state.lastFormatsKey = probe.format
 
     const folderId = state.config.folderId
 
@@ -359,7 +406,9 @@ async function runPoll() {
       scheduleRender()
     }
   } catch (err) {
-    eagle.log.error(`[clipboard-watcher] poll error: ${err && err.message ? err.message : err}`)
+    const detail =
+      err && err.stack ? err.stack : err && err.message ? err.message : String(err)
+    eagle.log.error(`[clipboard-watcher] poll error: ${detail}`)
     state.pollErrorCount += 1
     state.lastError = 'POLL_FAILED'
     setRuntimeStatus('error')

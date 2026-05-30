@@ -12,6 +12,9 @@
 - 启动期回填要 yield（每 N 条 `await sleep(0)`）否则 1000+ item 的文件夹会卡 UI 几秒。
 - `eagle.item.addFromPath` 返回 `Promise<itemId: string>`，**只是 id**——想要 metadata 还得 `eagle.item.getById(id)`。
 - 通知节流（1.5s）必须做，否则连续粘贴会刷屏。
+- M3.1 Session：**PRD 第三次写错 Eagle API**（前两次 `eagle.extraData` / `eagle.app.isDarkMode`，本次 `require('electron').clipboard`）。教训：**Eagle 插件 webview 不暴露 Electron 渲染进程模块**，所有 Electron-flavored API 都要走 `eagle.*` 命名空间；下次写新 API 之前先查 developer.eagle.cool 文档而不是按 Electron 习惯写。
+- 错误日志一定要带 `err.stack`，不带的话 catch 之后只剩"undefined is not a function"这种无用信息。
+- 对 Eagle API 完全没有的能力（如 `availableFormats()` / `changeCount`），不要硬撑"做和 macOS Sonoma 横幅彻底无关"，承认现实代价，给用户提供间隔调节是更诚实的方案。
 
 ## 规则修正
 

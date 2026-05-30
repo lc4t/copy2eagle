@@ -189,35 +189,54 @@ eagle-clipboard-watcher.eagleplugin（实质是 zip）
 
 > ⚠️ `id` 字段在提交 Eagle Plugin Center 前需替换为通过 Eagle 开发者工具生成的真实唯一 ID。
 
-### 3.4 可用 API 清单
+### 3.4 可用 API 清单（v1.1 修订：实际验证过的接口）
 
-| API | 用途 |
-|---|---|
-| `require('electron').clipboard` | 读取剪贴板图片（`readImage()`） |
-| `require('fs')` | 写入/删除临时文件 |
-| `require('os')` | 获取 `tmpdir()`、`platform()` |
-| `require('path')` | 路径拼接 |
-| `eagle.item.addFromPath(path, opts)` | 导入文件到 Eagle |
-| `eagle.folder.getAll()` | 获取所有文件夹 |
-| `eagle.extraData` | 持久化配置（get/set） |
-| `eagle.notification.show(opts)` | 发送系统通知 |
-| `eagle.onPluginCreate(callback)` | 插件初始化入口 |
-| `eagle.onPluginShow(callback)` | 面板显示时触发（用于刷新 UI） |
+| API | 用途 | 备注 |
+|---|---|---|
+| `eagle.clipboard.has(format)` | 探测剪贴板是否含指定 format | **替代** PRD v1.0 写错的 `require('electron').clipboard.availableFormats()`（K13） |
+| `eagle.clipboard.readImage()` | 读取剪贴板图片，返回 NativeImage | NativeImage 上有 `isEmpty()` / `toPNG()` 等 Electron 方法 |
+| `require('fs')` | 写入/删除临时文件 | ✓ |
+| `require('os')` | 获取 `tmpdir()`、`platform()`、`hostname()` | ✓ |
+| `require('path')` | 路径拼接 | ✓ |
+| `require('child_process')` | 调 `screencapture -ic` | ✓ |
+| `eagle.item.addFromPath(path, opts)` | 导入文件到 Eagle | `opts.folders` 必须是 `string[]` 数组（K10） |
+| `eagle.item.get({ folders: [id] })` | 拉文件夹现有 item，回填 hashSet 用 | 每个 item 有 `.filePath` 是磁盘路径 |
+| `eagle.folder.getAll()` | 获取所有文件夹（含 `children` 树） | ✓ |
+| `localStorage.getItem/setItem` | 持久化配置 | **替代** PRD v1.0 写错的 `eagle.extraData`（K7 / ADR-010） |
+| `eagle.notification.show(opts)` | 发送系统通知 | 插件内做 1.5s 节流避免刷屏 |
+| `eagle.app.theme` (Promise) | 当前主题字符串 | **替代** PRD v1.0 写错的 `eagle.app.isDarkMode`（K8） |
+| `eagle.onThemeChanged(cb)` | 主题切换监听 | ✓ |
+| `eagle.onPluginCreate(callback)` | 插件初始化入口 | ✓ |
+| `eagle.onPluginShow(callback)` | 面板显示时触发（用于刷新 UI） | ✓ |
+| `eagle.onPluginBeforeExit(callback)` | 关闭前钩子（停轮询） | ✓ |
+| `eagle.log.info/warn/error(msg)` | 写 Eagle 日志面板 | 替代 console.log |
 
-### 3.5 剪贴板读取逻辑（关键实现细节）
+### 3.5 剪贴板读取逻辑（v1.1 修订：用 eagle.clipboard）
 
 ```javascript
-const { clipboard, nativeImage } = require('electron')
+const IMAGE_FORMAT_CANDIDATES = [
+  'image/png', 'image/jpeg', 'image/tiff', 'image/bmp', 'image/gif',
+  'public.png', 'public.tiff', 'public.jpeg', 'public.image',
+]
+
+function probeImageFormat() {
+  for (const fmt of IMAGE_FORMAT_CANDIDATES) {
+    try { if (eagle.clipboard.has(fmt)) return fmt } catch {}
+  }
+  return null
+}
 
 function checkClipboard() {
-  const img = clipboard.readImage()
-  if (img.isEmpty()) return null
+  if (!probeImageFormat()) return null            // 不读 buffer → 不触发 macOS 横幅
+  const img = eagle.clipboard.readImage()
+  if (!img || img.isEmpty()) return null
   const buffer = img.toPNG()
-  // 轻量 hash：长度 + 前256字节内容
   const hash = buffer.length + '_' + buffer.slice(0, 256).toString('base64').slice(0, 32)
   return { img, buffer, hash }
 }
 ```
+
+**为什么不用 `availableFormats()`**：Eagle 的 `eagle.clipboard` 只暴露 `has(format)` 和 `readImage()`，没有 `availableFormats()`（K13）。必须依次试已知 format 候选。
 
 ### 3.6 截图目录自动检测（macOS）
 
@@ -354,12 +373,13 @@ mv eagle-clipboard-watcher.zip eagle-clipboard-watcher.eagleplugin
 3. **配置存储**：使用 webview 原生 `localStorage`（ADR-010 / K7），容量 10MB+ 远超 PRD 早期写的 10KB；配置 JSON 仍应保持小（< 10KB 量级）以便打印日志
 4. **隐私**：插件只在本地运行，不向任何外部服务器发送数据，需在 Plugin Center 描述中注明
 5. **`clipboard.readImage()` 性能**：每秒调用不会有明显性能问题，但面板关闭期间 `serviceMode` 后台运行时 CPU 占用应低于 0.5%
-6. **剪贴板权限与 macOS Sonoma 横幅（v1.1 新增，K12）**：
+6. **剪贴板权限与 macOS Sonoma 横幅（v1.1 / M3.1 修订，K12 / K13）**：
    - macOS / Windows 都**不需要显式申请权限**——没有"剪贴板访问"开关，插件随 Eagle 进程运行
-   - **macOS 14+ (Sonoma) 起读剪贴板内容会触发"已粘贴自 Eagle"系统横幅**，1Hz 轮询会刷屏
-   - 实现策略（M3 必做）：
-     - 先调 `clipboard.availableFormats()` 查格式（轻量元数据查询，业界默认不触发横幅）
-     - 仅在含 `image/*` 时才调 `clipboard.readImage()`
-     - 上一帧 formats 不变时可直接跳过本轮（额外节流）
-     - hash 比对放在 readImage 之后，相同 hash 直接退出
-   - README 与面板需提示用户：横幅是 macOS 系统行为，不代表插件偷窥；如不接受可调大间隔或关闭监听
+   - **macOS 14+ (Sonoma) 起读剪贴板内容会触发"已粘贴自 Eagle"系统横幅**
+   - 实现策略：
+     - 先调 `eagle.clipboard.has(fmt)` 依次探测图片 format 候选（不读 buffer，不触发横幅）
+     - 全部 false → 整轮跳过
+     - 探到任一为 true → `eagle.clipboard.readImage()`（每次调用可能触发一次横幅）→ `toPNG()` → hash → 与上次比对，相同 hash 直接返回
+   - **真实代价**：剪贴板里持续留着一张图时，每轮 readImage 会触发横幅；1Hz 间隔意味着每秒一次横幅
+   - **缓解**：建议 macOS 14+ 用户把间隔调到 2–5s；后续 M4 可做 adaptive polling（同 hash 持续 N 轮放慢）
+   - README 与面板已提示：横幅是 macOS 系统行为，不代表插件偷窥

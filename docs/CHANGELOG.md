@@ -38,6 +38,16 @@ Format: [Keep a Changelog](https://keepachangelog.com) | Versioning: Major.Minor
 - `plugin.js` 顶部注释加入 M3 实现指引（`availableFormats()` 预判 + hash 比对）
 - 新增 K12 知识条目（剪贴板权限与横幅缓解策略）
 
+### Fixed (M3.1)
+
+- **致命 bug：剪贴板 API 用错** — `require('electron').clipboard` 在 Eagle 插件 webview 不可用，导致加载后立即报"剪贴板监听出错，5 秒后自动重试"。改用 `eagle.clipboard`（K13 / PRD §3.4 修订）
+- `eagle.clipboard` 没有 `availableFormats()`，改为对 9 个图片 format 候选依次 `eagle.clipboard.has(fmt)` 探测（MIME + macOS UTI）
+- 横幅缓解策略修订（K12 修订）：
+  - 剪贴板**无图**时 `has()` 全 false → 整轮跳过（不触发横幅）
+  - 剪贴板**有图**时仍需 readImage + hash 比对 → 每轮触发一次横幅，建议 macOS 14+ 用户调到 2–5s 间隔
+  - adaptive polling 留给 M4
+- poll 错误日志加 `err.stack`，下次类似 bug 直接见堆栈
+
 ### Added (M3)
 
 - 剪贴板轮询主循环（`setTimeout` 链 + `pollInFlight` 自锁，避免任务堆积）

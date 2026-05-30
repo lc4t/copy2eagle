@@ -36,7 +36,27 @@
 - **项目影响**：M3 实现时 `eagle.item.get({ folders: [folderId] })` 是回填的主要入口。
 - **时效性**：长期有效。
 
-### K12: 剪贴板权限与 macOS Sonoma "已粘贴自" 横幅
+### K13: Eagle 插件用 `eagle.clipboard`，不是 `require('electron').clipboard`
+
+- **来源**：
+  - https://developer.eagle.cool/plugin-api/api/clipboard（实际接口）
+  - https://developer.eagle.cool/plugin-api/llms-full.txt（全量文档检索：未提及 `require('electron')`）
+  - M3 真机运行直接报错"剪贴板监听出错，5 秒后自动重试"——`require('electron').clipboard` 在 Eagle 插件 webview 不可用，destructure 得到 undefined，调 `.availableFormats()` 抛错
+- **获取时间**：2026-05-31
+- **知识摘要**：
+  - **Eagle 插件 webview 不暴露 Electron 渲染进程的 `electron` 模块**——`require('electron')` 不可用
+  - 剪贴板访问走 `eagle.clipboard` 命名空间
+  - 暴露：
+    - `eagle.clipboard.has(format)` — 探测特定 format
+    - `eagle.clipboard.readImage()` — 返回 NativeImage（仍然是 Electron 的 NativeImage 类型，`.isEmpty() / .toPNG() / .toJPEG()` 可用）
+  - **不暴露**：`availableFormats()` / `readBuffer()` / `read()` / `changeCount`
+- **项目影响**：
+  - M3 原代码用 `availableFormats()` 整批查 format 不可行 → M3.1 改为 `has()` 依次试候选 format 串（`image/png` / `image/jpeg` / `image/tiff` / `image/bmp` / `image/gif` / `public.png` / `public.tiff` / `public.jpeg` / `public.image`）
+  - 不识别的 format 字符串 `has()` 可能抛错，候选列表每个都 try/catch
+  - format 字符串到底用 MIME 风格还是 UTI 风格 Eagle 文档未明示，本项目按可能性扔进候选列表，优先 MIME
+- **时效性**：依赖 Eagle 插件 SDK 当前版本，若 Eagle 后续开放 Electron 直接访问可放宽。
+
+### K12: 剪贴板权限与 macOS Sonoma "已粘贴自" 横幅（M3.1 修订）
 
 - **来源**：
   - https://www.electronjs.org/docs/latest/api/clipboard（Electron clipboard 全量 API）
@@ -54,16 +74,21 @@
   - 1Hz 轮询 `clipboard.readImage()` 会刷屏，UX 灾难
   - 触发的是「读内容」，**不是「查格式」**——`availableFormats()` 是轻量元数据查询，业界默认认为不触发横幅
 
-  **Electron clipboard API 现状**：
-  - 没有 `changeCount`（macOS 原生 `NSPasteboard.changeCount` 未透出）
-  - 可用：`availableFormats()` / `has(format)`（experimental）/ `readImage()`
-  - 业界 OK 的代理方案：先 `availableFormats()` 过滤 → 仅在含 `image/*` 时 `readImage()` → 再用 hash 比对，相同 hash 直接退出
+  **Eagle 插件层 API 现状（M3.1 修正，K13）**：
+  - Eagle 不暴露 `availableFormats()`，只有 `eagle.clipboard.has(format)` 单 format 探测
+  - 没有 `changeCount` / 时间戳类接口
+  - 实际可用策略：
+    1. `eagle.clipboard.has(fmt)` 依次试图片 format 候选 → 全部 false 整轮跳过（不触发横幅）
+    2. 探到任一为 true → `eagle.clipboard.readImage()`（此次可能触发横幅）
+    3. 立即 `toPNG()` → hash → 与上次比对：相同则不再导入
 
 - **项目影响**：
-  - M3 实现时**必须**：先 `availableFormats()` 预判，仅在 `formats.some(f => f.startsWith('image/'))` 时 `readImage()`
-  - 进一步：把上一帧的 formats 也缓存，formats 不变时连 `availableFormats()` 都可省（额外节流）
-  - README 与面板加 macOS 用户提示，避免用户误以为"插件在偷窥"
-- **时效性**：依赖 macOS / Electron 行为；macOS 15 / Electron 后续版本若改变，需重新评估。
+  - 剪贴板**有图持续不变**时，每轮仍要 readImage 才能判定 hash 是否变化，此时**每轮触发一次横幅**
+  - 剪贴板**没图**时，仅 `has()` 探测，**不触发横幅**
+  - 横幅刷屏的最坏情况：剪贴板留着图 + 1Hz 间隔 → 每秒一次。**建议用户在 macOS 14+ 把间隔调到 2–5s**
+  - M4 候选项：adaptive polling（同 hash 持续 N 轮后放慢，hash 变化时立即回到默认间隔），可显著降低横幅触发频率
+  - README 与面板必须明示这一点
+- **时效性**：依赖 Eagle / macOS / Electron 行为；macOS 15 / Eagle 后续版本若放开 changeCount 可彻底解决。
 
 ### K1: Eagle `addFromPath` 的 `folders` 是数组
 

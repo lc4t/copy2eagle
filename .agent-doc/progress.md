@@ -11,8 +11,9 @@
 | M2.1 | bug 修复 + scope 变更（剪贴板单路径） | ✅ Done | 2026-05-30 | - |
 | M2.2 | 间隔单位改秒 + 剪贴板权限知识沉淀（K12） | ✅ Done | 2026-05-30 | - |
 | M3 | 剪贴板监听 + 导入 + 截图按钮接入 | ✅ Done | 2026-05-30 | - |
+| M3.1 | clipboard API 修正（eagle.clipboard） + 横幅策略修订 | ✅ Done | 2026-05-31 | - |
 | ~~M4~~ | ~~macOS 截图目录监听~~ | ❌ 弃用 | 合并入 M3 | - |
-| M4(新) | 状态/通知/错误处理（增强） | ⬜ Todo | - | - |
+| M4(新) | 状态/通知/错误处理增强 + adaptive polling | ⬜ Todo | - | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -125,7 +126,30 @@
 
 **遇到不符合预期的现象告诉我具体步骤和现象，我跟进。**
 
-## 当前里程碑：M4（新）— 状态/通知/错误处理增强
+## M3.1 完成回顾（2026-05-31）
+
+**触发**：用户加载插件后立即报"剪贴板监听出错，5 秒后自动重试"。
+
+**根因**：PRD §3.4 第三次写错 Eagle API——`require('electron').clipboard` 在 Eagle 插件 webview 不可用（前两次：`eagle.extraData` / `eagle.app.isDarkMode`）。destructure 得到 undefined，调 `.availableFormats()` 立即抛 `TypeError: Cannot read properties of undefined`，被 `runPoll` catch 后转成 POLL_FAILED 错误状态。
+
+**修复**：
+- 删除 `const { clipboard } = require('electron')`，全部改用 `eagle.clipboard`
+- 因为 `eagle.clipboard` 没有 `availableFormats()`（只有 `has(format)`），实现 `probeImageFormat()` 依次对 9 个图片 format 候选（MIME + macOS UTI）try/catch 探测
+- `runPoll` 改为：探到格式 → readImage → hash → 与 lastClipboardHash 比对（相同直接返回）→ 走去重 + 导入
+- poll 错误日志加 `err.stack`，下次类似问题能直接看堆栈
+- 新增 K13 沉淀「Eagle 插件用 eagle.clipboard，不是 require('electron').clipboard」
+- K12 修订：原"formats 数组不变跳过"的优化已失效（has 不支持批量），实际策略改为「无图整轮跳过 + 同 hash 不重导入」；剪贴板长期留图时仍会按周期触发横幅
+
+**M3 验收清单调整**：
+- A/B/C/D/E/F/G/H 全部保持不变
+- H 项观察"横幅频度"时记得：剪贴板一直留着图 + 1Hz 间隔 = 每秒一次横幅，是当前实现的已知代价；建议调到 2–5s 间隔再验
+
+**仍未做（M4 候选）**：
+- adaptive polling：同 hash 持续 N 轮 → 自动放慢轮询（减横幅）
+- 重试倒计时显示
+- 多条最近导入列表
+
+## 当前里程碑：M4（新）— 状态/通知/错误处理增强 + adaptive polling
 
 ## M1 完成回顾（2026-05-30）
 
