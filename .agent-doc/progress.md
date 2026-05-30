@@ -13,7 +13,8 @@
 | M3 | 剪贴板监听 + 导入 + 截图按钮接入 | ✅ Done | 2026-05-30 | - |
 | M3.1 | clipboard API 修正（eagle.clipboard） + 横幅策略修订 | ✅ Done | 2026-05-31 | - |
 | ~~M4~~ | ~~macOS 截图目录监听~~ | ❌ 弃用 | 合并入 M3 | - |
-| M4(新) | 状态/通知/错误处理增强 + adaptive polling | ⬜ Todo | - | - |
+| M4(新) | 用户反馈 5 项：删后再复制 / 命名 / 多文件 / 混排开关 / 延迟 | ✅ Done | 2026-05-31 | - |
+| M5(新) | adaptive polling + 状态/重试倒计时增强 | ⬜ Todo | - | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -149,7 +150,83 @@
 - 重试倒计时显示
 - 多条最近导入列表
 
-## 当前里程碑：M4（新）— 状态/通知/错误处理增强 + adaptive polling
+## M4 完成回顾（2026-05-31）
+
+**触发**：用户 M3 验收时反馈 5 项。
+
+**5 项问题处理**：
+1. ❌ 多文件复制 → ✅ 支持 macOS + Windows，shell-out 抓路径，**默认关 opt-in**（F10）
+2. ❌ 图文混排 → ✅ 当前行为（导入图）默认开，**新加开关可关**（F11）
+3. ⏳ 复制后延迟 → 维持 1 秒默认（用户接受推荐）；M5 做 adaptive polling 进一步优化
+4. ❌ 删后再复制不出现 → ✅ 真 bug 修复：`backfillFolder` 改为整组替换 + onPluginShow 触发节流回填 + 重置按钮
+5. ❌ 名字太机械 / 来源 APP 检测 → ✅ 名字加 `WxH` + 区分 `Screenshot/Clipboard`；来源 APP 确认**不可识别**（K14），不承诺
+
+**关键实现**：
+- `CONFIG_VERSION` 升到 2；新增 `importMixedContent`（默认 true）和 `importMultipleFiles`（默认 false）字段
+- `backfillFolder` 重构：始终新建 `tempSet` → 完成后整组替换 `hashSetByFolder.set(folderId, tempSet)`，自然清理被删除 item 的旧 hash；`lastBackfillAt` 节流（5s）
+- `resetFolderIndex()` 暴露给 UI；高级设置加按钮
+- `onPluginShow` 调用 `backfillFolder(currentFolderId)`（节流自动跳过频繁触发）
+- 命名：`buildItemName(source, dims, ts)` 拼 `Screenshot 1920x1080 2026-05-31 14:30:22`
+- 来源检测：`detectImageSource()` 看 `state.lastScreenshotAt` 是否在 5s 窗口内
+- 尺寸：`NativeImage.getSize()` 同步调用
+- annotation：写明 Source / Size / hostname，去重做 mtime+长度+首文件 key
+- 多文件：
+  - macOS：`execFile('osascript', ['-e', script], {timeout: 2000})` — script 用 AppleScript 把 `the clipboard as «class furl»` 转 POSIX path linefeed 列表
+  - Windows：`execFile('powershell', [...], {timeout: 2000})` — `Get-Clipboard -Format FileDropList`
+  - 过滤 IMAGE_FILE_EXTS（11 个扩展名）；最多 50 张/批；batchKey 防重复触发
+  - 单图剪贴板有图时**图优先**（多文件路径不会同时触发）
+- 混排开关：`probeAnyFormat(TEXT_FORMAT_CANDIDATES)`，4 种 format 候选
+
+**沉淀的新 Knowledge**：K14（来源 APP 不可识别 + 多文件需 shell-out）
+
+**未做（M5 候选）**：
+- adaptive polling（同 hash 持续 N 轮放慢 → 减 macOS 横幅）
+- 重试倒计时显示
+- 多条最近导入列表
+- 「打开 Eagle 日志」快捷入口
+
+### M4 本地验证清单（必跑）
+
+> ⚠️ 在你本地 Eagle 中按顺序验证，发现不符合预期请描述步骤 + 现象。
+
+**A. 回归**
+1. 重新加载插件 → 加载后**不应再立即报错**（M3.1 修复）
+2. 选文件夹 → 配置保存正常
+
+**B. #4 修复：删后再复制**
+1. 选 fold A → 开监听 → 复制图 X → X 入 fold A
+2. **在 Eagle 里手动删除 X**
+3. 不点重置按钮：关闭面板 → 重新打开（onPluginShow 触发节流回填） → 再复制 X → **应该重新入库**
+4. 验证另一路径：开监听 → 复制 X 入库 → Eagle 里删 X → 点「重置当前文件夹索引」 → 再复制 X → 应重新入库
+
+**C. #5 命名增强**
+1. 普通剪贴板复制图 → 名字应是 `Clipboard 1920x1080 2026-05-31 ...`（实际尺寸数字）
+2. 点「立即截图」按钮截一张 → 名字应是 `Screenshot 1920x1080 2026-05-31 ...`
+3. 在 Eagle 里查看 item annotation → 应含 `Source: ...` `Size: ...` `Imported by Clipboard Watcher @ <主机名>`
+
+**D. #2 图文混排开关**
+1. 高级设置默认应**勾选**「允许从图文混排导入图片」
+2. 从浏览器复制一段带图的内容（带文字）→ 应导入图片
+3. 关闭这个开关 → 再次从浏览器复制带图带文字 → **应该跳过不导入**
+4. 重新打开 → 又能导入
+
+**E. #1 多文件复制（默认关，需开启）**
+1. 默认情况下高级设置「支持多文件复制批量导入」**未勾选**
+2. 在 Finder 里选 3 张 PNG → Cmd+C → 不应有任何反应（默认关）
+3. 勾选开关 → 在 Finder 里再选 3 张图 → Cmd+C → 1 秒内 Eagle 出现这 3 张，名字是源文件名
+4. 同样的 3 张文件**不要修改文件** → 再 Cmd+C → 应不重复（batchKey 命中）
+5. 验证扩展名过滤：Finder 选 1 张 PNG + 1 个 .txt → Cmd+C → 只导入 PNG
+6. **Windows 验证**（如果你在 Win 上）：资源管理器选多张 Ctrl+C，PowerShell 调用，行为应一致
+
+**F. 验证节流**
+1. 反复打开/关闭面板（5 秒内） → 不应每次都看到「索引中 N/M」（节流生效）
+2. 选 fold A 开监听 → 切到 fold B → 应立即看到「索引中…」（切文件夹强制回填）
+
+**G. 错误回归**
+1. 删掉目标文件夹（在 Eagle 中） → 复制图 → 应报错并 5s 重试
+2. shell-out 失败（卸载 osascript 不太可能，可在 Windows 上 disable PowerShell 模拟） → 多文件应静默失败，不影响单图路径
+
+## 当前里程碑：M5（新）— adaptive polling + 状态/重试倒计时增强
 
 ## M1 完成回顾（2026-05-30）
 

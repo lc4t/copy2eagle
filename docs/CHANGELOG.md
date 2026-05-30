@@ -38,6 +38,38 @@ Format: [Keep a Changelog](https://keepachangelog.com) | Versioning: Major.Minor
 - `plugin.js` 顶部注释加入 M3 实现指引（`availableFormats()` 预判 + hash 比对）
 - 新增 K12 知识条目（剪贴板权限与横幅缓解策略）
 
+### Added / Fixed (M4 — 用户 M3 验收反馈)
+
+- **#4 真 bug 修复：删后再复制导入失败**
+  - `backfillFolder` 重构：始终新建 tempSet → 完成后整组替换 `hashSetByFolder.set(folderId, tempSet)`，自然清理 Eagle 里已删 item 的旧 hash
+  - `onPluginShow` 钩子调用节流回填（5s freshMs），打开面板即感知用户在 Eagle 里手动删除
+  - 高级设置加「重置当前文件夹索引」按钮 → `backfillFolder(folderId, {force: true})`
+- **#5 命名增强**
+  - 普通剪贴板复制 → `Clipboard 1920x1080 2026-05-31 14:30:22`
+  - 截图按钮触发后 5s 内的导入 → `Screenshot {WxH} {timestamp}`
+  - 尺寸来自 `NativeImage.getSize()`，缺失时省略
+  - annotation 含 `Source: ... / Size: ... / Imported by Clipboard Watcher @ <hostname>`
+  - **来源 APP 检测确认不可行**（K14），不在 UI 暴露假承诺
+- **#1 多文件复制（默认关 opt-in）**
+  - 新增配置 `importMultipleFiles`（默认 false）
+  - 探测剪贴板 file URL format（`public.file-url` / `NSFilenamesPboardType` / `CF_HDROP` / `FileDrop`）
+  - macOS：`osascript -e '...'` 把 `the clipboard as «class furl»` 转 POSIX 路径列表
+  - Windows：`powershell -Command "Get-Clipboard -Format FileDropList | ForEach-Object { $_.FullName }"`
+  - 2s shell 超时；过滤图片扩展名（11 个）；最多 50 张/批；batchKey 防重复触发
+  - 单图剪贴板有图时 **图优先**（不并发触发多文件）
+  - Linux 跳过
+- **#2 图文混排开关（默认开 opt-out）**
+  - 新增配置 `importMixedContent`（默认 true，沿用 M3 行为）
+  - 关闭时探到 `text/html` / `text/plain` / `public.utf8-plain-text` / `public.html` 任一存在即跳过本张
+- **#3 延迟**：保持 1s 默认（用户接受推荐），M5 做 adaptive polling 进一步优化
+
+### Changed (M4)
+
+- `CONFIG_VERSION` 升到 2（新增 `importMixedContent` / `importMultipleFiles` 字段）
+- `normalizeConfig` 覆盖新字段，旧配置自动平滑升级
+- PRD 新增 F10（多文件复制）+ F11（图文混排开关），F3 命名规则修订；§3.4 API 清单已用 `localStorage` 替代残留的 `eagle.extraData` 引用
+- 知识库 K14：来源 APP 不可识别 + 多文件需 shell-out
+
 ### Fixed (M3.1)
 
 - **致命 bug：剪贴板 API 用错** — `require('electron').clipboard` 在 Eagle 插件 webview 不可用，导致加载后立即报"剪贴板监听出错，5 秒后自动重试"。改用 `eagle.clipboard`（K13 / PRD §3.4 修订）

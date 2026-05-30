@@ -46,13 +46,34 @@ const IMAGE_FORMAT_CANDIDATES = [
 ]
 
 const CONFIG_KEY = 'clipboardWatcher'
-const CONFIG_VERSION = 1
+const CONFIG_VERSION = 2
 const ALLOWED_DUPLICATE_STRATEGIES = ['skip', 'allow']
 const ALLOW_DEDUP_WINDOW_MS = 30000
 const POLL_RETRY_MS = 5000
 const POLL_ERROR_THRESHOLD = 3
 const BACKFILL_YIELD_EVERY = 20
+const BACKFILL_FRESH_MS = 5000 // onPluginShow 触发回填的节流窗口
+const SCREENSHOT_NAME_WINDOW_MS = 5000 // 截图按钮触发后 N 秒内的导入标 Screenshot
 const TMP_DIR_NAME = 'eagle-cw'
+
+// 多文件复制相关
+const FILE_URL_FORMAT_CANDIDATES = [
+  'public.file-url',
+  'NSFilenamesPboardType',
+  'CF_HDROP',
+  'FileDrop',
+]
+const TEXT_FORMAT_CANDIDATES = [
+  'text/html',
+  'text/plain',
+  'public.utf8-plain-text',
+  'public.html',
+]
+const IMAGE_FILE_EXTS = new Set([
+  '.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.tiff', '.tif', '.heic', '.svg', '.avif',
+])
+const MULTI_FILE_MAX = 50
+const SHELL_TIMEOUT_MS = 2000
 
 function pad(n) {
   return String(n).padStart(2, '0')
@@ -93,6 +114,8 @@ function buildDefaults() {
     tags: defaultTags(),
     notifyOnImport: true,
     duplicateStrategy: 'skip',
+    importMixedContent: true,    // F11 / M4：含 HTML/RTF 的混排，默认仍导入图片
+    importMultipleFiles: false,  // F10 / M4：多文件批量复制，默认关
   }
 }
 
@@ -109,6 +132,8 @@ function normalizeConfig(raw) {
   if (!ALLOWED_DUPLICATE_STRATEGIES.includes(merged.duplicateStrategy)) {
     merged.duplicateStrategy = 'skip'
   }
+  if (typeof merged.importMixedContent !== 'boolean') merged.importMixedContent = true
+  if (typeof merged.importMultipleFiles !== 'boolean') merged.importMultipleFiles = false
   return merged
 }
 
@@ -147,6 +172,11 @@ const state = {
   indexingProgress: 0,
   indexingTotal: 0,
   pollErrorCount: 0,
+
+  // M4 additions
+  lastBackfillAt: new Map(), // folderId -> timestamp（节流 onPluginShow 触发的回填）
+  lastScreenshotAt: 0,        // 截图按钮触发时间（导入命名用）
+  lastFileBatchKey: null,     // 多文件复制路径列表的 hash，避免同批反复导入
 }
 
 let pollTimer = null
@@ -247,16 +277,30 @@ function setRuntimeStatus(status, errorCode = null) {
 // Backfill：把目标文件夹现有 item 的 hash 拉进 hashSetByFolder
 // ---------------------------------------------------------------------------
 
-async function backfillFolder(folderId) {
+/**
+ * 回填指定文件夹的 hash 集合。
+ * - 每次都重建到 tempSet，结束时整组替换 → 这是修复「删了又复制」bug 的关键：
+ *   Eagle 里已删的 item，不会在 tempSet 里出现，set 替换后旧 hash 自然脱离去重表。
+ * - 非 force 模式下用 freshMs 节流，避免 onPluginShow 频繁触发。
+ * - 极小概率竞态：回填进行中用户复制一张新图被导入并写入旧 set，结束替换时会丢失。
+ *   折中为可接受（最坏导致下一次同图重复导入一次）。
+ */
+async function backfillFolder(folderId, options = {}) {
   if (!folderId) return
   if (state.indexingFolderId === folderId) return // 已在跑
+
+  const { force = false, freshMs = BACKFILL_FRESH_MS } = options
+  if (!force) {
+    const lastAt = state.lastBackfillAt.get(folderId) || 0
+    if (Date.now() - lastAt < freshMs) return
+  }
 
   state.indexingFolderId = folderId
   state.indexingProgress = 0
   state.indexingTotal = 0
-  const set = state.hashSetByFolder.get(folderId) || new Set()
-  state.hashSetByFolder.set(folderId, set)
   scheduleRender()
+
+  const tempSet = new Set()
 
   try {
     const items = await eagle.item.get({ folders: [folderId] })
@@ -264,7 +308,6 @@ async function backfillFolder(folderId) {
     scheduleRender()
 
     for (let i = 0; i < state.indexingTotal; i++) {
-      // 用户中途换走当前文件夹 / 关插件，提前终止
       if (state.indexingFolderId !== folderId) break
 
       const item = items[i]
@@ -272,7 +315,7 @@ async function backfillFolder(folderId) {
         if (item && typeof item.filePath === 'string' && fs.existsSync(item.filePath)) {
           const buffer = fs.readFileSync(item.filePath)
           const hash = computeHash(buffer)
-          if (hash) set.add(hash)
+          if (hash) tempSet.add(hash)
         }
       } catch (err) {
         eagle.log.warn(
@@ -285,8 +328,12 @@ async function backfillFolder(folderId) {
         await sleep(0)
       }
     }
+
+    // 整组替换（修复 #4：Eagle 里已删的 item 不会留在 set 里）
+    state.hashSetByFolder.set(folderId, tempSet)
+    state.lastBackfillAt.set(folderId, Date.now())
     eagle.log.info(
-      `[clipboard-watcher] backfill done folder=${folderId} indexed=${set.size} items=${state.indexingTotal}`
+      `[clipboard-watcher] backfill done folder=${folderId} indexed=${tempSet.size} items=${state.indexingTotal} force=${force}`
     )
   } catch (err) {
     eagle.log.error(`[clipboard-watcher] backfill failed: ${err && err.message ? err.message : err}`)
@@ -297,6 +344,11 @@ async function backfillFolder(folderId) {
     }
     scheduleRender()
   }
+}
+
+async function resetFolderIndex() {
+  if (!state.config.folderId) return
+  await backfillFolder(state.config.folderId, { force: true })
 }
 
 // ---------------------------------------------------------------------------
@@ -343,62 +395,250 @@ function probeImageFormat() {
   return { available: true, format: null } // has() 可用但当前没图
 }
 
+function probeAnyFormat(candidates) {
+  if (!eagle.clipboard || typeof eagle.clipboard.has !== 'function') return false
+  for (const fmt of candidates) {
+    try {
+      if (eagle.clipboard.has(fmt)) return true
+    } catch {}
+  }
+  return false
+}
+
+/**
+ * 读取剪贴板里的多文件路径列表（仅 macOS / Windows）。
+ * macOS: osascript 把 `the clipboard as «class furl»` 拉出来转 POSIX 路径
+ * Windows: PowerShell `Get-Clipboard -Format FileDropList`
+ * 返回 string[]；超时 / 出错都返回 []
+ */
+function readClipboardFilePaths() {
+  return new Promise((resolve) => {
+    const platform = os.platform()
+    if (platform === 'darwin') {
+      const script =
+        'try\n' +
+        '  set theItems to the clipboard as «class furl»\n' +
+        'on error\n' +
+        '  return ""\n' +
+        'end try\n' +
+        'set thePaths to {}\n' +
+        'try\n' +
+        '  repeat with f in theItems\n' +
+        '    set end of thePaths to POSIX path of f\n' +
+        '  end repeat\n' +
+        'on error\n' +
+        '  try\n' +
+        '    set end of thePaths to POSIX path of theItems\n' +
+        '  end try\n' +
+        'end try\n' +
+        'set AppleScript\'s text item delimiters to linefeed\n' +
+        'return thePaths as text'
+      execFile(
+        'osascript',
+        ['-e', script],
+        { timeout: SHELL_TIMEOUT_MS },
+        (err, stdout) => {
+          if (err) {
+            eagle.log.warn(`[clipboard-watcher] osascript failed: ${err.message}`)
+            resolve([])
+            return
+          }
+          resolve(parsePathList(stdout))
+        }
+      )
+    } else if (platform === 'win32') {
+      const script =
+        "$ErrorActionPreference='SilentlyContinue';" +
+        " Get-Clipboard -Format FileDropList |" +
+        ' ForEach-Object { $_.FullName }'
+      execFile(
+        'powershell',
+        ['-NoProfile', '-NonInteractive', '-Command', script],
+        { timeout: SHELL_TIMEOUT_MS },
+        (err, stdout) => {
+          if (err) {
+            eagle.log.warn(`[clipboard-watcher] powershell failed: ${err.message}`)
+            resolve([])
+            return
+          }
+          resolve(parsePathList(stdout))
+        }
+      )
+    } else {
+      resolve([])
+    }
+  })
+}
+
+function parsePathList(stdout) {
+  if (typeof stdout !== 'string') return []
+  return stdout
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, MULTI_FILE_MAX)
+}
+
+function isImagePath(p) {
+  if (typeof p !== 'string') return false
+  const ext = path.extname(p).toLowerCase()
+  return IMAGE_FILE_EXTS.has(ext)
+}
+
+function fileBatchKey(paths) {
+  // 用路径列表 + 第一个文件 mtime 做 key；避免同批反复导入
+  if (!paths.length) return null
+  let mtimeMs = 0
+  try {
+    mtimeMs = fs.statSync(paths[0]).mtimeMs
+  } catch {}
+  return `${paths.length}|${paths[0]}|${mtimeMs}`
+}
+
+async function importFileBatch(paths, folderId) {
+  let added = 0
+  let skipped = 0
+  for (const p of paths) {
+    try {
+      if (!fs.existsSync(p)) {
+        skipped++
+        continue
+      }
+      const buffer = fs.readFileSync(p)
+      const hash = computeHash(buffer)
+      if (!hash) {
+        skipped++
+        continue
+      }
+
+      // 去重判定（沿用 skip / allow）
+      if (state.config.duplicateStrategy === 'skip') {
+        const set = state.hashSetByFolder.get(folderId)
+        if (set && set.has(hash)) {
+          skipped++
+          continue
+        }
+      }
+
+      const baseName = path.basename(p, path.extname(p))
+      const tags = parseTags(state.config.tags)
+      try {
+        await eagle.item.addFromPath(p, {
+          name: baseName,
+          folders: [folderId],
+          tags,
+          annotation: `Source: Multi-file clipboard\nFrom: ${p}\nImported by Clipboard Watcher @ ${getHostname()}`,
+        })
+        let set = state.hashSetByFolder.get(folderId)
+        if (!set) {
+          set = new Set()
+          state.hashSetByFolder.set(folderId, set)
+        }
+        set.add(hash)
+        added++
+        rolloverTodayIfNeeded()
+        state.todayCount += 1
+        state.lastImport = {
+          name: baseName,
+          folderLabel: state.folderIndex.get(folderId) || folderId,
+          importedAt: nowStamp(),
+        }
+      } catch (err) {
+        skipped++
+        eagle.log.warn(`[clipboard-watcher] addFromPath failed for ${p}: ${err && err.message ? err.message : err}`)
+      }
+    } catch (err) {
+      skipped++
+      eagle.log.warn(`[clipboard-watcher] file batch item failed ${p}: ${err && err.message ? err.message : err}`)
+    }
+  }
+  if (added > 0) {
+    maybeNotify(`${state.folderIndex.get(folderId) || folderId}（${added} 张）`)
+  }
+  scheduleRender()
+  return { added, skipped }
+}
+
 async function runPoll() {
   if (pollInFlight) return
   pollInFlight = true
   try {
     if (!state.config.enabled || !state.config.folderId) return
 
-    // 1. format 探测：用 eagle.clipboard.has(fmt) 依次试候选，找到第一个返回 true 的
-    //    不存在图片格式 → 整轮跳过（不触发 readImage，不触发 macOS 横幅）
+    // 1. format 探测
     const probe = probeImageFormat()
     if (!probe.available) {
-      // 极端：eagle.clipboard 或 has 不可用，直接报错让用户感知
       throw new Error('eagle.clipboard.has is unavailable')
     }
-    if (!probe.format) {
-      // 剪贴板内没有任何已知图片 format
-      state.lastFormatsKey = null
-      return
-    }
 
-    // 2. 读图 + hash
-    //    注意：这里每轮都 readImage 是必要的——has() 只能告诉我们"有图"，不能告诉
-    //    我们"图是否变了"。Eagle/Electron 未透出 NSPasteboard.changeCount。
-    const img = eagle.clipboard.readImage()
-    if (!img || typeof img.isEmpty !== 'function' || img.isEmpty()) return
-    const buffer = img.toPNG()
-    const hash = computeHash(buffer)
-    if (!hash) return
+    if (probe.format) {
+      // ───── 单张图片路径 ─────
+      // 1a. 混排判定（#2）：开关关闭时，若同时存在 text/html 或 text/plain 则跳过
+      if (!state.config.importMixedContent) {
+        if (probeAnyFormat(TEXT_FORMAT_CANDIDATES)) {
+          state.lastFormatsKey = probe.format
+          return
+        }
+      }
 
-    // 同 hash 立即返回（剪贴板里还是上次那张图）
-    if (hash === state.lastClipboardHash) {
+      // 2. 读图 + hash
+      const img = eagle.clipboard.readImage()
+      if (!img || typeof img.isEmpty !== 'function' || img.isEmpty()) return
+      const buffer = img.toPNG()
+      const hash = computeHash(buffer)
+      if (!hash) return
+
+      // 同 hash 立即返回
+      if (hash === state.lastClipboardHash) {
+        state.lastFormatsKey = probe.format
+        return
+      }
       state.lastFormatsKey = probe.format
-      return
-    }
-    state.lastFormatsKey = probe.format
 
-    const folderId = state.config.folderId
+      const folderId = state.config.folderId
 
-    // 3. 去重判定
-    if (state.config.duplicateStrategy === 'skip') {
-      const set = state.hashSetByFolder.get(folderId)
-      if (set && set.has(hash)) {
-        state.lastClipboardHash = hash
-        return
+      // 3. 去重判定
+      if (state.config.duplicateStrategy === 'skip') {
+        const set = state.hashSetByFolder.get(folderId)
+        if (set && set.has(hash)) {
+          state.lastClipboardHash = hash
+          return
+        }
+      } else {
+        const now = Date.now()
+        if (
+          state.lastClipboardHash === hash &&
+          now - state.lastClipboardAt < ALLOW_DEDUP_WINDOW_MS
+        ) {
+          return
+        }
       }
+
+      // 4. 导入（带尺寸 + 来源）
+      const source = detectImageSource()
+      const dims = getImageDimensions(img)
+      await importImage(buffer, hash, folderId, { source, dims })
     } else {
-      const now = Date.now()
-      if (
-        state.lastClipboardHash === hash &&
-        now - state.lastClipboardAt < ALLOW_DEDUP_WINDOW_MS
-      ) {
-        return
-      }
-    }
+      // ───── 多文件路径（#1 / F10）─────
+      state.lastFormatsKey = null
+      if (!state.config.importMultipleFiles) return
+      if (!probeAnyFormat(FILE_URL_FORMAT_CANDIDATES)) return
 
-    // 4. 导入
-    await importImage(buffer, hash, folderId)
+      const paths = await readClipboardFilePaths()
+      if (!paths.length) return
+      const imagePaths = paths.filter(isImagePath)
+      if (!imagePaths.length) return
+
+      const batchKey = fileBatchKey(imagePaths)
+      if (batchKey && batchKey === state.lastFileBatchKey) return
+      state.lastFileBatchKey = batchKey
+
+      const folderId = state.config.folderId
+      const { added, skipped } = await importFileBatch(imagePaths, folderId)
+      eagle.log.info(
+        `[clipboard-watcher] multi-file batch added=${added} skipped=${skipped} total=${imagePaths.length}`
+      )
+    }
 
     state.pollErrorCount = 0
     if (state.runtimeStatus !== 'running') {
@@ -435,7 +675,37 @@ async function runPoll() {
 // 导入管道
 // ---------------------------------------------------------------------------
 
-async function importImage(buffer, hash, folderId) {
+function detectImageSource() {
+  // 5 秒内截图按钮被按过 → 标 Screenshot
+  if (state.lastScreenshotAt && Date.now() - state.lastScreenshotAt < SCREENSHOT_NAME_WINDOW_MS) {
+    return 'screenshot'
+  }
+  return 'clipboard'
+}
+
+function getImageDimensions(img) {
+  try {
+    if (img && typeof img.getSize === 'function') {
+      const s = img.getSize()
+      if (s && s.width && s.height) return `${s.width}x${s.height}`
+    }
+  } catch {}
+  return ''
+}
+
+function buildItemName(source, dims, ts) {
+  const prefix = source === 'screenshot' ? 'Screenshot' : 'Clipboard'
+  return [prefix, dims, nowStamp(ts)].filter(Boolean).join(' ')
+}
+
+function buildAnnotation(source, dims) {
+  const parts = [`Source: ${source === 'screenshot' ? 'Screenshot (button)' : 'Clipboard'}`]
+  if (dims) parts.push(`Size: ${dims}`)
+  parts.push(`Imported by Clipboard Watcher @ ${getHostname()}`)
+  return parts.join('\n')
+}
+
+async function importImage(buffer, hash, folderId, options = {}) {
   const tmpRoot = path.join(os.tmpdir(), TMP_DIR_NAME)
   try {
     fs.mkdirSync(tmpRoot, { recursive: true })
@@ -446,7 +716,9 @@ async function importImage(buffer, hash, folderId) {
   }
 
   const ts = new Date()
-  const tmpPath = path.join(tmpRoot, `clip-${tmpFileStamp(ts)}.png`)
+  const source = options.source || detectImageSource()
+  const dims = options.dims || ''
+  const tmpPath = path.join(tmpRoot, `${source}-${tmpFileStamp(ts)}.png`)
   try {
     fs.writeFileSync(tmpPath, buffer)
   } catch (err) {
@@ -455,17 +727,13 @@ async function importImage(buffer, hash, folderId) {
     throw err
   }
 
-  const name = `Clipboard ${nowStamp(ts)}`
+  const name = buildItemName(source, dims, ts)
+  const annotation = buildAnnotation(source, dims)
   const tags = parseTags(state.config.tags)
   const folders = [folderId]
 
   try {
-    await eagle.item.addFromPath(tmpPath, {
-      name,
-      folders,
-      tags,
-      annotation: 'Auto imported by Clipboard Watcher',
-    })
+    await eagle.item.addFromPath(tmpPath, { name, folders, tags, annotation })
   } catch (err) {
     eagle.log.error(`[clipboard-watcher] addFromPath failed: ${err && err.message ? err.message : err}`)
     state.lastError = 'IMPORT_FAILED'
@@ -612,6 +880,8 @@ function triggerScreenshot() {
         resolve(false)
         return
       }
+      // 标记触发时间，让随后的 import 命名为 "Screenshot ..."
+      state.lastScreenshotAt = Date.now()
       eagle.log.info('[clipboard-watcher] screencapture done; awaiting clipboard pickup')
       resolve(true)
     })
@@ -661,6 +931,7 @@ window.ClipboardWatcher = {
   getSnapshot,
   buildDefaults,
   updateIntervalMs,
+  resetFolderIndex,
 }
 
 eagle.onPluginCreate(async () => {
@@ -693,6 +964,10 @@ eagle.onPluginShow(async () => {
   await refreshTheme()
   await refreshFolders()
   scheduleRender()
+  // 节流回填：让本次打开面板能感知到 Eagle 里被手动删除的 item
+  if (state.config.folderId) {
+    backfillFolder(state.config.folderId).catch(() => {})
+  }
 })
 
 if (typeof eagle.onThemeChanged === 'function') {

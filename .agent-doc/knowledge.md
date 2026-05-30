@@ -36,6 +36,32 @@
 - **项目影响**：M3 实现时 `eagle.item.get({ folders: [folderId] })` 是回填的主要入口。
 - **时效性**：长期有效。
 
+### K14: 剪贴板图片来源 APP 无法识别 + 多文件路径需 shell-out
+
+- **来源**：
+  - macOS NSPasteboard 文档（无 source app metadata 公开 API）
+  - https://developer.eagle.cool/plugin-api/api/clipboard（无 readURLs/readBuffer）
+  - 实际尝试 osascript 与 PowerShell 验证可行性
+- **获取时间**：2026-05-31
+- **知识摘要**：
+
+  **来源 APP 不可识别**：
+  - macOS NSPasteboard 不暴露 source application metadata
+  - Electron 与 Eagle 的 clipboard API 都没有 `getOwner()` / `source` 之类接口
+  - 结论：「这张图来自 Safari / WeChat / Word」做不到，**别承诺**
+
+  **多文件路径需 shell-out**：
+  - Eagle 的 `eagle.clipboard` 只有 `has(format)` 和 `readImage()`，没有 `readBuffer` / `readURLs` / `read`
+  - macOS：`osascript -e 'the clipboard as «class furl»'` 配合 `POSIX path of` 可拉路径列表
+  - Windows：`powershell -Command "Get-Clipboard -Format FileDropList | ForEach-Object { $_.FullName }"`
+  - Linux：无标准工具，本项目跳过
+
+- **项目影响**：
+  - F3 命名只能用「时间 + 尺寸 + Screenshot/Clipboard 区分」，不暴露不可知信息
+  - F10 多文件批量必须 shell-out，加 2s 超时 + 50 张上限 + 默认关
+  - 跨平台兼容：Linux 多文件复制不实现
+- **时效性**：长期有效，除非 Eagle 透出 NSPasteboard source / 增加文件 URL 读取 API。
+
 ### K13: Eagle 插件用 `eagle.clipboard`，不是 `require('electron').clipboard`
 
 - **来源**：

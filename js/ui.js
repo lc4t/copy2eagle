@@ -124,6 +124,25 @@ function renderAdvanced(snapshot) {
   }
 
   $('cw-notify').checked = !!snapshot.config.notifyOnImport
+  $('cw-mixed').checked = !!snapshot.config.importMixedContent
+  $('cw-multi-file').checked = !!snapshot.config.importMultipleFiles
+
+  const resetBtn = $('cw-reset-index')
+  resetBtn.disabled = !snapshot.config.folderId || !!snapshot.indexing
+  if (snapshot.indexing) {
+    resetBtn.textContent = `索引中 ${snapshot.indexing.progress}/${snapshot.indexing.total || '…'}`
+  } else {
+    resetBtn.textContent = '重置当前文件夹索引'
+  }
+
+  const multiHint = $('cw-multi-file-hint')
+  if (snapshot.platform !== 'darwin' && snapshot.platform !== 'win32') {
+    multiHint.textContent = '当前平台不支持多文件复制读取（仅 macOS / Windows）'
+  } else if (snapshot.platform === 'darwin') {
+    multiHint.textContent = '打开后：Finder 选中多张 Cmd+C → osascript 抓路径 → 仅图片扩展名 → 批量入库（最多 50 张）'
+  } else {
+    multiHint.textContent = '打开后：资源管理器选中多张 Ctrl+C → PowerShell 抓路径 → 仅图片扩展名 → 批量入库（最多 50 张）'
+  }
 }
 
 function renderRecent(snapshot) {
@@ -217,6 +236,18 @@ function bindEvents() {
 
   $('cw-notify').addEventListener('change', (e) => {
     safeAction('notifyOnImport', () => CW.saveConfig({ notifyOnImport: e.target.checked }))
+  })
+
+  $('cw-mixed').addEventListener('change', (e) => {
+    safeAction('importMixedContent', () => CW.saveConfig({ importMixedContent: e.target.checked }))
+  })
+
+  $('cw-multi-file').addEventListener('change', (e) => {
+    safeAction('importMultipleFiles', () => CW.saveConfig({ importMultipleFiles: e.target.checked }))
+  })
+
+  $('cw-reset-index').addEventListener('click', () => {
+    safeAction('resetIndex', () => CW.resetFolderIndex())
   })
 }
 

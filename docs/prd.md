@@ -47,20 +47,28 @@ Eagle 用户，习惯通过截图或复制图片收集素材，希望这些图�
 - ❌ 识别系统截图文件名正则
 - ❌ 500ms 写盘等待
 
-#### F3：导入到 Eagle 指定文件夹
+#### F3：导入到 Eagle 指定文件夹（v1.2 / M4 修订）
 - 使用 `eagle.item.addFromPath(path, options)` 导入
-- 导入参数：
+- 单图（剪贴板）参数：
   ```json
   {
-    "name": "Clipboard YYYY-MM-DD HH:mm:ss",
+    "name": "Clipboard 1920x1080 YYYY-MM-DD HH:mm:ss",
     "folders": ["<用户配置的 folderId>"],
-    "tags": ["clipboard-watcher"],
-    "annotation": "Auto imported by Clipboard Watcher"
+    "tags": ["clipboard-watcher", "<hostname>"],
+    "annotation": "Source: Clipboard\nSize: 1920x1080\nImported by Clipboard Watcher @ <host>"
   }
   ```
-- 剪贴板图片：先将图片数据写入系统临时目录（`os.tmpdir()/eagle-cw/`），再传路径给 API
-- 截图文件：直接传原始路径，不复制
-- 导入完成后删除临时文件
+- 命名规则（M4 / #5）：
+  - 截图按钮触发后 **5 秒内**的导入 → `Screenshot {WxH} {timestamp}`，annotation 标 `Source: Screenshot (button)`
+  - 其他剪贴板复制 → `Clipboard {WxH} {timestamp}`，annotation 标 `Source: Clipboard`
+  - `{WxH}` 通过 `NativeImage.getSize()` 获取；失败时省略
+  - **来源 APP 不可识别**（macOS/Windows clipboard 均未透出原始应用，K14）
+- 多文件批量（F10）参数：
+  - `name`：源文件名（去扩展名）
+  - `annotation`：含 `From: <full path>`
+- 剪贴板图片：先将图片数据写入系统临时目录（`os.tmpdir()/eagle-cw/{source}-{stamp}.png`），再传路径给 API
+- 多文件复制：直接传原始路径，不复制
+- 导入完成（成功 or 失败）后删除临时文件
 
 #### F4：去重机制（v1.1 修订）
 
@@ -103,18 +111,43 @@ UI 控件：高级设置区下拉 / Radio，字段名 `duplicateStrategy`，可�
 - 调用 `eagle.folder.getAll()` 获取所有文件夹列表
 - 以下拉选择器展示（显示文件夹名称，存储 folderId）
 - 支持二级文件夹（显示格式：`父文件夹 / 子文件夹`）
-- 配置持久化：用 `eagle.extraData` 存储，key 为 `clipboardWatcher`
+- 配置持久化：用 `localStorage`（key `clipboardWatcher`，K7 / ADR-010）
 
 #### F6：启停开关
 - 主界面提供一个开关（Toggle），控制监听是否激活
-- 开关状态持久化到 `eagle.extraData`
+- 开关状态持久化到 `localStorage`
 - 插件启动时读取持久化状态，自动恢复上次的开启/关闭状态
 
 #### F7：高级选项（可折叠区域）
 - **监听间隔**：滑块，范围 500ms–5000ms，默认 1000ms
 - **自动添加标签**：文本输入，用逗号分隔，默认 `clipboard-watcher,<os.hostname()>`（v1.1 修订：自动附主机名，便于多机协作时区分来源）
 - **重复图片处理**：Radio 二选一（`skip` 默认 / `allow`），见 F4.3
+- **重置当前文件夹索引**：button（M4 新增）。用户在 Eagle 里手动删除 item 后点这里，hash 索引重建后下次同图可重新入库（修复 #4）
+- **允许从图文混排导入图片**：checkbox（M4 新增），默认开 → 含 HTML/RTF 时仍导入图片；关 → 探到 text/* format 则跳过本张（见 F11）
+- **支持多文件复制批量导入**：checkbox（M4 新增），默认关 → 用户主动开启；开启后走 shell-out 读路径（见 F10）
 - ❌ ~~截图监听目录~~（v1.1 移除，原因见 F2 修订与 ADR-011）
+
+#### F10：多文件复制批量导入（M4 新增，opt-in）
+
+- **触发条件**：用户在高级设置勾选「支持多文件复制」+ 剪贴板探到文件 URL format
+- **format 探测候选**：`public.file-url` / `NSFilenamesPboardType`（macOS）/ `CF_HDROP` / `FileDrop`（Windows）
+- **路径读取**（Eagle 没暴露 `readBuffer`/`readURLs`，shell 出去抓）：
+  - macOS：`osascript -e '...'` 把 `the clipboard as «class furl»` 转 POSIX 路径列表
+  - Windows：`powershell -Command "Get-Clipboard -Format FileDropList | ForEach-Object { $_.FullName }"`
+- **超时**：2000ms（shell 调用上限）
+- **过滤**：只处理图片扩展名（`.png/.jpg/.jpeg/.gif/.webp/.bmp/.tiff/.tif/.heic/.svg/.avif`）
+- **批次上限**：50 张（防呆）
+- **batchKey 去重**：用 `paths.length|paths[0]|mtimeMs(paths[0])` 做 key，避免同批反复触发
+- **命名**：以文件原名（去扩展名）作为 Eagle item name；annotation 含来源路径
+- **去重**：沿用 `duplicateStrategy`（skip / allow）
+- **优先级**：单图剪贴板 > 多文件批量。剪贴板同时有图和文件 URL 时，**图优先**
+- **未覆盖**：Linux（保留 hint 不实现）
+
+#### F11：图文混排导入开关（M4 新增）
+
+- 默认 `importMixedContent = true`：剪贴板含图 + HTML/RTF 仍正常导入图片（当前 M3 行为）
+- 关闭后：探到剪贴板里**同时**有 `text/html` / `text/plain` / `public.utf8-plain-text` / `public.html` 其一时，跳过本张
+- **为什么默认开**：用户口径——"复制了图就该到 Eagle"；关闭只服务"我只是想用文本，别偷我图"的保守诉求
 
 ### 2.3 状态与反馈
 
