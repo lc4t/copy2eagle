@@ -4,7 +4,9 @@
 
 ## 开发习惯
 
-<!-- 例：Eagle 插件调试期把 manifest 临时切普通 Window Plugin 更顺手，commit 前必须切回 serviceMode -->
+- M2 Session：Eagle 插件骨架走"plugin.js 挂 `window.ClipboardWatcher` + ui.js 挂 `window.ClipboardWatcherUI`"的命名空间约定，避免模块系统依赖。两边通过 `getSnapshot()` 单向取状态、`saveConfig({patch})` 单向改状态，UI 只渲染不持状态。
+- 配置规范化 `normalizeConfig` 集中在 plugin.js，所有外部输入（`extraData`、UI 事件）入口都过一遍，避免脏数据扩散。
+- `safeAction(label, fn)` 在 ui.js 兜底所有异步事件，render() 必走 finally，保证错误也能反馈到 UI。
 
 ## 规则修正
 

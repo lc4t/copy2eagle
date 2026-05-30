@@ -1,0 +1,20 @@
+{
+  "id": "CLIPBOARD_WATCHER_001",
+  "version": "1.0.0",
+  "platform": "all",
+  "arch": "all",
+  "name": "Clipboard Watcher",
+  "logo": "/logo.png",
+  "keywords": ["clipboard", "screenshot", "auto", "import", "剪贴板"],
+  "devTools": false,
+  "main": {
+    "serviceMode": true,
+    "url": "index.html",
+    "width": 480,
+    "height": 640,
+    "minWidth": 400,
+    "minHeight": 520,
+    "resizable": true,
+    "backgroundColor": "#ffffff"
+  }
+}

@@ -6,31 +6,65 @@
 
 | # | 名称 | 状态 | 完成时间 | GitHub Issue |
 |---|---|---|---|---|
-| M1 | 项目初始化 | 🔄 In Progress | - | - |
-| M2 | 插件骨架 + 配置面板 | ⬜ Todo | - | - |
-| M3 | 剪贴板监听 + 导入 | ⬜ Todo | - | - |
+| M1 | 项目初始化 | ✅ Done | 2026-05-30 | - |
+| M2 | 插件骨架 + 配置面板 | ✅ Done | 2026-05-30 | - |
+| M3 | 剪贴板监听 + 导入（含 F4 修订：按文件夹去重 + skip/allow） | ⬜ Todo | - | - |
 | M4 | macOS 截图监听 | ⬜ Todo | - | - |
 | M5 | 状态/通知/错误处理 | ⬜ Todo | - | - |
 | M6 | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M7 | 开源发布准备 | ⬜ Todo | - | - |
 
-## 当前里程碑：M1 — 项目初始化
+## 当前里程碑：M3 — 剪贴板监听 + 导入
 
-- [x] 目录骨架（`docs/`、`.agent-doc/`）
-- [x] PRD 入库（`docs/prd.md`）
-- [x] 治理文件（AGENTS / CLAUDE / AGENT.RULES）
-- [x] `docs/` 最小集（architecture / decisions / CHANGELOG）
-- [x] `.agent-doc/` 最小集（plan / progress / chat-summary / knowledge / relearning-log）
-- [x] `README.md` / `LICENSE` / `.gitignore`
-- [x] entire CLI enable（`entire enable --agent claude-code`）→ `.entire/` + `.claude/agents/entire-search.md`
-- [x] npm 初始化 → `package.json`（含 `pack` / `clean` scripts）
-- [x] License 选定 PolyForm Noncommercial 1.0.0（含 Required Notice）
-- [x] GitHub Issues 暂不启用
-- [ ] 用户确认 → 初始 commit
-- [ ] M7 阶段确认：Eagle Plugin Center 是否接受非商业 license（如拒，再评估）
+> 详见 [.agent-doc/plan.md](plan.md) 的 M3 段。
+
+### M3 任务清单（首次进入 Session 时由 Agent 细化）
+
+- [ ] 实现 `setInterval` 轮询 + 开关响应（暂停/恢复）
+- [ ] 实现按 folderId 维度的进程内 `Map<folderId, Set<hash>>`（ADR-009 / F4 v1.1）
+- [ ] 实现启动 / 切换文件夹时的 `eagle.item.get` 回填 + UI「索引中…」状态
+- [ ] 实现 `duplicateStrategy` 分支：skip 短路 / allow 仍导入并启用 30s 防抖
+- [ ] 实现 tmp 文件写入 + `addFromPath`（`folders:[folderId]` 数组 / ADR-003）+ 失败分支清理
+- [ ] 错误捕获 → UI 错误状态 → 5s 重试
+- [ ] 真实 Eagle 中验证：复制图 → 出现在文件夹；同图 30s/跨 Session 重复 → 按策略表现
+
+## M1 完成回顾（2026-05-30）
+
+- 目录骨架（`docs/`、`.agent-doc/`）+ PRD 入库
+- 治理文件三件套（AGENTS / CLAUDE / AGENT.RULES）
+- 架构 + 9 条 ADR（含 ADR-006 License / ADR-007 npm / ADR-008 entire / ADR-009 文件夹去重）
+- entire CLI enable（首次 `git push` 已自动创建 checkpoint）
+- npm 初始化 + License（PolyForm Noncommercial 1.0.0）
+- 初始 commit `948d8c0`，已 push 到 `origin/dev`（private 仓库）
+
+## M2 完成回顾（2026-05-30）
+
+- `manifest.json`：serviceMode: true，devTools: false（开发期可本地切 true，commit 前切回）
+- `logo.png`：128×128 占位（M7 替换正式版）
+- `index.html`：面板 UI（状态行 / 文件夹下拉 / 主开关 / 最近导入区 / 高级折叠区含 5 项设置）
+- `js/plugin.js`：配置 schema + `eagle.extraData` 读写 + 文件夹拉取与扁平化（含二级路径 `父/子`）+ 生命周期钩子 + 配置规范化与降级
+- `js/ui.js`：纯渲染 + 事件分发 + 错误 banner + 主题切换（依赖 `eagle.app.isDarkMode`）
+- 配置 schema 已含 `duplicateStrategy`（默认 `skip`），为 M3 留好开关
+
+### M2 未做（M3 起补齐）
+
+- 剪贴板轮询（plugin.js 仅切状态，未启动 setInterval）
+- 截图目录 `fs.watch`（M4）
+- 「最近导入」面板填充（依赖 M3 第一次成功导入）
+- 索引中 UI 状态（M3 引入回填时实现）
+
+### M2 验收限制
+
+> ⚠️ 真实 Eagle 加载验证未在本 Session 完成（无沙箱 Eagle 实例）。需要用户在本地 Eagle → 开发插件 → 选择本目录后人工验证：
+> 1. 面板正常显示，文件夹下拉拉到列表
+> 2. 选文件夹 → 开关可点 → 重启 Eagle / 重开面板 → 配置保留
+> 3. Dark Mode 切换面板配色跟随
+> 4. 高级折叠区所有控件状态可改并持久化
 
 ## 遗留问题
 
 - [ ] `manifest.json.id` 待替换为 Eagle 开发者工具生成的真实 ID（M7 处理）
 - [ ] Windows 截图监听延后至 v1.1
-- [ ] frontend-design Skill 安装时机：M2 / M5 UI 实际动手前装即可
+- [ ] `logo.png` 为占位（M7 换正式版）
+- [ ] M7 阶段确认：Eagle Plugin Center 是否接受非商业 license
+- [ ] frontend-design Skill 安装时机：M5 UI 精修前装
