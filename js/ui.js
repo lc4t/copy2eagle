@@ -5,17 +5,17 @@
  */
 
 const ERROR_MESSAGES = {
-  CONFIG_LOAD_FAILED: '配置读取失败，已重置为默认值。',
-  CONFIG_SAVE_FAILED: '配置保存失败，请稍后重试。',
-  FOLDER_FETCH_FAILED: '无法获取 Eagle 文件夹列表，请确认 Eagle 正在运行。',
-  NO_FOLDER_SELECTED: '请先选择目标文件夹。',
-  SCREENSHOT_UNSUPPORTED: '当前系统暂不支持「立即截图」按钮，请使用系统截图工具（结果需进剪贴板）。',
-  SCREENSHOT_FAILED: '调用系统截图工具失败，请稍后重试。',
-  BACKFILL_FAILED: '索引现有文件夹内容失败，将仅按本次会话内的图片去重。',
-  POLL_FAILED: '剪贴板监听出错，5 秒后自动重试。',
-  IMPORT_FAILED: '导入到 Eagle 失败，请检查目标文件夹是否仍存在。',
-  TMP_WRITE_FAILED: '写入临时文件失败，请检查磁盘可用空间。',
-  UNKNOWN: '发生未知错误，请查看 Eagle 日志面板。',
+  CONFIG_LOAD_FAILED: '之前的设置读不出来了，已经恢复默认设置。',
+  CONFIG_SAVE_FAILED: '设置保存不上，过会儿再试。',
+  FOLDER_FETCH_FAILED: '读不到 Eagle 的文件夹列表，确认 Eagle 还开着？',
+  NO_FOLDER_SELECTED: '先选一个目标文件夹。',
+  SCREENSHOT_UNSUPPORTED: '当前系统暂不支持「立即截图」按钮，请用系统截图（截图结果要进剪贴板）。',
+  SCREENSHOT_FAILED: '截图调用失败，过会儿再试。',
+  BACKFILL_FAILED: '检查文件夹里已有的图片时出错，本次仅按这次启动后的图片做去重。',
+  POLL_FAILED: '暂时读不到剪贴板，5 秒后再试。',
+  IMPORT_FAILED: '保存到 Eagle 失败，目标文件夹是不是被删了？',
+  TMP_WRITE_FAILED: '写入临时文件失败，磁盘是不是满了？',
+  UNKNOWN: '出错了，可以打开 Eagle 日志面板看看详情。',
 }
 
 function $(id) {
@@ -33,24 +33,25 @@ function renderStatus(snapshot) {
   dot.dataset.status = snapshot.runtimeStatus
   if (snapshot.indexing) {
     const { progress, total } = snapshot.indexing
-    text.textContent = total > 0 ? `索引中 ${progress}/${total}` : '索引中…'
+    text.textContent = total > 0
+      ? `正在整理文件夹内容 ${progress}/${total}`
+      : '正在整理文件夹内容…'
   } else if (snapshot.runtimeStatus === 'running') {
-    text.textContent = '监听中'
+    text.textContent = '正在运行'
   } else if (snapshot.runtimeStatus === 'error') {
-    text.textContent = '出错'
+    text.textContent = '出错了'
   } else {
-    text.textContent = '已停止'
+    text.textContent = '未运行'
   }
-  count.textContent = `今日导入：${snapshot.todayCount}`
+  count.textContent = `今日已保存：${snapshot.todayCount} 张`
 }
 
 function renderError(snapshot) {
   const banner = $('cw-error-banner')
   if (snapshot.lastError) {
     let msg = ERROR_MESSAGES[snapshot.lastError] || ERROR_MESSAGES.UNKNOWN
-    // 重试倒计时：把"5 秒后自动重试"替换为实时秒数
     if (snapshot.retryRemainingSec > 0 && snapshot.lastError === 'POLL_FAILED') {
-      msg = `剪贴板监听出错，将在 ${snapshot.retryRemainingSec} 秒后重试`
+      msg = `暂时读不到剪贴板，${snapshot.retryRemainingSec} 秒后再试`
     }
     banner.textContent = msg
     banner.dataset.visible = 'true'
@@ -68,7 +69,7 @@ function renderFolders(snapshot) {
 
   const placeholder = document.createElement('option')
   placeholder.value = ''
-  placeholder.textContent = snapshot.folders.length ? '请选择文件夹…' : '（无可用文件夹）'
+  placeholder.textContent = snapshot.folders.length ? '请选择文件夹…' : '（Eagle 里还没有文件夹）'
   select.appendChild(placeholder)
 
   for (const f of snapshot.folders) {
@@ -80,11 +81,11 @@ function renderFolders(snapshot) {
   }
 
   if (!snapshot.folders.length) {
-    hint.textContent = '未获取到文件夹。请确认 Eagle 已打开且至少存在一个文件夹。'
+    hint.textContent = '没看到任何文件夹。确认 Eagle 已打开，并至少有一个文件夹。'
   } else if (!current) {
-    hint.textContent = '未选择文件夹时无法开启监听'
+    hint.textContent = '选择文件夹后才能开始自动保存'
   } else {
-    hint.textContent = `当前目标：${snapshot.folderLabel || current}`
+    hint.textContent = `保存到：${snapshot.folderLabel || current}`
   }
 }
 
@@ -100,18 +101,18 @@ function renderScreenshotButton(snapshot) {
   const macSupported = snapshot.platform === 'darwin'
   btn.disabled = !macSupported || !snapshot.config.folderId
   if (!macSupported) {
-    hint.textContent = 'Windows：请用 Win+Shift+S 截图（结果会自动进剪贴板，监听开启后自动导入）'
+    hint.textContent = 'Windows 请用 Win+Shift+S 截图，打开「自动保存」后会自动出现在 Eagle'
   } else if (!snapshot.config.folderId) {
-    hint.textContent = '选择目标文件夹后即可点击截图（结果自动进剪贴板，监听开启时自动入库）'
+    hint.textContent = '先选好文件夹，截图就能自动出现在 Eagle'
   } else if (!snapshot.config.enabled) {
-    hint.textContent = '截图将进入剪贴板，开启监听后才会自动入库'
+    hint.textContent = '截图会先进剪贴板，打开上面的「自动保存」开关后会进 Eagle'
   } else {
-    hint.textContent = '点击后选择区域截图，结果自动进剪贴板并入库'
+    hint.textContent = '点一下选区，截图自动出现在 Eagle'
   }
 }
 
 function formatSeconds(ms) {
-  return `${(ms / 1000).toFixed(1)} s`
+  return `${(ms / 1000).toFixed(1)} 秒`
 }
 
 function renderAdvanced(snapshot) {
@@ -135,18 +136,18 @@ function renderAdvanced(snapshot) {
   const resetBtn = $('cw-reset-index')
   resetBtn.disabled = !snapshot.config.folderId || !!snapshot.indexing
   if (snapshot.indexing) {
-    resetBtn.textContent = `索引中 ${snapshot.indexing.progress}/${snapshot.indexing.total || '…'}`
+    resetBtn.textContent = `正在整理 ${snapshot.indexing.progress}/${snapshot.indexing.total || '…'}`
   } else {
-    resetBtn.textContent = '重置当前文件夹索引'
+    resetBtn.textContent = '刷新已保存记录'
   }
 
   const multiHint = $('cw-multi-file-hint')
   if (snapshot.platform !== 'darwin' && snapshot.platform !== 'win32') {
-    multiHint.textContent = '当前平台不支持多文件复制读取（仅 macOS / Windows）'
+    multiHint.textContent = '此功能仅在 macOS / Windows 可用'
   } else if (snapshot.platform === 'darwin') {
-    multiHint.textContent = '打开后：Finder 选中多张 Cmd+C → osascript 抓路径 → 仅图片扩展名 → 批量入库（最多 50 张）'
+    multiHint.textContent = '在 Finder 中选中多张图片 Cmd+C，一次性全部进 Eagle（最多 50 张）'
   } else {
-    multiHint.textContent = '打开后：资源管理器选中多张 Ctrl+C → PowerShell 抓路径 → 仅图片扩展名 → 批量入库（最多 50 张）'
+    multiHint.textContent = '在资源管理器中选中多张图片 Ctrl+C，一次性全部进 Eagle（最多 50 张）'
   }
 }
 
@@ -232,7 +233,7 @@ function bindEvents() {
 
   $('cw-interval').addEventListener('input', (e) => {
     const sec = Number(e.target.value)
-    $('cw-interval-value').textContent = `${sec.toFixed(1)} s`
+    $('cw-interval-value').textContent = `${sec.toFixed(1)} 秒`
   })
   $('cw-interval').addEventListener('change', (e) => {
     const ms = Math.round(Number(e.target.value) * 1000)

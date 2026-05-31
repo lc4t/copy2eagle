@@ -307,23 +307,23 @@
     <section class="cw-status">
       <div class="cw-status-left">
         <span class="cw-dot" id="cw-status-dot" data-status="idle"></span>
-        <span class="cw-status-text" id="cw-status-text">已停止</span>
+        <span class="cw-status-text" id="cw-status-text">未运行</span>
       </div>
-      <span class="cw-status-count" id="cw-status-count">今日导入：0</span>
+      <span class="cw-status-count" id="cw-status-count">今日已保存：0 张</span>
     </section>
 
     <div class="cw-error-banner" id="cw-error-banner"></div>
 
     <section class="cw-field">
-      <label for="cw-folder">目标文件夹</label>
+      <label for="cw-folder">保存到 Eagle 的哪个文件夹</label>
       <select id="cw-folder">
         <option value="">请选择文件夹…</option>
       </select>
-      <span class="cw-hint" id="cw-folder-hint">未选择文件夹时无法开启监听</span>
+      <span class="cw-hint" id="cw-folder-hint">选择文件夹后才能开始自动保存</span>
     </section>
 
     <section class="cw-toggle-row">
-      <span class="cw-toggle-label">开启监听</span>
+      <span class="cw-toggle-label">自动保存复制的图片</span>
       <label class="cw-switch">
         <input type="checkbox" id="cw-enabled" disabled />
         <span class="cw-slider"></span>
@@ -332,72 +332,72 @@
 
     <section>
       <button type="button" class="cw-primary-button" id="cw-screenshot" disabled>
-        立即截图（到剪贴板）
+        立即截图
       </button>
       <span class="cw-hint" id="cw-screenshot-hint">
-        macOS：选区截图直接进剪贴板 · Windows：请用 Win+Shift+S
+        截图后会自动出现在 Eagle
       </span>
     </section>
 
     <section class="cw-field">
-      <label>最近导入</label>
-      <div class="cw-recent-empty" id="cw-recent">尚无导入记录</div>
+      <label>最近保存</label>
+      <div class="cw-recent-empty" id="cw-recent">还没有保存过图片</div>
     </section>
 
     <details class="cw-advanced" id="cw-advanced">
       <summary>高级设置</summary>
       <div class="cw-advanced-body">
         <div class="cw-field">
-          <label for="cw-interval">监听间隔（秒）</label>
+          <label for="cw-interval">检查频率（秒）</label>
           <div class="cw-slider-row">
             <input type="range" id="cw-interval" min="0.5" max="5" step="0.5" value="1" />
-            <span class="cw-slider-value" id="cw-interval-value">1.0 s</span>
+            <span class="cw-slider-value" id="cw-interval-value">1.0 秒</span>
           </div>
           <span class="cw-hint" id="cw-interval-hint">
-            轮询越快越及时；macOS 14+ 读剪贴板会触发"已粘贴自 Eagle"系统横幅，可调大间隔减少触发
+            数字越小响应越快。macOS 14 及以上读取剪贴板时会出现"已粘贴自 Eagle"通知，把数字调大可减少通知次数
           </span>
         </div>
 
         <div class="cw-field">
-          <label for="cw-tags">自动添加标签（逗号分隔）</label>
+          <label for="cw-tags">自动加上的标签（用逗号分隔）</label>
           <input type="text" id="cw-tags" placeholder="clipboard-watcher" />
         </div>
 
         <div class="cw-field">
-          <label>重复图片处理</label>
+          <label>遇到已有的相同图片</label>
           <div class="cw-radio-group">
             <label>
               <input type="radio" name="cw-duplicate" value="skip" checked />
-              跳过（默认）
+              跳过不再保存
             </label>
             <label>
               <input type="radio" name="cw-duplicate" value="allow" />
-              允许重复
+              再保存一份
             </label>
           </div>
-          <span class="cw-hint">「跳过」时，目标文件夹已存在的图不会重复导入</span>
+          <span class="cw-hint">「跳过」会先检查文件夹里是否已存在同一张图</span>
           <button type="button" class="cw-button cw-button-inline" id="cw-reset-index" disabled>
-            重置当前文件夹索引
+            刷新已保存记录
           </button>
-          <span class="cw-hint">在 Eagle 里手动删除图片后点这里，下次再复制同图就会重新入库</span>
+          <span class="cw-hint">在 Eagle 里手动删图后点这里，下次复制同图就会重新保存</span>
         </div>
 
         <div class="cw-checkbox-row">
           <input type="checkbox" id="cw-notify" checked />
-          <label for="cw-notify">导入成功时发送通知</label>
+          <label for="cw-notify">保存成功时发送系统通知</label>
         </div>
 
         <div class="cw-checkbox-row">
           <input type="checkbox" id="cw-mixed" checked />
-          <label for="cw-mixed">允许从图文混排中导入图片（默认开启）</label>
+          <label for="cw-mixed">复制带文字的内容时，把里面的图片也保存</label>
         </div>
 
         <div class="cw-checkbox-row">
           <input type="checkbox" id="cw-multi-file" />
-          <label for="cw-multi-file">支持多文件复制批量导入（默认关闭）</label>
+          <label for="cw-multi-file">同时选中多张图片复制时也一并保存</label>
         </div>
         <span class="cw-hint" id="cw-multi-file-hint">
-          打开后：在 Finder / 资源管理器中 Cmd/Ctrl+C 多张图片，会通过 osascript / PowerShell 抓取路径批量入库（仅 macOS / Windows）
+          在 Finder / 资源管理器选中多张图片复制，会一次性全部进 Eagle（最多 50 张）
         </span>
       </div>
     </details>
