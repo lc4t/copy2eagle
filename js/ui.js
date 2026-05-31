@@ -47,7 +47,12 @@ function renderStatus(snapshot) {
 function renderError(snapshot) {
   const banner = $('cw-error-banner')
   if (snapshot.lastError) {
-    banner.textContent = ERROR_MESSAGES[snapshot.lastError] || ERROR_MESSAGES.UNKNOWN
+    let msg = ERROR_MESSAGES[snapshot.lastError] || ERROR_MESSAGES.UNKNOWN
+    // 重试倒计时：把"5 秒后自动重试"替换为实时秒数
+    if (snapshot.retryRemainingSec > 0 && snapshot.lastError === 'POLL_FAILED') {
+      msg = `剪贴板监听出错，将在 ${snapshot.retryRemainingSec} 秒后重试`
+    }
+    banner.textContent = msg
     banner.dataset.visible = 'true'
   } else {
     banner.textContent = ''
@@ -147,22 +152,34 @@ function renderAdvanced(snapshot) {
 
 function renderRecent(snapshot) {
   const box = $('cw-recent')
-  if (!snapshot.lastImport) {
+  const list = snapshot.recentImports && snapshot.recentImports.length
+    ? snapshot.recentImports
+    : []
+  if (!list.length) {
     box.classList.add('cw-recent-empty')
+    box.classList.remove('cw-recent-list')
     box.textContent = '尚无导入记录'
     return
   }
   box.classList.remove('cw-recent-empty')
-  const { name, folderLabel, importedAt } = snapshot.lastImport
+  box.classList.add('cw-recent-list')
   box.innerHTML = ''
-  const title = document.createElement('div')
-  title.className = 'cw-recent-title'
-  title.textContent = name
-  const meta = document.createElement('div')
-  meta.className = 'cw-recent-meta'
-  meta.textContent = `${importedAt} → ${folderLabel || '—'}`
-  box.appendChild(title)
-  box.appendChild(meta)
+  for (const entry of list) {
+    const card = document.createElement('div')
+    card.className = 'cw-recent-card'
+
+    const title = document.createElement('div')
+    title.className = 'cw-recent-title'
+    title.textContent = entry.name
+    card.appendChild(title)
+
+    const meta = document.createElement('div')
+    meta.className = 'cw-recent-meta'
+    meta.textContent = `${entry.importedAt} → ${entry.folderLabel || '—'}`
+    card.appendChild(meta)
+
+    box.appendChild(card)
+  }
 }
 
 function render() {

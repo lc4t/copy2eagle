@@ -12,22 +12,42 @@
 | M2.2 | 间隔单位改秒 + 剪贴板权限 K12 | ✅ Done | 0.5–5s slider、macOS Sonoma 横幅缓解策略 | - |
 | M3 | 剪贴板监听 + 导入 + 截图按钮 | ✅ Done | 轮询 + 按文件夹 hash 集合 + 启动期回填 + `duplicateStrategy` 分支 + tmp 文件 + `addFromPath` + 5s 重试 | - |
 | ~~M4~~ | ~~macOS 截图目录监听~~ | ❌ 弃用（ADR-004 修订） | 合并入 M3 截图按钮 | - |
-| M4(新) | 状态/通知/错误处理增强 | ⬜ Todo | 多条最近导入列表、重试倒计时、清除配置按钮、通知细节、错误展示文案 | - |
-| M5(新) | 打包 + 本地端到端验证 | ⬜ Todo | `.eagleplugin` 包、安装文档、截图证据 | - |
-| M6(新) | 开源发布准备 | ⬜ Todo | README 完善、CHANGELOG v1.0.0、Plugin Center 提交材料 | - |
+| M4 | 用户反馈 5 项（删后复制/命名/多文件/混排/延迟） | ✅ Done | backfill 整组替换 + Screenshot 命名 + osascript 多文件 + 混排开关 + WxH | - |
+| M5 | adaptive polling + 重试倒计时 + 最近导入列表 | 🔄 In Progress | 同 hash 持续 3 轮放慢到 5s；倒计时 1s tick；recent cap 5 | - |
+| M6 | 用户视角文案 + 打包 + 端到端验证 | ⬜ Todo | 设置文案去开发者用语；`.eagleplugin` 包；安装文档；截图证据 | - |
+| M7 | 开源发布准备 | ⬜ Todo | README 完善、CHANGELOG v1.0.0、Plugin Center 提交材料 | - |
 
-## 当前里程碑：M4（新）— 状态/通知/错误处理增强
+## 当前里程碑：M5 — adaptive polling + 重试倒计时 + 最近导入列表
 
-> 详见 progress.md 的 M3 验收清单——若 M3 验收发现具体 bug 优先修复，再做 M4 增强。
+实装内容：
+- **Adaptive polling**：剪贴板里图片不变 N 轮后自动放慢到 5s，hash 变化即刻回 1s。透明优化，UI 不暴露切换。
+- **重试倒计时**：错误状态显示"将在 N 秒后重试"，1s tick 更新。
+- **最近导入列表**：state 保留最近 5 条，UI 列表展示。
 
-候选增强项：
-- 多条最近导入列表（最多 5 条），滚动展示
-- 错误重试倒计时（"将在 4s 后重试…"）
-- 「清除当前文件夹索引」按钮（用户手动 invalidate hashSet）
-- 「打开 Eagle 日志」快捷入口
-- 通知细节：导入失败时也通知（一次性，可关闭）
-- 「打开最近导入」点击跳转 Eagle item
-- macOS 横幅频度统计（可选，给用户透明度）
+## 后续里程碑：M6 — 用户视角文案 + 打包 + 端到端验证
+
+M6 任务（按优先级）：
+
+### M6.1 设置文案重写（用户反馈"太开发者视角"）
+
+需要重写的开发者用语清单：
+- "（默认开启 / 默认关闭）" → 删除（默认通过控件初始态体现）
+- "osascript / PowerShell" → "复制图片文件后批量入库"
+- "索引" → "已导入记录" / "查找重复"
+- "format / hash" → "重复" / "已经存在"
+- "重置当前文件夹索引" → "刷新已导入记录"
+- "支持多文件复制批量导入" → "把复制的图片文件一并入库（Cmd/Ctrl+C 多张文件时）"
+- "允许从图文混排导入图片" → "复制带文字的内容时，把图片也放进 Eagle"
+- "监听间隔（秒）" → "检查频率（秒）"
+- hint 里的实现细节（"shell-out / 50 张上限"）→ 移到 README 高级说明，UI 只留"上限 50 张"提示
+- 错误码中文：保持，但更口语化（"剪贴板监听出错" → "暂时没法读取剪贴板"）
+
+### M6.2 打包 + E2E
+- `manifest.json` serviceMode/devTools 最终确认
+- `npm run pack` 产 `.eagleplugin`
+- 干净 Eagle 环境跑 progress.md A–H + M4 A–G 全部清单
+- 1 小时空跑 CPU 监测
+- 截图证据存 `.agent-doc/evidence/M6-{date}/`
 
 ## 下一里程碑：M2 — 插件骨架 + 配置面板
 

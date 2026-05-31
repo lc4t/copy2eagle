@@ -157,8 +157,15 @@
       border: 1px dashed var(--cw-border);
       border-radius: 6px;
     }
-    #cw-recent:not(.cw-recent-empty) {
-      padding: 10px 12px;
+    .cw-recent-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 156px;
+      overflow-y: auto;
+    }
+    .cw-recent-card {
+      padding: 8px 10px;
       background: var(--cw-card);
       border: 1px solid var(--cw-border);
       border-radius: 6px;

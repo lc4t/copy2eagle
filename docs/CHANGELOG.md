@@ -38,6 +38,23 @@ Format: [Keep a Changelog](https://keepachangelog.com) | Versioning: Major.Minor
 - `plugin.js` 顶部注释加入 M3 实现指引（`availableFormats()` 预判 + hash 比对）
 - 新增 K12 知识条目（剪贴板权限与横幅缓解策略）
 
+### Added (M5)
+
+- **Adaptive polling**：剪贴板里同一张图持续 3 轮未变 → 自动放慢轮询到 5s（取 max(用户设置, 5000ms)）；任何 hash 变化或图片消失即刻回到 normal 模式
+  - 直接降低 macOS 14+ 「已粘贴自 Eagle」横幅触发频率：从最差 1Hz 降到 0.2Hz（约 5×）
+  - 透明优化，UI 不暴露切换；snapshot 暴露 `adaptiveMode` / `effectiveIntervalMs` 用于调试
+  - 用户设置 ≥ 5s 时 adaptive 不再额外放慢（已经够慢）
+  - 截图按钮 / 切文件夹 / 启用监听都会重置到 normal
+- **重试倒计时**：错误状态文案从「5 秒后自动重试」改为「将在 N 秒后重试」，N 实时递减
+  - `state.retryAt` 记录重试 deadline
+  - `retryTicker` 每秒 tick 重新渲染
+  - 倒计时归零或恢复 running 自动清除 ticker
+- **最近导入列表**：替代 M3 的单条卡片
+  - `state.recentImports` 数组，cap = 5（最新在顶）
+  - 单图剪贴板、截图按钮、多文件批量都会写入
+  - UI 滚动列表展示，超过容器高度（156px）出滚动条
+  - 每条卡片：文件名 + 时间戳 + 目标文件夹标签
+
 ### Added / Fixed (M4 — 用户 M3 验收反馈)
 
 - **#4 真 bug 修复：删后再复制导入失败**

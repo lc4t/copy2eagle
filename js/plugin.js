@@ -56,6 +56,13 @@ const BACKFILL_FRESH_MS = 5000 // onPluginShow 触发回填的节流窗口
 const SCREENSHOT_NAME_WINDOW_MS = 5000 // 截图按钮触发后 N 秒内的导入标 Screenshot
 const TMP_DIR_NAME = 'eagle-cw'
 
+// M5：adaptive polling — 剪贴板里图片不变时自动放慢，降低 macOS 横幅触发频率
+const ADAPTIVE_IDLE_INTERVAL_MS = 5000
+const ADAPTIVE_IDLE_THRESHOLD = 3 // 同 hash 连续观测到这么多次后进入 idle 模式
+
+// M5：最近导入列表长度
+const RECENT_IMPORTS_CAP = 5
+
 // 多文件复制相关
 const FILE_URL_FORMAT_CANDIDATES = [
   'public.file-url',
@@ -177,12 +184,36 @@ const state = {
   lastBackfillAt: new Map(), // folderId -> timestamp（节流 onPluginShow 触发的回填）
   lastScreenshotAt: 0,        // 截图按钮触发时间（导入命名用）
   lastFileBatchKey: null,     // 多文件复制路径列表的 hash，避免同批反复导入
+
+  // M5 additions
+  sameHashStreak: 0,          // 同 hash 连续观测次数（adaptive polling）
+  adaptiveMode: 'normal',     // 'normal' | 'idle' — schedulePoll 用这个决定下一轮间隔
+  recentImports: [],          // 最近导入历史，cap = RECENT_IMPORTS_CAP
+  retryAt: 0,                 // 错误恢复 deadline；UI 显示倒计时
 }
 
 let pollTimer = null
 let pollInFlight = false
 let lastNotificationAt = 0
 const NOTIFICATION_MIN_GAP_MS = 1500
+
+let retryTicker = null
+function startRetryTicker() {
+  stopRetryTicker()
+  scheduleRender()
+  retryTicker = setInterval(() => {
+    if (!state.retryAt || Date.now() >= state.retryAt) {
+      stopRetryTicker()
+    }
+    scheduleRender()
+  }, 1000)
+}
+function stopRetryTicker() {
+  if (retryTicker) {
+    clearInterval(retryTicker)
+    retryTicker = null
+  }
+}
 
 function scheduleRender() {
   if (window.ClipboardWatcherUI && typeof window.ClipboardWatcherUI.render === 'function') {
@@ -359,6 +390,9 @@ async function resetFolderIndex() {
 function startPolling() {
   stopPolling()
   if (!state.config.enabled || !state.config.folderId) return
+  // 重新启动时回到 normal 模式
+  state.sameHashStreak = 0
+  state.adaptiveMode = 'normal'
   schedulePoll(true)
 }
 
@@ -369,9 +403,37 @@ function stopPolling() {
   }
 }
 
+function bumpIdleStreak() {
+  state.sameHashStreak += 1
+  if (state.sameHashStreak >= ADAPTIVE_IDLE_THRESHOLD && state.adaptiveMode !== 'idle') {
+    state.adaptiveMode = 'idle'
+    eagle.log.info(
+      `[clipboard-watcher] adaptive → idle (interval ${getEffectiveIntervalMs()}ms)`
+    )
+  }
+}
+
+function resetIdleStreak() {
+  if (state.sameHashStreak !== 0 || state.adaptiveMode !== 'normal') {
+    state.sameHashStreak = 0
+    state.adaptiveMode = 'normal'
+    eagle.log.info('[clipboard-watcher] adaptive → normal')
+  }
+}
+
+function getEffectiveIntervalMs() {
+  const base = state.config.intervalMs
+  // base 已是用户设置（0.5–5s）。idle 模式取 max(base, ADAPTIVE_IDLE_INTERVAL_MS)
+  // 用户已经把 base 调到 >= 5s 时不再 adaptive（已经够慢）
+  if (state.adaptiveMode === 'idle') {
+    return Math.max(base, ADAPTIVE_IDLE_INTERVAL_MS)
+  }
+  return base
+}
+
 function schedulePoll(immediate = false) {
   if (!state.config.enabled || !state.config.folderId) return
-  const delay = immediate ? 0 : state.config.intervalMs
+  const delay = immediate ? 0 : getEffectiveIntervalMs()
   pollTimer = setTimeout(async () => {
     pollTimer = null
     await runPoll()
@@ -538,11 +600,15 @@ async function importFileBatch(paths, folderId) {
         added++
         rolloverTodayIfNeeded()
         state.todayCount += 1
-        state.lastImport = {
+        const entry = {
           name: baseName,
           folderLabel: state.folderIndex.get(folderId) || folderId,
           importedAt: nowStamp(),
+          source: 'files',
+          dims: '',
         }
+        state.lastImport = entry
+        pushRecentImport(entry)
       } catch (err) {
         skipped++
         eagle.log.warn(`[clipboard-watcher] addFromPath failed for ${p}: ${err && err.message ? err.message : err}`)
@@ -577,6 +643,8 @@ async function runPoll() {
       if (!state.config.importMixedContent) {
         if (probeAnyFormat(TEXT_FORMAT_CANDIDATES)) {
           state.lastFormatsKey = probe.format
+          // 混排被跳过也算"剪贴板里有图但我们不动" → 进 idle 节流
+          bumpIdleStreak()
           return
         }
       }
@@ -591,8 +659,11 @@ async function runPoll() {
       // 同 hash 立即返回
       if (hash === state.lastClipboardHash) {
         state.lastFormatsKey = probe.format
+        bumpIdleStreak()
         return
       }
+      // hash 变化 → 立刻回 normal 模式
+      resetIdleStreak()
       state.lastFormatsKey = probe.format
 
       const folderId = state.config.folderId
@@ -621,6 +692,8 @@ async function runPoll() {
     } else {
       // ───── 多文件路径（#1 / F10）─────
       state.lastFormatsKey = null
+      // 没有单图：剪贴板无活动 → 重置 idle streak（normal 模式）
+      resetIdleStreak()
       if (!state.config.importMultipleFiles) return
       if (!probeAnyFormat(FILE_URL_FORMAT_CANDIDATES)) return
 
@@ -656,8 +729,12 @@ async function runPoll() {
 
     if (state.pollErrorCount >= POLL_ERROR_THRESHOLD) {
       stopPolling()
+      state.retryAt = Date.now() + POLL_RETRY_MS
+      startRetryTicker()
       eagle.log.warn(`[clipboard-watcher] poll suspended; retry in ${POLL_RETRY_MS}ms`)
       setTimeout(() => {
+        stopRetryTicker()
+        state.retryAt = 0
         if (state.config.enabled && state.config.folderId) {
           state.pollErrorCount = 0
           setRuntimeStatus('running')
@@ -754,15 +831,26 @@ async function importImage(buffer, hash, folderId, options = {}) {
 
   rolloverTodayIfNeeded()
   state.todayCount += 1
-  state.lastImport = {
+  const entry = {
     name,
     folderLabel: state.folderIndex.get(folderId) || folderId,
     importedAt: nowStamp(ts),
+    source,
+    dims,
   }
+  state.lastImport = entry
+  pushRecentImport(entry)
 
   cleanupTmp(tmpPath)
   maybeNotify(state.lastImport.folderLabel)
   scheduleRender()
+}
+
+function pushRecentImport(entry) {
+  state.recentImports.unshift(entry)
+  if (state.recentImports.length > RECENT_IMPORTS_CAP) {
+    state.recentImports.length = RECENT_IMPORTS_CAP
+  }
 }
 
 function cleanupTmp(p) {
@@ -894,12 +982,14 @@ function triggerScreenshot() {
 
 function getSnapshot() {
   rolloverTodayIfNeeded()
+  const retryRemainingMs = state.retryAt ? Math.max(0, state.retryAt - Date.now()) : 0
   return {
     config: state.config,
     folders: state.folders,
     folderLabel: state.config.folderId ? state.folderIndex.get(state.config.folderId) || null : null,
     todayCount: state.todayCount,
     lastImport: state.lastImport,
+    recentImports: state.recentImports.slice(),
     lastError: state.lastError,
     runtimeStatus: state.runtimeStatus,
     theme: state.theme,
@@ -910,6 +1000,9 @@ function getSnapshot() {
       state.indexingFolderId && state.indexingFolderId === state.config.folderId
         ? { progress: state.indexingProgress, total: state.indexingTotal }
         : null,
+    retryRemainingSec: retryRemainingMs > 0 ? Math.ceil(retryRemainingMs / 1000) : 0,
+    adaptiveMode: state.adaptiveMode,
+    effectiveIntervalMs: getEffectiveIntervalMs(),
   }
 }
 

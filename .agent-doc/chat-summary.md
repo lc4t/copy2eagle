@@ -15,6 +15,9 @@
 - M3.1 Session：**PRD 第三次写错 Eagle API**（前两次 `eagle.extraData` / `eagle.app.isDarkMode`，本次 `require('electron').clipboard`）。教训：**Eagle 插件 webview 不暴露 Electron 渲染进程模块**，所有 Electron-flavored API 都要走 `eagle.*` 命名空间；下次写新 API 之前先查 developer.eagle.cool 文档而不是按 Electron 习惯写。
 - 错误日志一定要带 `err.stack`，不带的话 catch 之后只剩"undefined is not a function"这种无用信息。
 - 对 Eagle API 完全没有的能力（如 `availableFormats()` / `changeCount`），不要硬撑"做和 macOS Sonoma 横幅彻底无关"，承认现实代价，给用户提供间隔调节是更诚实的方案。
+- M5 Session：adaptive polling 的实现选了「2 档模式 + streak 计数」最简方案，没用复杂的指数退避——同 hash 持续 N 次就 idle，hash 变就 normal。可读性优先。
+- 重试 ticker 跟 setTimeout 解耦：ticker 只刷 UI 文案，真正的重启 logic 还在原 setTimeout 里。否则两边状态机会撞车。
+- 用户反馈"设置太开发者视角"——以后写 hint 时别再写 osascript / format / 索引 / hash 这种实现词，按"用户在意的动作和结果"写。
 
 ## 规则修正
 
