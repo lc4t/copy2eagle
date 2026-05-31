@@ -102,6 +102,28 @@ _（待 v1.1+ 累积）_
 - `docs/plugin-center-submission.md`：中英文短/长描述、隐私声明、License 声明、reviewer 备注、关键词、分类建议
 - 最终打包验证通过：`npm run pack` 产 17.5KB 干净 `.eagleplugin`，version 1.0.0 / devTools false
 
+### Added (M7.1 — 设计 brief)
+
+- `docs/design-brief.md`：
+  - Logo 128×128 prompt 多版本（Midjourney v6 / Ideogram / Recraft / 通用文字）
+  - 封面 1280×800 设计指导（背景层 prompt + 排版建议）
+  - 5 张产品截图脚本（场景 / 准备步骤 / 命名约定）
+  - 风格参考（macOS Sonoma / Raycast / Linear 类）+ 避雷条款
+
+### Added (M7.2 — GitHub Release v1.0.0)
+
+- 修正 GitHub 仓库默认分支：原 `entire/checkpoints/v1` → `dev`（entire 注入 hooks 时误改了默认分支）
+- `git tag -a v1.0.0` 含完整 release notes
+- `gh release create v1.0.0`，附 `.eagleplugin` (17.5KB)
+- Release URL：https://github.com/lc4t/copy2eagle/releases/tag/v1.0.0
+
+### Changed (M7.3 — README install)
+
+- 推荐路径设为「下载 .eagleplugin 双击安装」（取代之前"待 Plugin Center"占位）
+- 增加「私仓须知」明确告知 Release 下载需登录 + 仓库读权限
+- Plugin Center 标"待审核"并附预计时间
+- 开发者模式作兜底，附 `npm run pack` 流程
+
 ### Changed (M6.3 — README polish)
 
 - 用户视角重写「它做什么 / 平台 / 安装 / 使用 / 高级设置」段落

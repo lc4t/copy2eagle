@@ -16,7 +16,7 @@
 | M4 | 用户反馈 5 项：删后再复制 / 命名 / 多文件 / 混排开关 / 延迟 | ✅ Done | 2026-05-31 | - |
 | M5 | adaptive polling + 重试倒计时 + 最近导入列表 | ✅ Done | 2026-05-31 | - |
 | M6 | 用户视角文案重写 + 打包验证 + README polish | ✅ Done | 2026-05-31 | - |
-| M7 | 开源发布准备（首次 v1.0.0 release） | 🔄 文档级完成，待用户做 GUI / 设计资产 | 2026-05-31 | - |
+| M7 | 开源发布准备（首次 v1.0.0 release） | ✅ Release 已建（v1.0.0 + .eagleplugin），待设计资产 + Plugin Center 提交 | 2026-05-31 | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -334,6 +334,23 @@
 - ❌ 审核拒（License 原因等）→ 回 ADR-006 重新决策 → 起 M7.1
 
 详细步骤见 [docs/release-checklist.md](../docs/release-checklist.md) 与 [docs/plugin-center-submission.md](../docs/plugin-center-submission.md)。
+
+## M7.1–7.3（2026-05-31）追加
+
+- **M7.1 设计 brief**：`docs/design-brief.md`，覆盖 logo / 封面 AI 生成 prompt（Midjourney / Ideogram / Recraft 多套）+ 5 张产品截图脚本（场景 / 准备步骤 / 命名约定）
+- **M7.2 GitHub Release v1.0.0**：
+  - 默认分支修正（entire 把它误标到 checkpoints 分支了 → 改回 `dev`）
+  - `git tag -a v1.0.0`，push tag
+  - `gh release create v1.0.0` 上传 `.eagleplugin` (17.5KB)
+  - Release URL：https://github.com/lc4t/copy2eagle/releases/tag/v1.0.0
+  - ⚠️ 仓库 private → 下载需登录 + 仓库读权限
+- **M7.3 README 安装段写实**：把推荐路径设为「下载 .eagleplugin 双击」，明确标注「私仓须知」；Plugin Center 标「待审核」；开发者模式作兜底
+- **未做（仍待你做）**：见 [docs/release-checklist.md](../docs/release-checklist.md)
+  - 设计资产（按 `docs/design-brief.md` 跑 AI 生图或找设计师）
+  - 真正去 Eagle 开发者工具拿正式 Plugin ID
+  - License 接受度问 Eagle 官方
+  - Plugin Center 后台提交（材料已就位）
+  - 端到端验证
 
 ## 后续计划
 

@@ -23,24 +23,37 @@
 
 ## 安装
 
-### 方式一：从 Eagle Plugin Center（待发布）
+### 推荐：下载 `.eagleplugin` 双击安装
 
-打开 Eagle → 插件中心 → 搜索 `Clipboard Watcher` → 安装。
+1. 打开 [Releases v1.0.0](https://github.com/lc4t/copy2eagle/releases/tag/v1.0.0)
+2. 下载附件里的 `eagle-clipboard-watcher.eagleplugin`（约 18 KB）
+3. **双击下载的文件**，Eagle 会弹出安装确认 → 同意即可
 
-### 方式二：下载 `.eagleplugin`
+> ⚠️ **私仓须知**：此仓库目前是 **private**，Release 页和下载链接需要登录 GitHub 且对仓库有读权限。你自己当然可以下载；要分享给别人，请等仓库切 public 或 Eagle Plugin Center 通过审核。
 
-1. 到 [Releases](https://github.com/lc4t/copy2eagle/releases) 下载最新 `eagle-clipboard-watcher.eagleplugin`
-2. 双击文件，Eagle 会询问是否安装
+### 候选：Eagle Plugin Center（待审核）
 
-### 方式三：开发者模式（自己构建）
+```
+状态：v1.0.0 已准备好提交材料，等设计资产（logo / 封面 / 截图）就位后提交
+预计：审核 1–7 天
+```
+
+通过后可直接 `Eagle → 插件中心 → 搜 "Clipboard Watcher" → 安装`。
+
+### 兜底：开发者模式 / 自己构建
 
 ```bash
 git clone https://github.com/lc4t/copy2eagle.git
 cd copy2eagle
-npm run pack         # 产出 eagle-clipboard-watcher.eagleplugin
+npm run pack         # 产 eagle-clipboard-watcher.eagleplugin，再双击安装
 ```
 
-或者直接挂载源码：Eagle → 菜单 → 插件 → 开发插件 → 选这个目录。
+或者直接挂源码热加载：
+```
+Eagle → 菜单 → 插件 → 开发插件 → 选这个 clone 下来的目录
+```
+
+> 这种方式每次改代码 reload 即可生效，适合给我提反馈或自己 fork 改造。
 
 ## 使用
 
