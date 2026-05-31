@@ -5,6 +5,33 @@ Format: [Keep a Changelog](https://keepachangelog.com) | Versioning: Major.Minor
 
 ## [Unreleased]
 
+_（待 v1.1+ 累积）_
+
+---
+
+## [1.0.0] — 2026-05-31
+
+首次公开发布。覆盖 PRD 的 F1–F11，跨 macOS / Windows / Linux（Linux 仅剪贴板路径）。
+
+### 里程碑总览
+
+- **M1** 项目治理 / npm 工具链 / entire CLI / PolyForm-NC License
+- **M2** 插件骨架与配置面板（manifest / index / plugin / ui）
+- **M2.1** 4 项 M2 bug 修复（localStorage / 窗口 / 主题 / hostname）+ scope 变更（剪贴板单路径）
+- **M2.2** 间隔单位改秒 + 剪贴板权限调研（K12）
+- **M3** 剪贴板轮询 + 按文件夹去重 + 启动期回填 + 导入管道
+- **M3.1** clipboard API 修正（eagle.clipboard 替代 require('electron').clipboard）
+- **M4** 用户 M3 反馈 5 项：删后再复制修复 / 命名增强 / 多文件 / 混排开关 / 延迟讨论
+- **M5** Adaptive polling + 重试倒计时 + 最近导入列表
+- **M6** 用户视角文案重写 + 打包验证 + README polish
+
+### 设计决策
+
+- ADR-001 ~ ADR-011（详见 [docs/decisions.md](decisions.md)）
+- K1 ~ K14 知识沉淀（详见 [.agent-doc/knowledge.md](../.agent-doc/knowledge.md)）
+
+### 原 Unreleased 详情
+
 ### Added
 - 项目治理文件（AGENTS / CLAUDE / AGENT.RULES）
 - 需求文档迁入 `docs/prd.md`
@@ -66,6 +93,14 @@ Format: [Keep a Changelog](https://keepachangelog.com) | Versioning: Major.Minor
 - `npm run pack` 实跑通过：产出 17.5KB `.eagleplugin`，含 6 个文件（manifest/index.html/logo.png/js/{ui,plugin}.js）
 - 验证 `docs/` `.agent-doc/` `.git/` `package.json` `AGENTS.md` 等开发期文件均**未**被打入产物
 - `.gitignore` 已覆盖 `*.eagleplugin` 和 `*.zip`，打包产物不会污染 git
+
+### Added (M7 — release prep, 文档级)
+
+- `package.json` version 0.0.0 → 1.0.0
+- `docs/CHANGELOG.md` 切版到 `[1.0.0] — 2026-05-31`，新建空 `[Unreleased]`
+- `docs/release-checklist.md`：用户手动步骤清单（设计资产 / Eagle 开发者工具 / License 风险点 / GitHub Release / Plugin Center 提交）
+- `docs/plugin-center-submission.md`：中英文短/长描述、隐私声明、License 声明、reviewer 备注、关键词、分类建议
+- 最终打包验证通过：`npm run pack` 产 17.5KB 干净 `.eagleplugin`，version 1.0.0 / devTools false
 
 ### Changed (M6.3 — README polish)
 

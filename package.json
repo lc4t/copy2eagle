@@ -1,6 +1,6 @@
 {
   "name": "eagle-clipboard-watcher",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Eagle plugin that auto-imports clipboard images and macOS screenshots into a chosen Eagle folder.",
   "private": true,
   "author": "lc4t <lc4t0.0@gmail.com>",

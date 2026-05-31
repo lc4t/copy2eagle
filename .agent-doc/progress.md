@@ -16,7 +16,7 @@
 | M4 | 用户反馈 5 项：删后再复制 / 命名 / 多文件 / 混排开关 / 延迟 | ✅ Done | 2026-05-31 | - |
 | M5 | adaptive polling + 重试倒计时 + 最近导入列表 | ✅ Done | 2026-05-31 | - |
 | M6 | 用户视角文案重写 + 打包验证 + README polish | ✅ Done | 2026-05-31 | - |
-| M7 | 开源发布准备（首次 v1.0.0 release） | ⬜ Todo | - | - |
+| M7 | 开源发布准备（首次 v1.0.0 release） | 🔄 文档级完成，待用户做 GUI / 设计资产 | 2026-05-31 | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -304,7 +304,48 @@
 - GitHub Release v1.0.0 with `.eagleplugin` 附件
 - 截图素材生成（README/Plugin Center 用）
 
-## 当前里程碑：M7 — 开源发布准备（首次 v1.0.0 release）
+## M7 完成回顾（2026-05-31）— 文档级 / 代码级到位
+
+**用户决策**：
+- 仓库**保持 private**，不切 public
+- 走 Eagle Plugin Center 正常发布流程
+- 用户最后做验证
+
+**M7 已交付（代码 / 文档级）**：
+- `package.json` version 0.0.0 → 1.0.0
+- `docs/CHANGELOG.md` 切版到 `[1.0.0] — 2026-05-31`；新建空 `[Unreleased]` 留给 v1.1+；M1–M6 完整里程碑总览
+- `docs/release-checklist.md`：用户手动步骤清单，覆盖设计资产 / Eagle 开发者工具 / License 风险点 / GitHub Release / Plugin Center 提交 / 提交后回流
+- `docs/plugin-center-submission.md`：中英文短/长描述、隐私声明、License 声明、reviewer 备注、关键词、分类建议
+- `manifest.json` 最终确认：`version: 1.0.0` / `devTools: false` / `serviceMode: true`
+- `npm run pack` 再跑一遍：产物 17.5KB / 6 文件 / 干净
+
+**M7 待用户做（GUI / 设计资产 / 账户权限，I 做不了）**：
+- Logo 128×128 PNG（当前占位）
+- 封面图 1280×800
+- 功能截图 3–5 张
+- Eagle 开发者工具生成正式 Plugin ID → 替换 manifest.json.id
+- License 风险点：邮件 Eagle 官方询问是否接受 PolyForm-NC（ADR-006 fallback 已记）
+- GitHub Release v1.0.0（可选，仓库 private 时 Release 对外不可见）
+- Plugin Center 后台填表 + 上传 `.eagleplugin` + 提交审核
+- 端到端验证（M3 A–H / M4 A–G / M5 A–D 清单）
+
+**完成定义**：
+- ✅ Plugin Center 审核通过 → 改 M7 状态为 ✅ Done
+- ❌ 审核拒（License 原因等）→ 回 ADR-006 重新决策 → 起 M7.1
+
+详细步骤见 [docs/release-checklist.md](../docs/release-checklist.md) 与 [docs/plugin-center-submission.md](../docs/plugin-center-submission.md)。
+
+## 后续计划
+
+- **v1.0.x（hotfix）**：用户验证发现 bug → 修复 → patch 发布
+- **v1.1（候选）**：
+  - 多文件复制 Linux 支持（xclip / wl-paste）
+  - 「打开 Eagle 里的 item」点击跳转（需 Eagle 是否有 `eagle.item.open`）
+  - 暗色模式 7 种主题逐一适配（当前 DARK/GRAY/BLUE/PURPLE 都按 dark 渲染）
+  - 自定义命名模板（用户配置 `{source}-{WxH}-{date}` 等）
+- **v1.2（候选）**：
+  - 多文件夹路由规则（按来源区分：截图 vs 复制）
+  - OCR 文字提取自动打标（依赖 Eagle AI SDK）
 
 ## M1 完成回顾（2026-05-30）
 
