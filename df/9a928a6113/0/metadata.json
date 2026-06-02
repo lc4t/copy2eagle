@@ -1,0 +1,64 @@
+{
+  "cli_version": "0.6.1",
+  "checkpoint_id": "df9a928a6113",
+  "session_id": "761ff9c0-8f5c-492f-aac4-403f227f2fd3",
+  "strategy": "manual-commit",
+  "created_at": "2026-06-02T01:43:14.352418Z",
+  "branch": "dev",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "manifest.json"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "733d5c134a44",
+  "token_usage": {
+    "input_tokens": 561,
+    "cache_creation_tokens": 2972852,
+    "cache_read_tokens": 107195253,
+    "output_tokens": 333403,
+    "api_call_count": 441
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-06-02T01:43:14.30817Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 266,
+    "human_modified": 8,
+    "human_removed": 0,
+    "total_committed": 266,
+    "total_lines_changed": 280,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 273,
+      "user_lines_removed": 7,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".github/ISSUE_TEMPLATE/bug.yml": 113,
+        ".github/ISSUE_TEMPLATE/config.yml": 11,
+        ".github/ISSUE_TEMPLATE/feature.yml": 56,
+        "docs/CHANGELOG.md": 26,
+        "index.html": 8,
+        "js/plugin.js": 46,
+        "js/ui.js": 11,
+        "manifest.json": 1,
+        "package.json": 1
+      },
+      "user_removed_per_file": {
+        "docs/CHANGELOG.md": 1,
+        "js/plugin.js": 3,
+        "js/ui.js": 1,
+        "manifest.json": 1,
+        "package.json": 1
+      }
+    }
+  ]
+}
