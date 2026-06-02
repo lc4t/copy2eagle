@@ -149,6 +149,40 @@ UI 控件：高级设置区下拉 / Radio，字段名 `duplicateStrategy`，可�
 - 关闭后：探到剪贴板里**同时**有 `text/html` / `text/plain` / `public.utf8-plain-text` / `public.html` 其一时，跳过本张
 - **为什么默认开**：用户口径——"复制了图就该到 Eagle"；关闭只服务"我只是想用文本，别偷我图"的保守诉求
 
+#### F12：多文件夹路由（v1.4 新增）
+
+**核心诉求**：按来源把不同类型的图分流到不同文件夹（截图归"截图"文件夹，复制图归"剪藏"文件夹，多文件批量归"导入"文件夹）。
+
+**Schema**（4 个 folder 字段）：
+- `folderId`（主文件夹，必填）—— 作为默认/兜底
+- `folderIdScreenshot`（可选）—— 截图按钮触发的导入目标
+- `folderIdClipboard`（可选）—— 普通剪贴板复制的导入目标
+- `folderIdFiles`（可选）—— 多文件复制的导入目标
+
+任一可选字段为 `null` → 该来源落回主 `folderId`。
+
+**Resolve 逻辑**（`config.js: resolveTargetFolder`）：
+```js
+function resolveTargetFolder(source, config) {
+  if (source === 'screenshot' && config.folderIdScreenshot) return config.folderIdScreenshot
+  if (source === 'clipboard' && config.folderIdClipboard) return config.folderIdClipboard
+  if (source === 'files' && config.folderIdFiles) return config.folderIdFiles
+  return config.folderId
+}
+```
+
+**回填策略**：
+- enable 时同步 backfill 主 folder
+- 配置了的额外 folder 后台异步 backfill（不阻塞 polling 启动）
+- 多 folder hash 集合各自维护（`hashSetByFolder: Map<folderId, Set<hash>>` 已支持）
+
+**UI**：高级设置最后加 3 个 select，标签明确"不选则跟随主文件夹"。
+
+**Source 来源判定**：保持 v1.0 行为
+- `source = 'screenshot'`：截图按钮触发后 5s 内的导入
+- `source = 'files'`：runPoll 多文件路径
+- `source = 'clipboard'`：其余（含 macOS 系统截图 Cmd+Shift+Ctrl+4，因为我们无法区分按钮触发外的截图）
+
 ### 2.3 状态与反馈
 
 #### F8：状态展示

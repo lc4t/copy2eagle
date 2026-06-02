@@ -5,7 +5,40 @@ Format: [Keep a Changelog](https://keepachangelog.com) | Versioning: Major.Minor
 
 ## [Unreleased]
 
-_（待 v1.4+ 累积）_
+_（待 v1.5+ 累积）_
+
+---
+
+## [1.4.0] — 2026-06-02
+
+第一波架构红利兑现：多文件夹路由 + 全期计数 + EN 翻译完整化。
+
+### Added
+
+- **多文件夹路由（F12）**：截图 / 复制 / 多文件三种来源可分别配置不同的 Eagle 文件夹
+  - config 新增 `folderIdScreenshot` / `folderIdClipboard` / `folderIdFiles`（默认 null，跟随主 folder）
+  - `lib/config.js: resolveTargetFolder(source)` 集中决定落地文件夹
+  - `lib/poll.js` runPoll：单图 + 多文件路径都按 source 解析
+  - enable 时同步 backfill 主 folder + 后台异步 backfill 各路由 folder（不阻塞 polling）
+  - UI 高级设置末尾加 3 个可选 select，标注"不选则跟随主文件夹"
+- **持久化全期计数**：跨 session 显示"累计 N 张"
+  - 独立 localStorage key `clipboardWatcher.stats`，与 config 解耦
+  - `incrementToday` 同步 +1 lifetime，写盘失败静默
+  - 状态行格式：`今日已保存：N 张 · 累计 M 张`（M = 0 时不显示"累计"段）
+- **EN 翻译表**：i18n 完整 zh / en 双表
+  - 67 个 key 全部对齐（自动校验通过）
+  - `detectLocale()` 用 `navigator.language` 自动选 zh / en
+  - 加新语言只需补 `messages.xx` 表
+
+### Changed
+
+- 入库 source 判定保持现状：截图按钮触发 5s 内 = `screenshot`，多文件路径 = `files`，其余 = `clipboard`
+- 状态行展示新增 lifetime（仅当 > 0）
+
+### Notes
+
+- 路由 select 只在高级设置里出现，**首次启用默认行为不变**——所有图仍进主文件夹
+- macOS 用户用系统快捷键截图（非插件按钮），来源被归为 `clipboard`，会落到剪贴板路由文件夹（如果配置了）。这是已知取舍——区分需要 Eagle 暴露剪贴板 owner API，目前未公开
 
 ---
 

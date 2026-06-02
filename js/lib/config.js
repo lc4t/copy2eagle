@@ -21,6 +21,11 @@ function buildDefaults() {
     version: CONFIG_VERSION,
     enabled: false,
     folderId: null,
+    // 多文件夹路由（v1.4 / F12）：按来源分流
+    // null = 使用主 folderId；string = 该来源专属文件夹
+    folderIdScreenshot: null,
+    folderIdClipboard: null,
+    folderIdFiles: null,
     intervalMs: 1000,
     tags: defaultTags(),
     notifyOnImport: true,
@@ -45,7 +50,38 @@ function normalizeConfig(raw) {
   }
   if (typeof merged.importMixedContent !== 'boolean') merged.importMixedContent = true
   if (typeof merged.importMultipleFiles !== 'boolean') merged.importMultipleFiles = false
+  // 路由字段：必须是 string 或 null
+  for (const k of ['folderIdScreenshot', 'folderIdClipboard', 'folderIdFiles']) {
+    if (typeof merged[k] !== 'string' || !merged[k]) merged[k] = null
+  }
   return merged
+}
+
+/**
+ * 根据来源解析目标文件夹（v1.4 / F12）。
+ * @param {'screenshot'|'clipboard'|'files'} source
+ * @returns {string|null}
+ */
+function resolveTargetFolder(source, config) {
+  const c = config || state.config || buildDefaults()
+  if (source === 'screenshot' && c.folderIdScreenshot) return c.folderIdScreenshot
+  if (source === 'clipboard' && c.folderIdClipboard) return c.folderIdClipboard
+  if (source === 'files' && c.folderIdFiles) return c.folderIdFiles
+  return c.folderId
+}
+
+/**
+ * 列出当前配置里所有被使用的 folderId（去重）。
+ * 用于 enable 时一次性 backfill。
+ */
+function getActiveFolderIds(config) {
+  const c = config || state.config || buildDefaults()
+  const ids = new Set()
+  if (c.folderId) ids.add(c.folderId)
+  if (c.folderIdScreenshot) ids.add(c.folderIdScreenshot)
+  if (c.folderIdClipboard) ids.add(c.folderIdClipboard)
+  if (c.folderIdFiles) ids.add(c.folderIdFiles)
+  return Array.from(ids)
 }
 
 function loadConfig() {
@@ -78,4 +114,6 @@ module.exports = {
   loadConfig,
   saveConfig,
   defaultTags,
+  resolveTargetFolder,
+  getActiveFolderIds,
 }

@@ -38,6 +38,7 @@ const {
   detectImageSource,
   getImageDimensions,
 } = require('./import')
+const { resolveTargetFolder } = require('./config')
 
 let pollTimer = null
 let pollInFlight = false
@@ -130,7 +131,8 @@ async function runPoll() {
       const batchKey = fileBatchKey(imagePaths)
       if (batchKey && batchKey === state.lastFileBatchKey) return
       state.lastFileBatchKey = batchKey
-      const folderId = state.config.folderId
+      // v1.4：多文件按 source='files' 解析
+      const folderId = resolveTargetFolder('files', state.config)
       const { added, skipped } = await importFileBatch(imagePaths, folderId)
       eagle.log.info(
         `[clipboard-watcher] multi-file (from file-url) added=${added} skipped=${skipped} total=${imagePaths.length}`
@@ -165,7 +167,9 @@ async function runPoll() {
       resetIdleStreak()
       state.lastFormatsKey = probe.format
 
-      const folderId = state.config.folderId
+      // v1.4：单图按 source（screenshot / clipboard）解析目标文件夹
+      const source = detectImageSource()
+      const folderId = resolveTargetFolder(source, state.config)
 
       if (state.config.duplicateStrategy === 'skip') {
         const set = state.hashSetByFolder.get(folderId)
@@ -180,7 +184,6 @@ async function runPoll() {
         }
       }
 
-      const source = detectImageSource()
       const dims = getImageDimensions(img)
       await importImage(buffer, hash, folderId, { source, dims })
     } else {

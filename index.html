@@ -288,6 +288,19 @@
       align-items: center;
       gap: 8px;
     }
+    .cw-routing-block {
+      margin-top: 8px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--cw-border);
+    }
+    .cw-route-sublabel {
+      font-size: 11px;
+      color: var(--cw-muted);
+      margin-top: 6px;
+    }
+    .cw-route-select {
+      margin-top: 2px;
+    }
     .cw-error-banner {
       display: none;
       padding: 8px 10px;
@@ -309,7 +322,7 @@
   <main class="cw-app">
     <header class="cw-header">
       <h1>Clipboard Watcher</h1>
-      <span class="cw-version" id="cw-version">v1.3.0</span>
+      <span class="cw-version" id="cw-version">v1.4.0</span>
     </header>
 
     <section class="cw-status">
@@ -397,6 +410,26 @@
           <label for="cw-multi-file" id="cw-multi-file-label"></label>
         </div>
         <span class="cw-hint" id="cw-multi-file-hint"></span>
+
+        <div class="cw-field cw-routing-block">
+          <label id="cw-routing-section-label"></label>
+          <span class="cw-hint" id="cw-routing-section-hint"></span>
+
+          <label for="cw-route-screenshot" class="cw-route-sublabel" id="cw-route-screenshot-label"></label>
+          <select id="cw-route-screenshot" class="cw-route-select">
+            <option value=""></option>
+          </select>
+
+          <label for="cw-route-clipboard" class="cw-route-sublabel" id="cw-route-clipboard-label"></label>
+          <select id="cw-route-clipboard" class="cw-route-select">
+            <option value=""></option>
+          </select>
+
+          <label for="cw-route-files" class="cw-route-sublabel" id="cw-route-files-label"></label>
+          <select id="cw-route-files" class="cw-route-select">
+            <option value=""></option>
+          </select>
+        </div>
       </div>
     </details>
   </main>

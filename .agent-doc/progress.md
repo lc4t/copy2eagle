@@ -21,6 +21,7 @@
 | M9 | v1.2.0：主题 bug 修复 + Linux 多文件 | ✅ Released | 2026-05-31 | - |
 | M10 | v1.2.1 hotfix #1：Finder 复制文件时不再误导入系统预览 icon | ✅ Released | 2026-06-02 | #1 |
 | M11 | v1.3.0 架构重构：plugin.js 拆 12 个 lib 模块 + i18n bootstrap | ✅ Released | 2026-06-02 | - |
+| M12 | v1.4.0：多文件夹路由 + 全期计数 + EN 翻译完整化 | ✅ Released | 2026-06-02 | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -396,6 +397,26 @@
 **风险点**：Eagle webview 必须支持 `require('./lib/xxx')` 相对路径解析。若加载报错，回退 v1.2.1 后起 v1.3.1 改方案。
 
 **Release**：https://github.com/lc4t/copy2eagle/releases/tag/v1.3.0
+
+## M12 完成回顾（2026-06-02）→ v1.4.0
+
+**触发**：用户在 v1.3.0 架构铺好后说"干"——第一波架构红利兑现。
+
+**三件事**：
+1. **多文件夹路由（F12）**：截图 / 复制 / 多文件按来源分流到不同 folder
+   - 4 字段：`folderId`（主，必填）+ `folderIdScreenshot / folderIdClipboard / folderIdFiles`（可选）
+   - `config.js: resolveTargetFolder(source)` 一处决策
+   - enable 时同步 backfill 主 folder，后台异步 backfill 其他路由 folder
+2. **持久化全期计数**：独立 localStorage key `clipboardWatcher.stats`，UI 状态行展示"今日 N · 累计 M"
+3. **EN 翻译表**：67 个 key 完整 zh / en 对齐（自动校验通过），`navigator.language` 自动选
+
+**架构投资落地**：M11 拆模块后，这 3 个特性各只改 2-3 个 lib 文件，没碰其他模块——证明架构边界是对的。
+
+**已知取舍**：
+- macOS 系统快捷键截图（非按钮）source 归为 `clipboard`，会落到剪贴板路由文件夹
+- 区分需要 Eagle 暴露剪贴板 owner API，目前未公开
+
+**Release**：https://github.com/lc4t/copy2eagle/releases/tag/v1.4.0
 
 ## M9 完成回顾（2026-05-31）→ v1.2.0
 

@@ -16,8 +16,8 @@
  */
 
 const { ERROR_CODES } = require('./lib/constants')
-const { state, setRenderer, scheduleRender, rolloverTodayIfNeeded, setRuntimeStatus, setLastError } = require('./lib/state')
-const { buildDefaults, loadConfig, saveConfig } = require('./lib/config')
+const { state, setRenderer, scheduleRender, rolloverTodayIfNeeded, setRuntimeStatus, setLastError, loadStats } = require('./lib/state')
+const { buildDefaults, loadConfig, saveConfig, getActiveFolderIds } = require('./lib/config')
 const { detectLocale, setLocale } = require('./lib/i18n')
 const { refreshTheme, isDarkTheme, bindThemeListener } = require('./lib/theme')
 const { refreshFolders, backfillFolder, resetFolderIndex } = require('./lib/folders')
@@ -39,8 +39,17 @@ async function enableWatcher() {
   setRuntimeStatus('running')
   scheduleRender()
 
-  if (!state.hashSetByFolder.has(state.config.folderId)) {
-    await backfillFolder(state.config.folderId)
+  // v1.4：backfill 主 folder 同步等待；其他活跃 folder（每个来源的专属）后台异步 backfill
+  const activeIds = getActiveFolderIds(state.config)
+  const mainId = state.config.folderId
+  if (!state.hashSetByFolder.has(mainId)) {
+    await backfillFolder(mainId)
+  }
+  for (const id of activeIds) {
+    if (id === mainId) continue
+    if (!state.hashSetByFolder.has(id)) {
+      backfillFolder(id).catch(() => {})
+    }
   }
   startPolling()
   eagle.log.info('[clipboard-watcher] watcher enabled')
@@ -98,6 +107,7 @@ function getSnapshot() {
     folders: state.folders,
     folderLabel: state.config.folderId ? state.folderIndex.get(state.config.folderId) || null : null,
     todayCount: state.todayCount,
+    lifetimeCount: state.lifetimeCount,
     lastImport: state.lastImport,
     recentImports: state.recentImports.slice(),
     lastError: state.lastError,
@@ -153,6 +163,7 @@ eagle.onPluginCreate(async () => {
 
   rolloverTodayIfNeeded()
   loadConfig()
+  loadStats()
   await refreshTheme()
   await refreshFolders()
 

@@ -31,7 +31,11 @@ function renderStatus(snapshot) {
   } else {
     text.textContent = t('status.idle')
   }
-  count.textContent = t('status.today_count', null, snapshot.todayCount)
+  if (snapshot.lifetimeCount && snapshot.lifetimeCount > 0) {
+    count.textContent = `${t('status.today_count', null, snapshot.todayCount)} · ${t('status.lifetime_count', null, snapshot.lifetimeCount)}`
+  } else {
+    count.textContent = t('status.today_count', null, snapshot.todayCount)
+  }
 }
 
 function renderError(snapshot) {
@@ -134,6 +138,29 @@ function renderAdvanced(snapshot) {
   else if (snapshot.platform === 'win32') multiHint.textContent = t('fields.multi_file_hint_win')
   else if (snapshot.platform === 'linux') multiHint.textContent = t('fields.multi_file_hint_linux')
   else multiHint.textContent = t('fields.multi_file_hint_unknown')
+
+  // v1.4 路由 3 个 select
+  renderRoutingSelect('cw-route-screenshot', snapshot.config.folderIdScreenshot, snapshot)
+  renderRoutingSelect('cw-route-clipboard', snapshot.config.folderIdClipboard, snapshot)
+  renderRoutingSelect('cw-route-files', snapshot.config.folderIdFiles, snapshot)
+}
+
+function renderRoutingSelect(elId, current, snapshot) {
+  const sel = $(elId)
+  if (!sel) return
+  sel.innerHTML = ''
+  const blank = document.createElement('option')
+  blank.value = ''
+  blank.textContent = t('fields.routing_use_main')
+  sel.appendChild(blank)
+  for (const f of snapshot.folders) {
+    const opt = document.createElement('option')
+    opt.value = f.id
+    opt.textContent = f.label
+    if (f.id === current) opt.selected = true
+    sel.appendChild(opt)
+  }
+  if (!current) sel.value = ''
 }
 
 function renderRecent(snapshot) {
@@ -193,6 +220,11 @@ function renderStaticLabels() {
     ['cw-mixed-label', 'fields.mixed_label'],
     ['cw-multi-file-label', 'fields.multi_file_label'],
     ['cw-screenshot', 'fields.screenshot_button'],
+    ['cw-routing-section-label', 'fields.routing_section_label'],
+    ['cw-routing-section-hint', 'fields.routing_section_hint'],
+    ['cw-route-screenshot-label', 'fields.routing_screenshot_label'],
+    ['cw-route-clipboard-label', 'fields.routing_clipboard_label'],
+    ['cw-route-files-label', 'fields.routing_files_label'],
   ]
   for (const [id, key] of map) {
     const el = $(id)
@@ -275,6 +307,17 @@ function bindEvents() {
   })
   $('cw-reset-index').addEventListener('click', () => {
     safeAction('resetIndex', () => CW.resetFolderIndex())
+  })
+
+  // v1.4：路由 select
+  $('cw-route-screenshot').addEventListener('change', (e) => {
+    safeAction('routeScreenshot', () => CW.saveConfig({ folderIdScreenshot: e.target.value || null }))
+  })
+  $('cw-route-clipboard').addEventListener('change', (e) => {
+    safeAction('routeClipboard', () => CW.saveConfig({ folderIdClipboard: e.target.value || null }))
+  })
+  $('cw-route-files').addEventListener('change', (e) => {
+    safeAction('routeFiles', () => CW.saveConfig({ folderIdFiles: e.target.value || null }))
   })
 }
 

@@ -71,6 +71,34 @@ const state = {
 
   // 最近导入
   recentImports: [],
+
+  // 全期计数（v1.4）：跨 session 持久化的"保存总数"
+  lifetimeCount: 0,
+}
+
+// 全期计数独立 localStorage key，与 config 解耦
+const STATS_KEY = 'clipboardWatcher.stats'
+
+function loadStats() {
+  try {
+    const raw = localStorage.getItem(STATS_KEY)
+    if (raw) {
+      const obj = JSON.parse(raw)
+      if (typeof obj.lifetimeCount === 'number' && obj.lifetimeCount >= 0) {
+        state.lifetimeCount = obj.lifetimeCount
+      }
+    }
+  } catch {
+    state.lifetimeCount = 0
+  }
+}
+
+function saveStats() {
+  try {
+    localStorage.setItem(STATS_KEY, JSON.stringify({ lifetimeCount: state.lifetimeCount }))
+  } catch {
+    // 静默：stats 写失败不影响主流程
+  }
 }
 
 // ─── render 桥接：plugin.js 启动时塞进来 ───
@@ -119,6 +147,8 @@ function pushRecentImport(entry) {
 function incrementToday() {
   rolloverTodayIfNeeded()
   state.todayCount += 1
+  state.lifetimeCount += 1
+  saveStats()
 }
 
 module.exports = {
@@ -131,4 +161,6 @@ module.exports = {
   clearLastError,
   pushRecentImport,
   incrementToday,
+  loadStats,
+  saveStats,
 }
