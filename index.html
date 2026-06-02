@@ -309,7 +309,7 @@
   <main class="cw-app">
     <header class="cw-header">
       <h1>Clipboard Watcher</h1>
-      <span class="cw-version" id="cw-version">v1.0.0</span>
+      <span class="cw-version" id="cw-version">v1.3.0</span>
     </header>
 
     <section class="cw-status">
@@ -323,15 +323,15 @@
     <div class="cw-error-banner" id="cw-error-banner"></div>
 
     <section class="cw-field">
-      <label for="cw-folder">保存到 Eagle 的哪个文件夹</label>
+      <label for="cw-folder" id="cw-folder-label"></label>
       <select id="cw-folder">
-        <option value="">请选择文件夹…</option>
+        <option value=""></option>
       </select>
-      <span class="cw-hint" id="cw-folder-hint">选择文件夹后才能开始自动保存</span>
+      <span class="cw-hint" id="cw-folder-hint"></span>
     </section>
 
     <section class="cw-toggle-row">
-      <span class="cw-toggle-label">自动保存复制的图片</span>
+      <span class="cw-toggle-label" id="cw-toggle-label"></span>
       <label class="cw-switch">
         <input type="checkbox" id="cw-enabled" disabled />
         <span class="cw-slider"></span>
@@ -339,74 +339,64 @@
     </section>
 
     <section>
-      <button type="button" class="cw-primary-button" id="cw-screenshot" disabled>
-        立即截图
-      </button>
-      <span class="cw-hint" id="cw-screenshot-hint">
-        截图后会自动出现在 Eagle
-      </span>
+      <button type="button" class="cw-primary-button" id="cw-screenshot" disabled></button>
+      <span class="cw-hint" id="cw-screenshot-hint"></span>
     </section>
 
     <section class="cw-field">
-      <label>最近保存</label>
-      <div class="cw-recent-empty" id="cw-recent">还没有保存过图片</div>
+      <label id="cw-recent-label"></label>
+      <div class="cw-recent-empty" id="cw-recent"></div>
     </section>
 
     <details class="cw-advanced" id="cw-advanced">
-      <summary>高级设置</summary>
+      <summary id="cw-advanced-summary"></summary>
       <div class="cw-advanced-body">
         <div class="cw-field">
-          <label for="cw-interval">检查频率（秒）</label>
+          <label for="cw-interval" id="cw-interval-label"></label>
           <div class="cw-slider-row">
             <input type="range" id="cw-interval" min="0.5" max="5" step="0.5" value="1" />
-            <span class="cw-slider-value" id="cw-interval-value">1.0 秒</span>
+            <span class="cw-slider-value" id="cw-interval-value"></span>
           </div>
-          <span class="cw-hint" id="cw-interval-hint">
-            数字越小响应越快。macOS 14 及以上读取剪贴板时会出现"已粘贴自 Eagle"通知，把数字调大可减少通知次数
-          </span>
+          <span class="cw-hint" id="cw-interval-hint"></span>
         </div>
 
         <div class="cw-field">
-          <label for="cw-tags">自动加上的标签（用逗号分隔）</label>
+          <label for="cw-tags" id="cw-tags-label"></label>
           <input type="text" id="cw-tags" placeholder="clipboard-watcher" />
         </div>
 
         <div class="cw-field">
-          <label>遇到已有的相同图片</label>
+          <label id="cw-duplicate-label"></label>
           <div class="cw-radio-group">
             <label>
               <input type="radio" name="cw-duplicate" value="skip" checked />
-              跳过不再保存
+              <span id="cw-duplicate-skip-label"></span>
             </label>
             <label>
               <input type="radio" name="cw-duplicate" value="allow" />
-              再保存一份
+              <span id="cw-duplicate-allow-label"></span>
             </label>
           </div>
-          <span class="cw-hint">「跳过」会先检查文件夹里是否已存在同一张图</span>
-          <button type="button" class="cw-button cw-button-inline" id="cw-reset-index" disabled>
-            刷新已保存记录
-          </button>
-          <span class="cw-hint">在 Eagle 里手动删图后点这里，下次复制同图就会重新保存</span>
+          <span class="cw-hint" id="cw-duplicate-hint"></span>
+          <button type="button" class="cw-button cw-button-inline" id="cw-reset-index" disabled></button>
+          <span class="cw-hint" id="cw-reset-index-hint"></span>
         </div>
 
         <div class="cw-checkbox-row">
           <input type="checkbox" id="cw-notify" checked />
-          <label for="cw-notify">保存成功时发送系统通知</label>
+          <label for="cw-notify" id="cw-notify-label"></label>
         </div>
 
         <div class="cw-checkbox-row">
           <input type="checkbox" id="cw-mixed" checked />
-          <label for="cw-mixed">复制带文字的内容时，把里面的图片也保存</label>
+          <label for="cw-mixed" id="cw-mixed-label"></label>
         </div>
 
         <div class="cw-checkbox-row">
           <input type="checkbox" id="cw-multi-file" />
-          <label for="cw-multi-file">同时选中多张图片复制时也一并保存</label>
+          <label for="cw-multi-file" id="cw-multi-file-label"></label>
         </div>
-        <span class="cw-hint" id="cw-multi-file-hint">
-          在 Finder / 资源管理器选中多张图片复制，会一次性全部进 Eagle（最多 50 张）
-        </span>
+        <span class="cw-hint" id="cw-multi-file-hint"></span>
       </div>
     </details>
   </main>

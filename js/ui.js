@@ -1,22 +1,10 @@
 /*
- * Clipboard Watcher — ui.js
+ * ui.js — DOM 渲染 + 事件分发（v1.3.0：接 i18n）
  *
- * 仅做 DOM 渲染与事件分发。状态与配置全在 window.ClipboardWatcher（plugin.js）。
+ * 不持状态，只读 ClipboardWatcher.getSnapshot()，写通过 CW.xxx 方法回传。
  */
 
-const ERROR_MESSAGES = {
-  CONFIG_LOAD_FAILED: '之前的设置读不出来了，已经恢复默认设置。',
-  CONFIG_SAVE_FAILED: '设置保存不上，过会儿再试。',
-  FOLDER_FETCH_FAILED: '读不到 Eagle 的文件夹列表，确认 Eagle 还开着？',
-  NO_FOLDER_SELECTED: '先选一个目标文件夹。',
-  SCREENSHOT_UNSUPPORTED: '当前系统暂不支持「立即截图」按钮，请用系统截图（截图结果要进剪贴板）。',
-  SCREENSHOT_FAILED: '截图调用失败，过会儿再试。',
-  BACKFILL_FAILED: '检查文件夹里已有的图片时出错，本次仅按这次启动后的图片做去重。',
-  POLL_FAILED: '暂时读不到剪贴板，5 秒后再试。',
-  IMPORT_FAILED: '保存到 Eagle 失败，目标文件夹是不是被删了？',
-  TMP_WRITE_FAILED: '写入临时文件失败，磁盘是不是满了？',
-  UNKNOWN: '出错了，可以打开 Eagle 日志面板看看详情。',
-}
+const { t } = require('./lib/i18n')
 
 function $(id) {
   return document.getElementById(id)
@@ -34,24 +22,24 @@ function renderStatus(snapshot) {
   if (snapshot.indexing) {
     const { progress, total } = snapshot.indexing
     text.textContent = total > 0
-      ? `正在整理文件夹内容 ${progress}/${total}`
-      : '正在整理文件夹内容…'
+      ? t('status.indexing_with_total', null, progress, total)
+      : t('status.indexing')
   } else if (snapshot.runtimeStatus === 'running') {
-    text.textContent = '正在运行'
+    text.textContent = t('status.running')
   } else if (snapshot.runtimeStatus === 'error') {
-    text.textContent = '出错了'
+    text.textContent = t('status.error')
   } else {
-    text.textContent = '未运行'
+    text.textContent = t('status.idle')
   }
-  count.textContent = `今日已保存：${snapshot.todayCount} 张`
+  count.textContent = t('status.today_count', null, snapshot.todayCount)
 }
 
 function renderError(snapshot) {
   const banner = $('cw-error-banner')
   if (snapshot.lastError) {
-    let msg = ERROR_MESSAGES[snapshot.lastError] || ERROR_MESSAGES.UNKNOWN
+    let msg = t(`errors.${snapshot.lastError}`, t('errors.UNKNOWN'))
     if (snapshot.retryRemainingSec > 0 && snapshot.lastError === 'POLL_FAILED') {
-      msg = `暂时读不到剪贴板，${snapshot.retryRemainingSec} 秒后再试`
+      msg = t('status.retry_in', null, snapshot.retryRemainingSec)
     }
     banner.textContent = msg
     banner.dataset.visible = 'true'
@@ -69,7 +57,9 @@ function renderFolders(snapshot) {
 
   const placeholder = document.createElement('option')
   placeholder.value = ''
-  placeholder.textContent = snapshot.folders.length ? '请选择文件夹…' : '（Eagle 里还没有文件夹）'
+  placeholder.textContent = snapshot.folders.length
+    ? t('fields.folder_placeholder_select')
+    : t('fields.folder_placeholder_empty')
   select.appendChild(placeholder)
 
   for (const f of snapshot.folders) {
@@ -81,11 +71,11 @@ function renderFolders(snapshot) {
   }
 
   if (!snapshot.folders.length) {
-    hint.textContent = '没看到任何文件夹。确认 Eagle 已打开，并至少有一个文件夹。'
+    hint.textContent = t('fields.folder_hint_empty')
   } else if (!current) {
-    hint.textContent = '选择文件夹后才能开始自动保存'
+    hint.textContent = t('fields.folder_hint_pick')
   } else {
-    hint.textContent = `保存到：${snapshot.folderLabel || current}`
+    hint.textContent = t('fields.folder_hint_current', null, snapshot.folderLabel || current)
   }
 }
 
@@ -101,18 +91,18 @@ function renderScreenshotButton(snapshot) {
   const macSupported = snapshot.platform === 'darwin'
   btn.disabled = !macSupported || !snapshot.config.folderId
   if (!macSupported) {
-    hint.textContent = 'Windows 请用 Win+Shift+S 截图，打开「自动保存」后会自动出现在 Eagle'
+    hint.textContent = t('fields.screenshot_hint_win')
   } else if (!snapshot.config.folderId) {
-    hint.textContent = '先选好文件夹，截图就能自动出现在 Eagle'
+    hint.textContent = t('fields.screenshot_hint_no_folder')
   } else if (!snapshot.config.enabled) {
-    hint.textContent = '截图会先进剪贴板，打开上面的「自动保存」开关后会进 Eagle'
+    hint.textContent = t('fields.screenshot_hint_not_running')
   } else {
-    hint.textContent = '点一下选区，截图自动出现在 Eagle'
+    hint.textContent = t('fields.screenshot_hint_running')
   }
 }
 
 function formatSeconds(ms) {
-  return `${(ms / 1000).toFixed(1)} 秒`
+  return `${(ms / 1000).toFixed(1)} ${t('fields.interval_unit')}`
 }
 
 function renderAdvanced(snapshot) {
@@ -125,9 +115,7 @@ function renderAdvanced(snapshot) {
   tagsInput.placeholder = snapshot.defaults.tags
 
   const radios = document.getElementsByName('cw-duplicate')
-  for (const r of radios) {
-    r.checked = r.value === snapshot.config.duplicateStrategy
-  }
+  for (const r of radios) r.checked = r.value === snapshot.config.duplicateStrategy
 
   $('cw-notify').checked = !!snapshot.config.notifyOnImport
   $('cw-mixed').checked = !!snapshot.config.importMixedContent
@@ -136,33 +124,26 @@ function renderAdvanced(snapshot) {
   const resetBtn = $('cw-reset-index')
   resetBtn.disabled = !snapshot.config.folderId || !!snapshot.indexing
   if (snapshot.indexing) {
-    resetBtn.textContent = `正在整理 ${snapshot.indexing.progress}/${snapshot.indexing.total || '…'}`
+    resetBtn.textContent = t('fields.reset_index_indexing', null, snapshot.indexing.progress, snapshot.indexing.total)
   } else {
-    resetBtn.textContent = '刷新已保存记录'
+    resetBtn.textContent = t('fields.reset_index_default')
   }
 
   const multiHint = $('cw-multi-file-hint')
-  if (snapshot.platform === 'darwin') {
-    multiHint.textContent = '在 Finder 中选中多张图片 Cmd+C，一次性全部进 Eagle（最多 50 张）'
-  } else if (snapshot.platform === 'win32') {
-    multiHint.textContent = '在资源管理器中选中多张图片 Ctrl+C，一次性全部进 Eagle（最多 50 张）'
-  } else if (snapshot.platform === 'linux') {
-    multiHint.textContent = '在文件管理器中选中多张图片 Ctrl+C 即可（需安装 wl-paste 或 xclip，最多 50 张）'
-  } else {
-    multiHint.textContent = '此功能在当前系统不可用'
-  }
+  if (snapshot.platform === 'darwin') multiHint.textContent = t('fields.multi_file_hint_mac')
+  else if (snapshot.platform === 'win32') multiHint.textContent = t('fields.multi_file_hint_win')
+  else if (snapshot.platform === 'linux') multiHint.textContent = t('fields.multi_file_hint_linux')
+  else multiHint.textContent = t('fields.multi_file_hint_unknown')
 }
 
 function renderRecent(snapshot) {
   const CW = window.ClipboardWatcher
   const box = $('cw-recent')
-  const list = snapshot.recentImports && snapshot.recentImports.length
-    ? snapshot.recentImports
-    : []
+  const list = snapshot.recentImports && snapshot.recentImports.length ? snapshot.recentImports : []
   if (!list.length) {
     box.classList.add('cw-recent-empty')
     box.classList.remove('cw-recent-list')
-    box.textContent = '还没有保存过图片'
+    box.textContent = t('fields.recent_empty')
     return
   }
   box.classList.remove('cw-recent-empty')
@@ -173,14 +154,13 @@ function renderRecent(snapshot) {
     card.className = 'cw-recent-card'
     if (entry.itemId) {
       card.classList.add('cw-recent-card-clickable')
-      card.title = '点击在 Eagle 中打开'
+      card.title = t('fields.recent_open_in_eagle')
       card.addEventListener('click', () => {
         if (CW && typeof CW.openItem === 'function') {
           safeAction('openItem', () => CW.openItem(entry.itemId))
         }
       })
     }
-
     const title = document.createElement('div')
     title.className = 'cw-recent-title'
     title.textContent = entry.name
@@ -193,6 +173,34 @@ function renderRecent(snapshot) {
 
     box.appendChild(card)
   }
+}
+
+function renderStaticLabels() {
+  // 静态文案：只渲染一次
+  const map = [
+    ['cw-folder-label', 'fields.folder_label'],
+    ['cw-toggle-label', 'fields.enable_label'],
+    ['cw-recent-label', 'fields.recent_label'],
+    ['cw-advanced-summary', 'fields.advanced_summary'],
+    ['cw-interval-label', 'fields.interval_label'],
+    ['cw-tags-label', 'fields.tags_label'],
+    ['cw-duplicate-label', 'fields.duplicate_label'],
+    ['cw-duplicate-skip-label', 'fields.duplicate_skip'],
+    ['cw-duplicate-allow-label', 'fields.duplicate_allow'],
+    ['cw-duplicate-hint', 'fields.duplicate_hint'],
+    ['cw-reset-index-hint', 'fields.reset_index_hint'],
+    ['cw-notify-label', 'fields.notify_label'],
+    ['cw-mixed-label', 'fields.mixed_label'],
+    ['cw-multi-file-label', 'fields.multi_file_label'],
+    ['cw-screenshot', 'fields.screenshot_button'],
+  ]
+  for (const [id, key] of map) {
+    const el = $(id)
+    if (el) el.textContent = t(key)
+  }
+  // hint 段
+  const intervalHint = $('cw-interval-hint')
+  if (intervalHint) intervalHint.textContent = t('fields.interval_hint')
 }
 
 function render() {
@@ -215,7 +223,7 @@ async function safeAction(label, fn) {
     await fn()
   } catch (err) {
     eagle.log.error(`[clipboard-watcher] ui action "${label}" failed: ${err && err.message ? err.message : err}`)
-    if (CW && !CW.state.lastError) CW.state.lastError = 'UNKNOWN'
+    if (CW && CW.state && !CW.state.lastError) CW.state.lastError = 'UNKNOWN'
   } finally {
     render()
   }
@@ -225,57 +233,46 @@ function bindEvents() {
   const CW = window.ClipboardWatcher
   if (!CW) return
 
+  // 静态文案先渲染一次
+  renderStaticLabels()
+
   $('cw-folder').addEventListener('change', (e) => {
     safeAction('selectFolder', () => CW.selectFolder(e.target.value || null))
   })
-
   $('cw-enabled').addEventListener('change', (e) => {
     safeAction('toggleEnabled', () => {
-      if (e.target.checked) {
-        CW.enableWatcher()
-      } else {
-        CW.disableWatcher()
-      }
+      if (e.target.checked) CW.enableWatcher()
+      else CW.disableWatcher()
     })
   })
-
   $('cw-screenshot').addEventListener('click', () => {
     safeAction('screenshot', () => CW.triggerScreenshot())
   })
-
   $('cw-interval').addEventListener('input', (e) => {
     const sec = Number(e.target.value)
-    $('cw-interval-value').textContent = `${sec.toFixed(1)} 秒`
+    $('cw-interval-value').textContent = `${sec.toFixed(1)} ${t('fields.interval_unit')}`
   })
   $('cw-interval').addEventListener('change', (e) => {
     const ms = Math.round(Number(e.target.value) * 1000)
     safeAction('intervalMs', () => CW.updateIntervalMs(ms))
   })
-
   $('cw-tags').addEventListener('change', (e) => {
     safeAction('tags', () => CW.saveConfig({ tags: e.target.value }))
   })
-
   for (const r of document.getElementsByName('cw-duplicate')) {
     r.addEventListener('change', (e) => {
-      if (e.target.checked) {
-        safeAction('duplicateStrategy', () => CW.saveConfig({ duplicateStrategy: e.target.value }))
-      }
+      if (e.target.checked) safeAction('duplicateStrategy', () => CW.saveConfig({ duplicateStrategy: e.target.value }))
     })
   }
-
   $('cw-notify').addEventListener('change', (e) => {
     safeAction('notifyOnImport', () => CW.saveConfig({ notifyOnImport: e.target.checked }))
   })
-
   $('cw-mixed').addEventListener('change', (e) => {
     safeAction('importMixedContent', () => CW.saveConfig({ importMixedContent: e.target.checked }))
   })
-
   $('cw-multi-file').addEventListener('change', (e) => {
     safeAction('importMultipleFiles', () => CW.saveConfig({ importMultipleFiles: e.target.checked }))
   })
-
   $('cw-reset-index').addEventListener('click', () => {
     safeAction('resetIndex', () => CW.resetFolderIndex())
   })

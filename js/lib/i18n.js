@@ -1,0 +1,119 @@
+/*
+ * lib/i18n.js — 字符串集中 + locale bootstrap
+ *
+ * 用法：const { t } = require('./lib/i18n'); t('errors.POLL_FAILED')
+ *
+ * 当前只接 zh-CN，但所有字符串走 t() 调用——下次加 en 只需补 messages.en，
+ * 把 currentLocale 切换即可。Plugin Center 国际化分发的基础。
+ */
+
+const zh = {
+  errors: {
+    CONFIG_LOAD_FAILED: '之前的设置读不出来了，已经恢复默认设置。',
+    CONFIG_SAVE_FAILED: '设置保存不上，过会儿再试。',
+    FOLDER_FETCH_FAILED: '读不到 Eagle 的文件夹列表，确认 Eagle 还开着？',
+    NO_FOLDER_SELECTED: '先选一个目标文件夹。',
+    SCREENSHOT_UNSUPPORTED: '当前系统暂不支持「立即截图」按钮，请用系统截图（截图结果要进剪贴板）。',
+    SCREENSHOT_FAILED: '截图调用失败，过会儿再试。',
+    BACKFILL_FAILED: '检查文件夹里已有的图片时出错，本次仅按这次启动后的图片做去重。',
+    POLL_FAILED: '暂时读不到剪贴板，5 秒后再试。',
+    IMPORT_FAILED: '保存到 Eagle 失败，目标文件夹是不是被删了？',
+    TMP_WRITE_FAILED: '写入临时文件失败，磁盘是不是满了？',
+    UNKNOWN: '出错了，可以打开 Eagle 日志面板看看详情。',
+  },
+  status: {
+    running: '正在运行',
+    idle: '未运行',
+    error: '出错了',
+    indexing: '正在整理文件夹内容',
+    indexing_with_total: (p, t) => `正在整理文件夹内容 ${p}/${t}`,
+    today_count: (n) => `今日已保存：${n} 张`,
+    retry_in: (sec) => `暂时读不到剪贴板，${sec} 秒后再试`,
+  },
+  fields: {
+    folder_label: '保存到 Eagle 的哪个文件夹',
+    folder_placeholder_select: '请选择文件夹…',
+    folder_placeholder_empty: '（Eagle 里还没有文件夹）',
+    folder_hint_pick: '选择文件夹后才能开始自动保存',
+    folder_hint_empty: '没看到任何文件夹。确认 Eagle 已打开，并至少有一个文件夹。',
+    folder_hint_current: (label) => `保存到：${label}`,
+    enable_label: '自动保存复制的图片',
+    screenshot_button: '立即截图',
+    screenshot_hint_default: '截图后会自动出现在 Eagle',
+    screenshot_hint_win: 'Windows 请用 Win+Shift+S 截图，打开「自动保存」后会自动出现在 Eagle',
+    screenshot_hint_no_folder: '先选好文件夹，截图就能自动出现在 Eagle',
+    screenshot_hint_not_running: '截图会先进剪贴板，打开上面的「自动保存」开关后会进 Eagle',
+    screenshot_hint_running: '点一下选区，截图自动出现在 Eagle',
+    recent_label: '最近保存',
+    recent_empty: '还没有保存过图片',
+    recent_open_in_eagle: '点击在 Eagle 中打开',
+    advanced_summary: '高级设置',
+    interval_label: '检查频率（秒）',
+    interval_unit: '秒',
+    interval_hint: '数字越小响应越快。macOS 14 及以上读取剪贴板时会出现“已粘贴自 Eagle”通知，把数字调大可减少通知次数',
+    tags_label: '自动加上的标签（用逗号分隔）',
+    duplicate_label: '遇到已有的相同图片',
+    duplicate_skip: '跳过不再保存',
+    duplicate_allow: '再保存一份',
+    duplicate_hint: '「跳过」会先检查文件夹里是否已存在同一张图',
+    reset_index_default: '刷新已保存记录',
+    reset_index_indexing: (p, t) => `正在整理 ${p}/${t || '…'}`,
+    reset_index_hint: '在 Eagle 里手动删图后点这里，下次复制同图就会重新保存',
+    notify_label: '保存成功时发送系统通知',
+    mixed_label: '复制带文字的内容时，把里面的图片也保存',
+    multi_file_label: '同时选中多张图片复制时也一并保存',
+    multi_file_hint_mac: '在 Finder 中选中多张图片 Cmd+C，一次性全部进 Eagle（最多 50 张）',
+    multi_file_hint_win: '在资源管理器中选中多张图片 Ctrl+C，一次性全部进 Eagle（最多 50 张）',
+    multi_file_hint_linux: '在文件管理器中选中多张图片 Ctrl+C 即可（需安装 wl-paste 或 xclip，最多 50 张）',
+    multi_file_hint_unknown: '此功能在当前系统不可用',
+  },
+  notify: {
+    title_normal: 'Clipboard Watcher',
+    title_error: 'Clipboard Watcher · 出错了',
+    saved_to: (label) => `已保存到 ${label}`,
+    multi_saved_to: (label, n) => `已保存到 ${label}（${n} 张）`,
+    import_failed: '保存到 Eagle 失败',
+    tmp_failed: '写入临时文件失败（磁盘满？）',
+    multi_all_failed: (n) => `${n} 个文件都没能保存（重复或失败）`,
+  },
+}
+
+const messages = { zh }
+let currentLocale = 'zh'
+
+/**
+ * 根据 path 取消息。支持 'errors.POLL_FAILED' 或 'status.today_count'（函数）。
+ * 函数项：调用 t('status.today_count', null, 42) → "今日已保存：42 张"
+ * 缺失时回退 fallback 或 path 本身。
+ */
+function t(path, fallback, ...args) {
+  const parts = path.split('.')
+  let v = messages[currentLocale]
+  for (const p of parts) {
+    if (!v || typeof v !== 'object') return fallback || path
+    v = v[p]
+  }
+  if (typeof v === 'function') return v(...args)
+  if (v === undefined || v === null) return fallback || path
+  return v
+}
+
+function setLocale(locale) {
+  if (messages[locale]) {
+    currentLocale = locale
+    return true
+  }
+  return false
+}
+
+function detectLocale() {
+  try {
+    const lang = (navigator && navigator.language) || 'zh'
+    if (lang.toLowerCase().startsWith('en')) return 'en'
+    return 'zh'
+  } catch {
+    return 'zh'
+  }
+}
+
+module.exports = { t, setLocale, detectLocale, messages }

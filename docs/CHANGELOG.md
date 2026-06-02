@@ -5,7 +5,55 @@ Format: [Keep a Changelog](https://keepachangelog.com) | Versioning: Major.Minor
 
 ## [Unreleased]
 
-_（待 v1.3+ 累积）_
+_（待 v1.4+ 累积）_
+
+---
+
+## [1.3.0] — 2026-06-02
+
+**架构重构版本，行为零变化**（与 v1.2.1 完全等价）。
+
+> 用户不会感知任何 UI / 功能 / 命令差异；这版本是给后续功能开发铺地基的。
+> 任何回归，请优先回退到 v1.2.1 验证；如能复现 bug 也烦请同时反馈 v1.2.1 是否同样存在。
+
+### Refactored
+
+- **`js/plugin.js` 单文件 1100 行拆为 12 个 lib 模块**：
+  ```
+  js/
+  ├── plugin.js          # 入口编排（~150 行）
+  ├── ui.js              # DOM 渲染 + 事件
+  └── lib/
+      ├── constants.js   # 全局常量 / 错误码 / format 候选
+      ├── utils.js       # 纯函数：pad/nowStamp/sleep/computeHash/parseTags
+      ├── state.js       # 全局 state + 受控 mutator
+      ├── config.js      # schema/defaults/load/save (localStorage)
+      ├── i18n.js        # 消息表（zh）+ t(key) + locale 检测
+      ├── theme.js       # Eagle 主题适配
+      ├── folders.js     # eagle.folder + 启动期回填
+      ├── clipboard.js   # 多平台 has(format) + 文件 URL 读取
+      ├── import.js      # 单图 + 多文件 → addFromPath
+      ├── screenshot.js  # macOS screencapture -ic
+      ├── notification.js# eagle.notification 节流封装
+      └── poll.js        # 轮询状态机 + adaptive + retry
+  ```
+- **i18n 启动**：所有 UI 字符串走 `t('namespace.key')`，未来加英文翻译只需补 `messages.en` 表
+  - 当前默认 zh；用 `navigator.language` 检测，将来 Eagle 提供 locale API 可切换
+  - 这版本只接 zh，避免半英半中
+- **state 集中**：所有可变状态在 `lib/state.js`，通过 `setRuntimeStatus / pushRecentImport / scheduleRender` 等 mutator 修改
+- **错误码集中**：原 `'CONFIG_LOAD_FAILED'` 等裸字符串改用 `ERROR_CODES.CONFIG_LOAD_FAILED` 枚举（i18n 拿文案）
+- **HTML 静态文案抽离**：`index.html` 里写死的中文全改空壳 + id，由 `renderStaticLabels()` 注入
+
+### Why
+
+- 原单文件改一处常常牵动多处
+- 新功能（自定义命名模板 / 多文件夹路由 / OCR）会涉及多个职责，需要清晰边界
+- i18n 是 Plugin Center 国际化分发的前置条件
+
+### Known notes
+
+- Eagle webview 必须支持 `require('./lib/xxx')` 相对路径解析（Electron renderer + nodeIntegration 标准行为，但具体取决于 Eagle 实现）
+- 若加载报错，回滚到 v1.2.1 后再起 v1.3.1 改方案
 
 ---
 
