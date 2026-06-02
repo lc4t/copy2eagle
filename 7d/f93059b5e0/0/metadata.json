@@ -1,0 +1,60 @@
+{
+  "cli_version": "0.6.1",
+  "checkpoint_id": "7df93059b5e0",
+  "session_id": "761ff9c0-8f5c-492f-aac4-403f227f2fd3",
+  "strategy": "manual-commit",
+  "created_at": "2026-06-02T17:00:04.353172Z",
+  "branch": "dev",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "931ddee51b6b",
+  "token_usage": {
+    "input_tokens": 673,
+    "cache_creation_tokens": 4405184,
+    "cache_read_tokens": 148161802,
+    "output_tokens": 401786,
+    "api_call_count": 541
+  },
+  "session_metrics": {
+    "turn_count": 7
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 1603,
+      "user_lines_removed": 1178,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "docs/CHANGELOG.md": 49,
+        "index.html": 24,
+        "js/lib/clipboard.js": 201,
+        "js/lib/config.js": 81,
+        "js/lib/constants.js": 99,
+        "js/lib/folders.js": 118,
+        "js/lib/i18n.js": 119,
+        "js/lib/import.js": 240,
+        "js/lib/notification.js": 45,
+        "js/lib/poll.js": 233,
+        "js/lib/screenshot.js": 38,
+        "js/lib/state.js": 134,
+        "js/lib/theme.js": 36,
+        "js/lib/utils.js": 61,
+        "js/plugin.js": 55,
+        "js/ui.js": 68,
+        "manifest.json": 1,
+        "package.json": 1
+      },
+      "user_removed_per_file": {
+        "docs/CHANGELOG.md": 1,
+        "index.html": 34,
+        "js/plugin.js": 1070,
+        "js/ui.js": 71,
+        "manifest.json": 1,
+        "package.json": 1
+      }
+    }
+  ]
+}
