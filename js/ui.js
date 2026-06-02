@@ -152,6 +152,7 @@ function renderAdvanced(snapshot) {
 }
 
 function renderRecent(snapshot) {
+  const CW = window.ClipboardWatcher
   const box = $('cw-recent')
   const list = snapshot.recentImports && snapshot.recentImports.length
     ? snapshot.recentImports
@@ -159,7 +160,7 @@ function renderRecent(snapshot) {
   if (!list.length) {
     box.classList.add('cw-recent-empty')
     box.classList.remove('cw-recent-list')
-    box.textContent = '尚无导入记录'
+    box.textContent = '还没有保存过图片'
     return
   }
   box.classList.remove('cw-recent-empty')
@@ -168,6 +169,15 @@ function renderRecent(snapshot) {
   for (const entry of list) {
     const card = document.createElement('div')
     card.className = 'cw-recent-card'
+    if (entry.itemId) {
+      card.classList.add('cw-recent-card-clickable')
+      card.title = '点击在 Eagle 中打开'
+      card.addEventListener('click', () => {
+        if (CW && typeof CW.openItem === 'function') {
+          safeAction('openItem', () => CW.openItem(entry.itemId))
+        }
+      })
+    }
 
     const title = document.createElement('div')
     title.className = 'cw-recent-title'

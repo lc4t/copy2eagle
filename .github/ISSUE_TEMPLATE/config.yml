@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 使用文档 / README
+    url: https://github.com/lc4t/copy2eagle/blob/dev/README.md
+    about: 安装、配置、设置项说明
+  - name: 📜 决策记录 / ADR
+    url: https://github.com/lc4t/copy2eagle/blob/dev/docs/decisions.md
+    about: 看看某个设计是不是已经讨论过
+  - name: ✉️ 邮件联系
+    url: mailto:lc4t0.0@gmail.com
+    about: 商业授权 / 涉及隐私不便公开讨论的事

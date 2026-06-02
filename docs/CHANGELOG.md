@@ -5,7 +5,32 @@ Format: [Keep a Changelog](https://keepachangelog.com) | Versioning: Major.Minor
 
 ## [Unreleased]
 
-_（待 v1.1+ 累积）_
+_（待 v1.2+ 累积）_
+
+---
+
+## [1.1.0] — 2026-05-31
+
+体验增强 patch。基于 v1.0.0，无破坏性改动。
+
+### Added
+
+- **点击「最近保存」→ 在 Eagle 主窗口打开该 item**（`eagle.item.open(itemId)`）
+  - `addFromPath` 现在捕获返回的 itemId 写入 `recentImports`
+  - 可点击的卡片加 hover 反馈 + cursor pointer
+  - 多文件批量导入也同样支持
+- **导入失败时也发系统通知**（受同一个「保存成功时发送系统通知」开关控制）
+  - `addFromPath` 失败 / tmp 写入失败 / 多文件批量全失败 → 一条通知
+  - 1.5s 节流共享，不会刷屏
+- **GitHub Issue 模板**
+  - `.github/ISSUE_TEMPLATE/bug.yml`：Bug 反馈，含版本 / OS / Eagle 版本 / 复现步骤 / 高级设置状态 / 日志面板输出
+  - `.github/ISSUE_TEMPLATE/feature.yml`：功能建议，含痛点 / 期望体验 / 替代方案 / 优先级
+  - `config.yml`：禁用空白 issue，加文档/邮件入口
+  - 仓库 Issues 已启用（`gh repo edit --enable-issues`）
+
+### Changed
+
+- 通知文案：`已导入 1 张图片 → XX` → `已保存到 XX`（与 UI 统一为「保存」口径）
 
 ---
 

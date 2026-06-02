@@ -585,12 +585,13 @@ async function importFileBatch(paths, folderId) {
       const baseName = path.basename(p, path.extname(p))
       const tags = parseTags(state.config.tags)
       try {
-        await eagle.item.addFromPath(p, {
+        const itemIdResult = await eagle.item.addFromPath(p, {
           name: baseName,
           folders: [folderId],
           tags,
           annotation: `Source: Multi-file clipboard\nFrom: ${p}\nImported by Clipboard Watcher @ ${getHostname()}`,
         })
+        const itemId = typeof itemIdResult === 'string' ? itemIdResult : null
         let set = state.hashSetByFolder.get(folderId)
         if (!set) {
           set = new Set()
@@ -606,6 +607,7 @@ async function importFileBatch(paths, folderId) {
           importedAt: nowStamp(),
           source: 'files',
           dims: '',
+          itemId,
         }
         state.lastImport = entry
         pushRecentImport(entry)
@@ -620,6 +622,9 @@ async function importFileBatch(paths, folderId) {
   }
   if (added > 0) {
     maybeNotify(`${state.folderIndex.get(folderId) || folderId}（${added} 张）`)
+  } else if (skipped > 0 && paths.length > 0) {
+    // 全部失败 / 跳过，告知用户避免静默
+    maybeNotifyError(`${paths.length} 个文件都没能保存（重复或失败）`)
   }
   scheduleRender()
   return { added, skipped }
@@ -789,6 +794,7 @@ async function importImage(buffer, hash, folderId, options = {}) {
   } catch (err) {
     eagle.log.error(`[clipboard-watcher] mkdir tmp failed: ${err.message}`)
     state.lastError = 'TMP_WRITE_FAILED'
+    maybeNotifyError('写入临时文件失败（磁盘满？）')
     throw err
   }
 
@@ -801,6 +807,7 @@ async function importImage(buffer, hash, folderId, options = {}) {
   } catch (err) {
     eagle.log.error(`[clipboard-watcher] write tmp failed: ${err.message}`)
     state.lastError = 'TMP_WRITE_FAILED'
+    maybeNotifyError('写入临时文件失败（磁盘满？）')
     throw err
   }
 
@@ -809,12 +816,15 @@ async function importImage(buffer, hash, folderId, options = {}) {
   const tags = parseTags(state.config.tags)
   const folders = [folderId]
 
+  let itemId = null
   try {
-    await eagle.item.addFromPath(tmpPath, { name, folders, tags, annotation })
+    const result = await eagle.item.addFromPath(tmpPath, { name, folders, tags, annotation })
+    if (typeof result === 'string' && result) itemId = result
   } catch (err) {
     eagle.log.error(`[clipboard-watcher] addFromPath failed: ${err && err.message ? err.message : err}`)
     state.lastError = 'IMPORT_FAILED'
     cleanupTmp(tmpPath)
+    maybeNotifyError('保存到 Eagle 失败')
     throw err
   }
 
@@ -837,6 +847,7 @@ async function importImage(buffer, hash, folderId, options = {}) {
     importedAt: nowStamp(ts),
     source,
     dims,
+    itemId,
   }
   state.lastImport = entry
   pushRecentImport(entry)
@@ -870,11 +881,28 @@ function maybeNotify(folderLabel) {
     if (eagle.notification && typeof eagle.notification.show === 'function') {
       eagle.notification.show({
         title: 'Clipboard Watcher',
-        description: `已导入 1 张图片 → ${folderLabel}`,
+        description: `已保存到 ${folderLabel}`,
       })
     }
   } catch (err) {
     eagle.log.warn(`[clipboard-watcher] notification failed: ${err && err.message ? err.message : err}`)
+  }
+}
+
+function maybeNotifyError(description) {
+  if (!state.config.notifyOnImport) return
+  const now = Date.now()
+  if (now - lastNotificationAt < NOTIFICATION_MIN_GAP_MS) return
+  lastNotificationAt = now
+  try {
+    if (eagle.notification && typeof eagle.notification.show === 'function') {
+      eagle.notification.show({
+        title: 'Clipboard Watcher · 出错了',
+        description,
+      })
+    }
+  } catch (err) {
+    eagle.log.warn(`[clipboard-watcher] error-notification failed: ${err && err.message ? err.message : err}`)
   }
 }
 
@@ -943,6 +971,20 @@ async function updateIntervalMs(intervalMs) {
   if (state.config.enabled && state.config.folderId) {
     stopPolling()
     startPolling()
+  }
+}
+
+/**
+ * 在 Eagle 主窗口里打开某个 item（点击「最近保存」卡片时调用）
+ */
+async function openItem(itemId) {
+  if (!itemId || typeof eagle.item.open !== 'function') return false
+  try {
+    await eagle.item.open(itemId)
+    return true
+  } catch (err) {
+    eagle.log.warn(`[clipboard-watcher] open item failed: ${err && err.message ? err.message : err}`)
+    return false
   }
 }
 
@@ -1025,6 +1067,7 @@ window.ClipboardWatcher = {
   buildDefaults,
   updateIntervalMs,
   resetFolderIndex,
+  openItem,
 }
 
 eagle.onPluginCreate(async () => {

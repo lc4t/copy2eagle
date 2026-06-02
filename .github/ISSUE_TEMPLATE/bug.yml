@@ -1,0 +1,113 @@
+name: 🐛 Bug 反馈 / Bug Report
+description: 插件没按预期工作？告诉我现象 + 复现步骤。
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        谢谢反馈。请尽量填齐以下字段，便于定位。如果是隐私相关 / 截图含敏感信息，可以发邮件 lc4t0.0@gmail.com。
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: 插件版本
+      description: 在 Eagle → 插件 → Clipboard Watcher 看；或下载的 `.eagleplugin` 文件名
+      placeholder: "v1.1.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 操作系统
+      multiple: false
+      options:
+        - macOS 15 (Sequoia)
+        - macOS 14 (Sonoma)
+        - macOS 13 及以下
+        - Windows 11
+        - Windows 10
+        - Linux（请在补充信息里写发行版）
+    validations:
+      required: true
+
+  - type: input
+    id: eagle-version
+    attributes:
+      label: Eagle 版本
+      description: Eagle → 关于 Eagle
+      placeholder: "Eagle 4.x"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 发生了什么 / 现象
+      description: 哪里不对？UI 表现 / 文件没出现 / 错误提示具体内容
+      placeholder: |
+        我开了「自动保存复制的图片」，复制图片后……
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望的行为
+      placeholder: 我以为图片会出现在 Eagle 文件夹里
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 越具体越好。如果偶发请说明触发频率。
+      value: |
+        1. 选好目标文件夹「XX」
+        2. 打开「自动保存复制的图片」
+        3. 在 XX 应用里复制 XX 图片
+        4. 等待 N 秒后……
+    validations:
+      required: true
+
+  - type: textarea
+    id: settings
+    attributes:
+      label: 高级设置状态（如果改过默认值）
+      description: 检查频率 / 重复处理 / 混排开关 / 多文件开关 这几项
+      placeholder: |
+        - 检查频率：1.0 秒
+        - 重复图片：跳过
+        - 图文混排：开
+        - 多文件复制：关
+    validations:
+      required: false
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Eagle 日志面板里的相关输出
+      description: Eagle → 菜单 → 显示日志面板 → 复制 `[clipboard-watcher]` 开头的几行
+      render: text
+      placeholder: |
+        [clipboard-watcher] poll error: ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图 / 屏幕录制（可选）
+      description: 拖图片到这里即可。涉及隐私可马赛克处理。
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充信息（可选）
+      description: 多机 Eagle 同步？特殊文件夹？固件 / 第三方剪贴板管理器？
+    validations:
+      required: false
