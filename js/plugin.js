@@ -713,8 +713,40 @@ async function runPoll() {
       throw new Error('eagle.clipboard.has is unavailable')
     }
 
+    // 1.5 文件 URL 优先判定（修 issue #1）
+    //   Finder / 资源管理器复制文件 / 文件夹 / PDF 时，macOS / Windows 会**同时**：
+    //     · 在剪贴板放 file URL
+    //     · 自动生成预览 icon 塞进 image/* 格式槽位
+    //   如果当成单图导入会把那张 icon 入库（用户想要的是文件本身，而不是图标）。
+    //   策略：只要存在 file URL，**就走多文件路径**（用户开了 importMultipleFiles 时），
+    //         否则**整轮跳过**——不导入 icon。
+    const hasFileUrl = probeAnyFormat(FILE_URL_FORMAT_CANDIDATES)
+    if (hasFileUrl) {
+      state.lastFormatsKey = null
+      resetIdleStreak()
+      if (!state.config.importMultipleFiles) return
+      const paths = await readClipboardFilePaths()
+      if (!paths.length) return
+      const imagePaths = paths.filter(isImagePath)
+      if (!imagePaths.length) return // 复制了非图片文件（PDF / 文件夹 / .docx 等），跳过
+      const batchKey = fileBatchKey(imagePaths)
+      if (batchKey && batchKey === state.lastFileBatchKey) return
+      state.lastFileBatchKey = batchKey
+      const folderId = state.config.folderId
+      const { added, skipped } = await importFileBatch(imagePaths, folderId)
+      eagle.log.info(
+        `[clipboard-watcher] multi-file (from file-url) added=${added} skipped=${skipped} total=${imagePaths.length}`
+      )
+      state.pollErrorCount = 0
+      if (state.runtimeStatus !== 'running') {
+        setRuntimeStatus('running')
+        scheduleRender()
+      }
+      return
+    }
+
     if (probe.format) {
-      // ───── 单张图片路径 ─────
+      // ───── 单张图片路径（无 file URL，确认是真图）─────
       // 1a. 混排判定（#2）：开关关闭时，若同时存在 text/html 或 text/plain 则跳过
       if (!state.config.importMixedContent) {
         if (probeAnyFormat(TEXT_FORMAT_CANDIDATES)) {
@@ -766,27 +798,9 @@ async function runPoll() {
       const dims = getImageDimensions(img)
       await importImage(buffer, hash, folderId, { source, dims })
     } else {
-      // ───── 多文件路径（#1 / F10）─────
+      // ───── 既没图也没 file URL，剪贴板空闲或仅文本 ─────
       state.lastFormatsKey = null
-      // 没有单图：剪贴板无活动 → 重置 idle streak（normal 模式）
       resetIdleStreak()
-      if (!state.config.importMultipleFiles) return
-      if (!probeAnyFormat(FILE_URL_FORMAT_CANDIDATES)) return
-
-      const paths = await readClipboardFilePaths()
-      if (!paths.length) return
-      const imagePaths = paths.filter(isImagePath)
-      if (!imagePaths.length) return
-
-      const batchKey = fileBatchKey(imagePaths)
-      if (batchKey && batchKey === state.lastFileBatchKey) return
-      state.lastFileBatchKey = batchKey
-
-      const folderId = state.config.folderId
-      const { added, skipped } = await importFileBatch(imagePaths, folderId)
-      eagle.log.info(
-        `[clipboard-watcher] multi-file batch added=${added} skipped=${skipped} total=${imagePaths.length}`
-      )
     }
 
     state.pollErrorCount = 0

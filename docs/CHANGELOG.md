@@ -9,6 +9,27 @@ _（待 v1.3+ 累积）_
 
 ---
 
+## [1.2.1] — 2026-06-02
+
+Hotfix [#1](https://github.com/lc4t/copy2eagle/issues/1)。
+
+### Fixed
+
+- **不再误导入 Finder / 资源管理器复制文件 / 文件夹 / PDF 时系统自动生成的预览 icon**（[#1](https://github.com/lc4t/copy2eagle/issues/1)）
+  - macOS / Windows 在用户对文件 Cmd/Ctrl+C 时，会**同时**在剪贴板放：① file URL ② 自动生成的预览图标（也是 `image/*` 格式）
+  - 之前 `runPoll` 看到 `image/*` 就当真图导入 → 图标进了 Eagle
+  - 修复：`runPoll` 在跑图片路径**之前**先 `probeAnyFormat(FILE_URL_FORMAT_CANDIDATES)`：
+    - 有 file URL → 是文件/文件夹复制场景，**跳过 icon**；只在用户开了「同时选中多张图片复制时也一并保存」时走多文件路径
+    - 无 file URL → 才走单图剪贴板路径（截图 / 浏览器复制 / 别的 App 真图）
+  - 行为收益：复制 PDF / 文件夹 / 非图片文件时**完全静默**，不再产生意外条目
+
+### Changed
+
+- 多文件路径从「单图分支的 else」前移到「file URL 优先判定」中，逻辑更清晰
+- 单图分支注释明确「无 file URL，确认是真图」
+
+---
+
 ## [1.2.0] — 2026-05-31
 
 跨平台完整化 + 主题 bug 修复。
