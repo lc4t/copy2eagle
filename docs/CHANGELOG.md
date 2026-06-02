@@ -5,7 +5,30 @@ Format: [Keep a Changelog](https://keepachangelog.com) | Versioning: Major.Minor
 
 ## [Unreleased]
 
-_（待 v1.2+ 累积）_
+_（待 v1.3+ 累积）_
+
+---
+
+## [1.2.0] — 2026-05-31
+
+跨平台完整化 + 主题 bug 修复。
+
+### Fixed
+
+- **LIGHTGRAY 主题被误判为 dark** —— 原 `isDarkTheme()` 用 `/DARK|GRAY|BLUE|PURPLE/i` 正则，`LIGHTGRAY` 含 `GRAY` 子串导致误判。换为精确 `Set` 匹配，dark 系列只含 `GRAY / DARK / BLUE / PURPLE`（K8）
+
+### Added
+
+- **Linux 多文件复制支持**（之前只 macOS / Windows）
+  - Wayland：`wl-paste --type text/uri-list`
+  - X11：`xclip -selection clipboard -t text/uri-list -o`
+  - 根据 `$WAYLAND_DISPLAY` 自动选择优先项；不可用时回落另一个
+  - 解析 `text/uri-list`：剥 `file://` 前缀 + URL decode
+  - 工具均缺失时静默失败，不影响其他路径
+
+### Changed
+
+- UI hint：多文件复制开关下方的提示文案，Linux 也明确支持（"在文件管理器中选中多张图片 Ctrl+C 即可（需安装 wl-paste 或 xclip）"）
 
 ---
 

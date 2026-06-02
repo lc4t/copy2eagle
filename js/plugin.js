@@ -291,8 +291,12 @@ async function refreshTheme() {
   return state.theme
 }
 
+// Eagle 主题名列表（K8）：'Auto' | 'LIGHT' | 'LIGHTGRAY' | 'GRAY' | 'DARK' | 'BLUE' | 'PURPLE'
+// dark 系列只包含 GRAY / DARK / BLUE / PURPLE；LIGHTGRAY 是浅色（v1.1.0 之前的正则会误判）
+const DARK_THEMES = new Set(['GRAY', 'DARK', 'BLUE', 'PURPLE'])
 function isDarkTheme() {
-  return /DARK|GRAY|BLUE|PURPLE/i.test(String(state.theme || ''))
+  const t = String(state.theme || '').toUpperCase()
+  return DARK_THEMES.has(t)
 }
 
 function setRuntimeStatus(status, errorCode = null) {
@@ -473,6 +477,29 @@ function probeAnyFormat(candidates) {
  * Windows: PowerShell `Get-Clipboard -Format FileDropList`
  * 返回 string[]；超时 / 出错都返回 []
  */
+// Linux: 解析 text/uri-list 输出 → POSIX 路径列表（剥 file:// 前缀 + URL decode）
+function parseUriList(stdout) {
+  if (typeof stdout !== 'string') return []
+  const out = []
+  for (const line of stdout.split(/\r?\n/)) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+    if (trimmed.startsWith('file://')) {
+      try {
+        const url = new URL(trimmed)
+        out.push(decodeURIComponent(url.pathname))
+      } catch {
+        // 退化：手动剥 file:// 前缀
+        out.push(decodeURIComponent(trimmed.replace(/^file:\/\//, '')))
+      }
+    } else if (trimmed.startsWith('/')) {
+      // xclip 偶尔直接给 POSIX 路径
+      out.push(trimmed)
+    }
+  }
+  return out.slice(0, MULTI_FILE_MAX)
+}
+
 function readClipboardFilePaths() {
   return new Promise((resolve) => {
     const platform = os.platform()
@@ -526,6 +553,50 @@ function readClipboardFilePaths() {
           resolve(parsePathList(stdout))
         }
       )
+    } else if (platform === 'linux') {
+      // Wayland 优先（wl-paste），fallback X11（xclip）。两个工具任一缺失就用另一个。
+      const isWayland = !!process.env.WAYLAND_DISPLAY
+      const tryWlPaste = () =>
+        new Promise((res) => {
+          execFile(
+            'wl-paste',
+            ['--type', 'text/uri-list'],
+            { timeout: SHELL_TIMEOUT_MS },
+            (err, stdout) => {
+              if (err) {
+                res(null)
+                return
+              }
+              res(parseUriList(stdout))
+            }
+          )
+        })
+      const tryXclip = () =>
+        new Promise((res) => {
+          execFile(
+            'xclip',
+            ['-selection', 'clipboard', '-t', 'text/uri-list', '-o'],
+            { timeout: SHELL_TIMEOUT_MS },
+            (err, stdout) => {
+              if (err) {
+                res(null)
+                return
+              }
+              res(parseUriList(stdout))
+            }
+          )
+        })
+      const order = isWayland ? [tryWlPaste, tryXclip] : [tryXclip, tryWlPaste]
+      ;(async () => {
+        for (const fn of order) {
+          const r = await fn()
+          if (r && r.length) {
+            resolve(r)
+            return
+          }
+        }
+        resolve([])
+      })()
     } else {
       resolve([])
     }

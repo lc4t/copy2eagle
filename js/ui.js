@@ -142,12 +142,14 @@ function renderAdvanced(snapshot) {
   }
 
   const multiHint = $('cw-multi-file-hint')
-  if (snapshot.platform !== 'darwin' && snapshot.platform !== 'win32') {
-    multiHint.textContent = '此功能仅在 macOS / Windows 可用'
-  } else if (snapshot.platform === 'darwin') {
+  if (snapshot.platform === 'darwin') {
     multiHint.textContent = '在 Finder 中选中多张图片 Cmd+C，一次性全部进 Eagle（最多 50 张）'
-  } else {
+  } else if (snapshot.platform === 'win32') {
     multiHint.textContent = '在资源管理器中选中多张图片 Ctrl+C，一次性全部进 Eagle（最多 50 张）'
+  } else if (snapshot.platform === 'linux') {
+    multiHint.textContent = '在文件管理器中选中多张图片 Ctrl+C 即可（需安装 wl-paste 或 xclip，最多 50 张）'
+  } else {
+    multiHint.textContent = '此功能在当前系统不可用'
   }
 }
 
