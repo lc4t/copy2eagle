@@ -17,6 +17,8 @@
 | M5 | adaptive polling + 重试倒计时 + 最近导入列表 | ✅ Done | 2026-05-31 | - |
 | M6 | 用户视角文案重写 + 打包验证 + README polish | ✅ Done | 2026-05-31 | - |
 | M7 | 开源发布准备（首次 v1.0.0 release） | ✅ Release 已建（v1.0.0 + .eagleplugin），待设计资产 + Plugin Center 提交 | 2026-05-31 | - |
+| M8 | v1.1.0：点击跳转 + 失败通知 + Issue 模板 | ✅ Released | 2026-05-31 | - |
+| M9 | v1.2.0：主题 bug 修复 + Linux 多文件 | ✅ Released | 2026-05-31 | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -352,17 +354,33 @@
   - Plugin Center 后台提交（材料已就位）
   - 端到端验证
 
+## M8 完成回顾（2026-05-31）→ v1.1.0
+
+- 点击「最近保存」卡片 → `eagle.item.open(itemId)` 在 Eagle 主窗口打开（`addFromPath` 返回值现在捕获）
+- 导入失败也发系统通知（`addFromPath` / tmp 写入 / 多文件批量全失败 → 一条通知；共享 1.5s 节流）
+- GitHub Issue 模板（bug.yml / feature.yml / config.yml）+ 仓库 Issues 启用（`gh repo edit --enable-issues`）
+- 通知文案统一「保存」口径
+- Release：https://github.com/lc4t/copy2eagle/releases/tag/v1.1.0
+
+## M9 完成回顾（2026-05-31）→ v1.2.0
+
+- **Bug 修**：`isDarkTheme()` 用 `/DARK|GRAY|BLUE|PURPLE/i` 正则，`LIGHTGRAY` 被误判为 dark 主题（含 `GRAY` 子串）。改为精确 `Set` 匹配
+- **Linux 多文件**：`wl-paste --type text/uri-list`（Wayland）/ `xclip -t text/uri-list -o`（X11），根据 `$WAYLAND_DISPLAY` 自动优先；解析 file:// + URL decode
+- UI hint：多文件开关下方文案补 Linux 说明
+- Release：https://github.com/lc4t/copy2eagle/releases/tag/v1.2.0
+
 ## 后续计划
 
-- **v1.0.x（hotfix）**：用户验证发现 bug → 修复 → patch 发布
-- **v1.1（候选）**：
-  - 多文件复制 Linux 支持（xclip / wl-paste）
-  - 「打开 Eagle 里的 item」点击跳转（需 Eagle 是否有 `eagle.item.open`）
-  - 暗色模式 7 种主题逐一适配（当前 DARK/GRAY/BLUE/PURPLE 都按 dark 渲染）
+- **v1.2.x（hotfix）**：用户验证发现 bug → 修复 → patch 发布
+- **v1.3（候选）**：
   - 自定义命名模板（用户配置 `{source}-{WxH}-{date}` 等）
-- **v1.2（候选）**：
-  - 多文件夹路由规则（按来源区分：截图 vs 复制）
+  - 持久化全期计数（"你已经保存了 N 张" 满足感）
+  - 首次空状态引导（无文件夹时大字 CTA）
+  - i18n 抽取（为 Plugin Center 全球分发准备）
+- **v1.4+（候选）**：
+  - 多文件夹路由规则（按来源区分：截图 vs 复制 vs 多文件）
   - OCR 文字提取自动打标（依赖 Eagle AI SDK）
+  - 全局快捷键（Eagle 插件 API 暂未公开）
 
 ## M1 完成回顾（2026-05-30）
 
