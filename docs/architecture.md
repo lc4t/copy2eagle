@@ -2,7 +2,44 @@
 
 > 模块边界、数据流、关键时序。代码落地后随时更新。
 
-## 1. 模块划分（v1.1 修订：剪贴板单路径）
+## 1. 模块划分（v1.3.0：12 个 lib 模块）
+
+```
+js/
+├── plugin.js          # 入口编排（~150 行）：lifecycle hooks + window.ClipboardWatcher 暴露
+├── ui.js              # DOM 渲染 + 事件分发；不持状态
+└── lib/
+    ├── constants.js   # 全局常量 / 错误码 ERROR_CODES / format 候选 / 文件 ext 白名单
+    ├── utils.js       # 纯函数：pad / nowStamp / tmpFileStamp / sleep / computeHash / getHostname / parseTags
+    ├── state.js       # state 对象 + 受控 mutator（setRuntimeStatus / pushRecentImport / scheduleRender ...）
+    ├── config.js      # schema / buildDefaults / normalizeConfig / loadConfig / saveConfig（localStorage）
+    ├── i18n.js        # messages.zh 表 + t(path, fallback, ...args) + detectLocale / setLocale
+    ├── theme.js       # DARK_THEMES Set + isDarkTheme + refreshTheme + bindThemeListener
+    ├── folders.js     # eagle.folder.getAll → flattenFolders / backfillFolder / resetFolderIndex
+    ├── clipboard.js   # eagle.clipboard.has 多 format 探测 / readClipboardFilePaths（osascript/PowerShell/wl-paste/xclip）
+    ├── import.js      # importImage / importFileBatch / buildItemName / buildAnnotation / openItem
+    ├── screenshot.js  # macOS screencapture -ic → 设 state.lastScreenshotAt → 由轮询接力
+    ├── notification.js# maybeNotify / maybeNotifyError + 1.5s 节流
+    └── poll.js        # 轮询状态机：setTimeout 链 + adaptive(idle/normal) + 5s 重试 + retry ticker
+```
+
+### 模块依赖（无循环）
+
+```
+ui ──→ i18n
+       │
+       ▼
+plugin ──→ state ←── config / theme / folders / clipboard / import / screenshot / notification / poll
+                                    │           │             │            │           │
+                                    └───────────┴─────────────┴────────────┴───────────┘
+                                                       │
+                                                       ▼
+                                                  utils / constants / i18n
+```
+
+所有模块通过 `state.js` 共享状态，避免环依赖。
+
+### 运行时数据流
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -16,27 +53,26 @@
 │           │ snapshot / saveConfig(patch)                     │
 │           ▼                                                  │
 │  ┌─────────────────┐         ┌───────────────────────────┐  │
-│  │   js/plugin.js  │ ──────▶ │ eagle.item.addFromPath    │  │
-│  │                 │         │ eagle.folder.getAll       │  │
+│  │   plugin.js     │ ──────▶ │ eagle.item.addFromPath    │  │
+│  │  + lib/*.js     │         │ eagle.folder.getAll       │  │
 │  │                 │ ──────▶ │ localStorage (config)     │  │
 │  │                 │ ──────▶ │ eagle.notification        │  │
 │  │  ┌───────────┐  │         │ eagle.log                 │  │
-│  │  │ Clipboard │  │         └───────────────────────────┘  │
-│  │  │  Poller   │  │                                         │
-│  │  └─────┬─────┘  │         ┌───────────────────────────┐  │
-│  │        │        │ ──────▶ │ electron.clipboard        │  │
+│  │  │  poll.js  │  │         └───────────────────────────┘  │
+│  │  └─────┬─────┘  │                                         │
+│  │        │        │         ┌───────────────────────────┐  │
+│  │        │        │ ──────▶ │ eagle.clipboard.has /     │  │
 │  │        │        │         │   .readImage()            │  │
-│  │  ┌─────┴─────┐  │         └───────────────────────────┘  │
-│  │  │ Screenshot│  │         ┌───────────────────────────┐  │
-│  │  │  Trigger  │  │ ──────▶ │ child_process.execFile    │  │
-│  │  │ (darwin)  │  │         │   screencapture -ic       │  │
-│  │  └─────┬─────┘  │         │   （结果进剪贴板，由       │  │
-│  │        │        │         │    Clipboard Poller 接力） │  │
-│  │  ┌─────┴─────┐  │         └───────────────────────────┘  │
-│  │  │ Import    │  │         ┌───────────────────────────┐  │
-│  │  │ Pipeline  │  │ ──────▶ │ os.tmpdir() / fs.writeFile│  │
-│  │  └───────────┘  │         └───────────────────────────┘  │
-│  └─────────────────┘                                         │
+│  │ ┌──────┴──────┐ │         └───────────────────────────┘  │
+│  │ │ screenshot  │ │         ┌───────────────────────────┐  │
+│  │ │  .js (mac)  │ │ ──────▶ │ child_process.execFile    │  │
+│  │ └──────┬──────┘ │         │   screencapture -ic       │  │
+│  │        │        │         │   osascript / PowerShell  │  │
+│  │ ┌──────┴──────┐ │         │   wl-paste / xclip        │  │
+│  │ │  import.js  │ │         └───────────────────────────┘  │
+│  │ └─────────────┘ │         ┌───────────────────────────┐  │
+│  │                 │ ──────▶ │ os.tmpdir() / fs.writeFile│  │
+│  └─────────────────┘         └───────────────────────────┘  │
 └──────────────────────────────────────────────────────────────┘
 ```
 

@@ -19,6 +19,8 @@
 | M7 | 开源发布准备（首次 v1.0.0 release） | ✅ Release 已建（v1.0.0 + .eagleplugin），待设计资产 + Plugin Center 提交 | 2026-05-31 | - |
 | M8 | v1.1.0：点击跳转 + 失败通知 + Issue 模板 | ✅ Released | 2026-05-31 | - |
 | M9 | v1.2.0：主题 bug 修复 + Linux 多文件 | ✅ Released | 2026-05-31 | - |
+| M10 | v1.2.1 hotfix #1：Finder 复制文件时不再误导入系统预览 icon | ✅ Released | 2026-06-02 | #1 |
+| M11 | v1.3.0 架构重构：plugin.js 拆 12 个 lib 模块 + i18n bootstrap | ✅ Released | 2026-06-02 | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -361,6 +363,39 @@
 - GitHub Issue 模板（bug.yml / feature.yml / config.yml）+ 仓库 Issues 启用（`gh repo edit --enable-issues`）
 - 通知文案统一「保存」口径
 - Release：https://github.com/lc4t/copy2eagle/releases/tag/v1.1.0
+
+## M10 完成回顾（2026-06-02）→ v1.2.1（hotfix #1）
+
+**触发**：用户提了 issue #1——复制文件夹 / PDF 时，系统自动生成的预览 icon 被导入 Eagle。
+
+**根因**：macOS / Windows 在用户对文件 / 文件夹 / PDF 做 Cmd/Ctrl+C 时，剪贴板里**同时**有 file URL + 系统自动生成的预览 icon（`image/*` 槽位）。我们的 `runPoll` 看到 `image/*` 就当真图导入。
+
+**修法**：`runPoll` 先 `probeAnyFormat(FILE_URL_FORMAT_CANDIDATES)`。有 file URL → 是"文件复制"场景，不导入 icon；只在用户开了多文件开关时走多文件路径（且只接受图片扩展名）。
+
+**Release**：https://github.com/lc4t/copy2eagle/releases/tag/v1.2.1
+**Issue 评论**：https://github.com/lc4t/copy2eagle/issues/1#issuecomment-4602429326
+
+## M11 完成回顾（2026-06-02）→ v1.3.0（架构重构）
+
+**触发**：用户判断"插件足够简单可以一步到位"，要求"先优化架构再做新功能"。
+
+**重构内容**：
+- `js/plugin.js` 单文件 1100 行 → 150 行入口编排器 + 12 个 `js/lib/` 模块
+  - `constants` / `utils` / `state` / `config` / `i18n` / `theme` / `folders` / `clipboard` / `import` / `screenshot` / `notification` / `poll`
+- 每模块单一职责，≤200 行
+- `state` 集中：mutator 暴露为 `setRuntimeStatus / pushRecentImport / scheduleRender` 等
+- 错误码集中：`ERROR_CODES` 枚举，配 i18n 表
+- HTML 中文硬编码全改空壳 + id，`renderStaticLabels()` 注入
+- i18n bootstrap：messages.zh 表 + `t(path, fallback, ...args)`，未来加 en 只需补表
+- JSDoc typedef 加在 state.js
+
+**行为**：与 v1.2.1 完全等价；用户感知零差异。
+
+**Pack 产物**：从 19KB → 27.6KB（19 个文件含 lib/）。
+
+**风险点**：Eagle webview 必须支持 `require('./lib/xxx')` 相对路径解析。若加载报错，回退 v1.2.1 后起 v1.3.1 改方案。
+
+**Release**：https://github.com/lc4t/copy2eagle/releases/tag/v1.3.0
 
 ## M9 完成回顾（2026-05-31）→ v1.2.0
 
