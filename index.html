@@ -301,6 +301,31 @@
     .cw-route-select {
       margin-top: 2px;
     }
+    .cw-template-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    .cw-link-button {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--cw-primary);
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .cw-link-button:hover { text-decoration: underline; }
+    .cw-template-preview {
+      display: flex;
+      gap: 4px;
+      align-items: baseline;
+      margin-top: 4px;
+    }
+    .cw-template-preview-text {
+      color: var(--cw-fg);
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+      font-size: 11px;
+    }
     .cw-error-banner {
       display: none;
       padding: 8px 10px;
@@ -322,7 +347,7 @@
   <main class="cw-app">
     <header class="cw-header">
       <h1>Clipboard Watcher</h1>
-      <span class="cw-version" id="cw-version">v1.4.0</span>
+      <span class="cw-version" id="cw-version">v1.5.0</span>
     </header>
 
     <section class="cw-status">
@@ -376,6 +401,19 @@
         <div class="cw-field">
           <label for="cw-tags" id="cw-tags-label"></label>
           <input type="text" id="cw-tags" placeholder="clipboard-watcher" />
+        </div>
+
+        <div class="cw-field">
+          <div class="cw-template-header">
+            <label for="cw-name-template" id="cw-name-template-label"></label>
+            <button type="button" class="cw-link-button" id="cw-name-template-reset"></button>
+          </div>
+          <input type="text" id="cw-name-template" placeholder="" />
+          <span class="cw-hint" id="cw-name-template-hint"></span>
+          <span class="cw-hint cw-template-preview">
+            <span id="cw-name-template-preview-label"></span>
+            <span id="cw-name-template-preview" class="cw-template-preview-text"></span>
+          </span>
         </div>
 
         <div class="cw-field">
@@ -434,7 +472,7 @@
     </details>
   </main>
 
-  <script src="js/plugin.js"></script>
-  <script src="js/ui.js"></script>
+  <!-- 单文件 bundle：bundler 把 js/lib/* + plugin + ui 拼一起，规避 Eagle webview 的 require 限制（issue #2） -->
+  <script src="js/bundle.js"></script>
 </body>
 </html>

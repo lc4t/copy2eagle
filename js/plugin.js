@@ -17,12 +17,13 @@
 
 const { ERROR_CODES } = require('./lib/constants')
 const { state, setRenderer, scheduleRender, rolloverTodayIfNeeded, setRuntimeStatus, setLastError, loadStats } = require('./lib/state')
-const { buildDefaults, loadConfig, saveConfig, getActiveFolderIds } = require('./lib/config')
+const { buildDefaults, loadConfig, saveConfig, getActiveFolderIds, DEFAULT_NAME_TEMPLATE } = require('./lib/config')
 const { detectLocale, setLocale } = require('./lib/i18n')
 const { refreshTheme, isDarkTheme, bindThemeListener } = require('./lib/theme')
 const { refreshFolders, backfillFolder, resetFolderIndex } = require('./lib/folders')
 const { startPolling, stopPolling, getEffectiveIntervalMs } = require('./lib/poll')
-const { openItem } = require('./lib/import')
+const { openItem, buildNameContext } = require('./lib/import')
+const { renderTemplate } = require('./lib/utils')
 const { triggerScreenshot } = require('./lib/screenshot')
 
 // ─── 用户操作入口（UI 调用）───
@@ -128,6 +129,19 @@ function getSnapshot() {
 
 // ─── 暴露给 ui.js ───
 
+/**
+ * UI 模板预览专用：用当前 state 算一个示例名。
+ * 不带任何副作用——专门为「实时预览」服务。
+ */
+function previewNameTemplate(template) {
+  const ctx = buildNameContext({
+    source: 'Screenshot',
+    dims: '1920x1080',
+    ts: new Date(),
+  })
+  return renderTemplate(template || DEFAULT_NAME_TEMPLATE, ctx)
+}
+
 window.ClipboardWatcher = {
   // 用户操作
   enableWatcher,
@@ -140,6 +154,8 @@ window.ClipboardWatcher = {
   // 配置
   saveConfig,
   buildDefaults,
+  DEFAULT_NAME_TEMPLATE,
+  previewNameTemplate,
   // 快照
   getSnapshot,
   // 内部访问（少数 UI 直接用）

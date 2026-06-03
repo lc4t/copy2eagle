@@ -22,6 +22,9 @@ const {
   parseTags,
   getHostname,
   computeHash,
+  renderTemplate,
+  shortDate,
+  shortTime,
 } = require('./utils')
 const {
   state,
@@ -50,9 +53,35 @@ function getImageDimensions(img) {
   return ''
 }
 
+/**
+ * 构造单图 / 截图导入的 item 名（v1.5：可自定义模板，F13）。
+ * - 模板取自 state.config.nameTemplate（normalize 保证非空）
+ * - 渲染失败 / 空 → 回退到默认行为
+ * - 多文件批量路径**不走此函数**，仍用源文件 basename
+ */
 function buildItemName(source, dims, ts) {
-  const prefix = source === 'screenshot' ? 'Screenshot' : 'Clipboard'
-  return [prefix, dims, nowStamp(ts)].filter(Boolean).join(' ')
+  const sourceLabel = source === 'screenshot' ? 'Screenshot' : 'Clipboard'
+  const ctx = buildNameContext({ source: sourceLabel, dims, ts })
+  const tpl = (state.config && state.config.nameTemplate) || '{source} {dims} {timestamp}'
+  const rendered = renderTemplate(tpl, ctx)
+  if (rendered) return rendered
+  // 兜底：所有 token 都空时回到默认拼法
+  return [sourceLabel, dims, nowStamp(ts)].filter(Boolean).join(' ')
+}
+
+function buildNameContext({ source, dims, ts, name }) {
+  const t = ts || new Date()
+  return {
+    source: source || '',
+    dims: dims || '',
+    timestamp: nowStamp(t),
+    date: shortDate(t),
+    time: shortTime(t),
+    hostname: getHostname(),
+    count: state.todayCount,
+    lifetime: state.lifetimeCount,
+    name: name || '',
+  }
 }
 
 function buildAnnotation(source, dims) {
@@ -233,6 +262,7 @@ module.exports = {
   detectImageSource,
   getImageDimensions,
   buildItemName,
+  buildNameContext,
   buildAnnotation,
   fileBatchKey,
   isImagePath,

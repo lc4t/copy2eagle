@@ -110,6 +110,7 @@ function formatSeconds(ms) {
 }
 
 function renderAdvanced(snapshot) {
+  const CW = window.ClipboardWatcher
   const intervalSec = snapshot.config.intervalMs / 1000
   $('cw-interval').value = intervalSec
   $('cw-interval-value').textContent = formatSeconds(snapshot.config.intervalMs)
@@ -117,6 +118,18 @@ function renderAdvanced(snapshot) {
   const tagsInput = $('cw-tags')
   tagsInput.value = snapshot.config.tags
   tagsInput.placeholder = snapshot.defaults.tags
+
+  // v1.5 命名模板
+  const tplInput = $('cw-name-template')
+  // 用户主动 focus 时不打断编辑（避免重渲染覆盖正在输入的内容）
+  if (document.activeElement !== tplInput) {
+    tplInput.value = snapshot.config.nameTemplate || ''
+  }
+  tplInput.placeholder = (CW && CW.DEFAULT_NAME_TEMPLATE) || '{source} {dims} {timestamp}'
+  const previewEl = $('cw-name-template-preview')
+  if (previewEl && CW && typeof CW.previewNameTemplate === 'function') {
+    previewEl.textContent = CW.previewNameTemplate(tplInput.value || tplInput.placeholder)
+  }
 
   const radios = document.getElementsByName('cw-duplicate')
   for (const r of radios) r.checked = r.value === snapshot.config.duplicateStrategy
@@ -219,6 +232,10 @@ function renderStaticLabels() {
     ['cw-notify-label', 'fields.notify_label'],
     ['cw-mixed-label', 'fields.mixed_label'],
     ['cw-multi-file-label', 'fields.multi_file_label'],
+    ['cw-name-template-label', 'fields.name_template_label'],
+    ['cw-name-template-hint', 'fields.name_template_hint'],
+    ['cw-name-template-preview-label', 'fields.name_template_preview_label'],
+    ['cw-name-template-reset', 'fields.name_template_reset'],
     ['cw-screenshot', 'fields.screenshot_button'],
     ['cw-routing-section-label', 'fields.routing_section_label'],
     ['cw-routing-section-hint', 'fields.routing_section_hint'],
@@ -318,6 +335,23 @@ function bindEvents() {
   })
   $('cw-route-files').addEventListener('change', (e) => {
     safeAction('routeFiles', () => CW.saveConfig({ folderIdFiles: e.target.value || null }))
+  })
+
+  // v1.5：命名模板（M13）
+  $('cw-name-template').addEventListener('input', (e) => {
+    const tpl = e.target.value
+    const previewEl = $('cw-name-template-preview')
+    if (previewEl && typeof CW.previewNameTemplate === 'function') {
+      previewEl.textContent = CW.previewNameTemplate(tpl || CW.DEFAULT_NAME_TEMPLATE)
+    }
+  })
+  $('cw-name-template').addEventListener('change', (e) => {
+    safeAction('nameTemplate', () => CW.saveConfig({ nameTemplate: e.target.value }))
+  })
+  $('cw-name-template-reset').addEventListener('click', () => {
+    safeAction('nameTemplateReset', () =>
+      CW.saveConfig({ nameTemplate: CW.DEFAULT_NAME_TEMPLATE || '{source} {dims} {timestamp}' })
+    )
   })
 }
 

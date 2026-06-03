@@ -183,6 +183,40 @@ function resolveTargetFolder(source, config) {
 - `source = 'files'`：runPoll 多文件路径
 - `source = 'clipboard'`：其余（含 macOS 系统截图 Cmd+Shift+Ctrl+4，因为我们无法区分按钮触发外的截图）
 
+#### F13：自定义命名模板（v1.5 新增）
+
+**核心诉求**：让用户决定 Eagle item 名字怎么拼。
+
+**Config**：`nameTemplate`（string），默认 `{source} {dims} {timestamp}`（还原 v1.4 行为）。
+
+**Token 表**：
+| Token | 含义 | 举例 |
+|---|---|---|
+| `{source}` | 来源类型 | `Screenshot` / `Clipboard` |
+| `{dims}` | 尺寸 WxH（无尺寸时为空） | `1920x1080` |
+| `{timestamp}` | 完整时间戳 | `2026-06-03 02:30:00` |
+| `{date}` | 日期 | `2026-06-03` |
+| `{time}` | 时间 | `02:30:00` |
+| `{hostname}` | 主机名 | `MacBook-Pro` |
+| `{count}` | 今日计数（含本次） | `5` |
+| `{lifetime}` | 累计计数（含本次） | `1234` |
+
+**渲染规则**（`lib/utils.js: renderTemplate`）：
+- 占位符替换；缺失 token 当空串
+- 连续空白合并为单空格
+- 末尾去空白
+- 渲染结果为空 → 回退默认模板
+
+**应用范围**：
+- 单图剪贴板路径 ✓
+- 截图按钮路径 ✓
+- 多文件批量路径 ❌ — 仍用源文件 basename（保持向后兼容）
+
+**UI**：
+- 高级设置加输入框 + 占位符 hint + 实时预览 + 「恢复默认」按钮
+- 实时预览：用 `{source=Screenshot, dims=1920x1080, ts=now()}` 作示例 ctx 渲染
+- 输入时只更新预览，change（失焦 / Enter）才落到 `saveConfig`，避免打断编辑
+
 ### 2.3 状态与反馈
 
 #### F8：状态展示

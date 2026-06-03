@@ -11,6 +11,9 @@ const {
 const { getHostname } = require('./utils')
 const { state, setLastError } = require('./state')
 
+// v1.5：自定义命名模板（F13）默认值——还原 v1.4 行为
+const DEFAULT_NAME_TEMPLATE = '{source} {dims} {timestamp}'
+
 function defaultTags() {
   const host = getHostname()
   return host ? `clipboard-watcher,${host}` : 'clipboard-watcher'
@@ -32,6 +35,7 @@ function buildDefaults() {
     duplicateStrategy: 'skip',
     importMixedContent: true,
     importMultipleFiles: false,
+    nameTemplate: DEFAULT_NAME_TEMPLATE,
   }
 }
 
@@ -53,6 +57,10 @@ function normalizeConfig(raw) {
   // 路由字段：必须是 string 或 null
   for (const k of ['folderIdScreenshot', 'folderIdClipboard', 'folderIdFiles']) {
     if (typeof merged[k] !== 'string' || !merged[k]) merged[k] = null
+  }
+  // 模板：空 / 非 string → 用默认
+  if (typeof merged.nameTemplate !== 'string' || !merged.nameTemplate.trim()) {
+    merged.nameTemplate = DEFAULT_NAME_TEMPLATE
   }
   return merged
 }
@@ -116,4 +124,5 @@ module.exports = {
   defaultTags,
   resolveTargetFolder,
   getActiveFolderIds,
+  DEFAULT_NAME_TEMPLATE,
 }

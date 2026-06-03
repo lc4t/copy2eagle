@@ -1,6 +1,6 @@
 {
   "name": "eagle-clipboard-watcher",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Eagle plugin that auto-imports clipboard images and macOS screenshots into a chosen Eagle folder.",
   "private": true,
   "author": "lc4t <lc4t0.0@gmail.com>",
@@ -25,8 +25,9 @@
     "node": ">=18"
   },
   "scripts": {
-    "pack": "rm -f eagle-clipboard-watcher.eagleplugin && zip -r eagle-clipboard-watcher.zip manifest.json index.html logo.png js -x '*.DS_Store' && mv eagle-clipboard-watcher.zip eagle-clipboard-watcher.eagleplugin",
-    "clean": "rm -f eagle-clipboard-watcher.eagleplugin eagle-clipboard-watcher.zip"
+    "build": "node build/bundle.js",
+    "pack": "npm run build && rm -f eagle-clipboard-watcher.eagleplugin && zip eagle-clipboard-watcher.zip manifest.json index.html logo.png js/bundle.js -x '*.DS_Store' && mv eagle-clipboard-watcher.zip eagle-clipboard-watcher.eagleplugin",
+    "clean": "rm -f eagle-clipboard-watcher.eagleplugin eagle-clipboard-watcher.zip js/bundle.js"
   },
   "dependencies": {},
   "devDependencies": {}

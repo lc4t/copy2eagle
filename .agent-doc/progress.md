@@ -22,6 +22,7 @@
 | M10 | v1.2.1 hotfix #1：Finder 复制文件时不再误导入系统预览 icon | ✅ Released | 2026-06-02 | #1 |
 | M11 | v1.3.0 架构重构：plugin.js 拆 12 个 lib 模块 + i18n bootstrap | ✅ Released | 2026-06-02 | - |
 | M12 | v1.4.0：多文件夹路由 + 全期计数 + EN 翻译完整化 | ✅ Released | 2026-06-02 | - |
+| M13 + M14 | v1.5.0：bundle 修 [#2]（v1.3 起面板空白）+ 命名模板（F13） | ✅ Released | 2026-06-03 | #2 |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -417,6 +418,34 @@
 - 区分需要 Eagle 暴露剪贴板 owner API，目前未公开
 
 **Release**：https://github.com/lc4t/copy2eagle/releases/tag/v1.4.0
+
+## M14 + M13 完成回顾（2026-06-03）→ v1.5.0
+
+**触发**：用户在 v1.4.0 加载插件后开 issue [#2]——「面板全空，所有按钮不可点，只有'未运行'」。
+
+**根因实锤**：v1.3.0 重构后 plugin.js 用 `require('./lib/xxx')` 加载 lib 模块。Eagle 4.x webview 的 `<script src>` 加载脚本里执行相对路径 `require()` 抛错——`window.ClipboardWatcher` 没建起来 → UI 渲染全跳过 →「未运行」是 HTML 残留的硬编码初始文本。这正是 v1.3.0 release notes 里我标注的风险点。
+
+**修法（M14）**：本地 bundler
+- 新增 `build/bundle.js`：read 所有 `js/lib/*.js` + `js/plugin.js` + `js/ui.js`，按依赖序拼成单个 `js/bundle.js`
+- 重写 `require('./xxx')` → `__cw_require('lib/xxx')`，配 `__cw_modules` 表
+- 模块用 IIFE 注入；plugin.js / ui.js 作入口 IIFE 跑副作用
+- `npm run build` 生成；`npm run pack` 自动先 build
+- `index.html` 改为只加载 `js/bundle.js`
+- 源码维持模块化（开发体验不变），ship 单文件（绕开 Eagle webview 限制）
+- 73.9KB bundle，3 套自动校验通过
+
+**顺带兑现（M13）**：命名模板（F13）
+- `nameTemplate` config 字段，默认 `{source} {dims} {timestamp}`
+- 8 个 token：`{source}` / `{dims}` / `{timestamp}` / `{date}` / `{time}` / `{hostname}` / `{count}` / `{lifetime}`
+- 多文件批量路径**不走模板**（保持向后兼容）
+- UI：输入框 + 实时预览 + 「恢复默认」链接；input 不立即保存避免打断编辑
+- `utils.js: renderTemplate(template, ctx)` 纯函数；`buildNameContext(...)` 在 import.js 暴露给 UI
+
+**架构投资再次兑现**：bundler 本身是新增模块，没改任何 lib 文件。模板特性只改了 utils / config / import / i18n / index.html / ui.js 共 6 个文件。其他 lib 模块完全无改动。
+
+**风险**：bundler 是新工具链，可能有 edge case（如复杂 `require` 表达式被正则漏掉）；目前所有 lib 都用简单 `require('./xxx')` 形式，已覆盖。
+
+**Release**：https://github.com/lc4t/copy2eagle/releases/tag/v1.5.0
 
 ## M9 完成回顾（2026-05-31）→ v1.2.0
 

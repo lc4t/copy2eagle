@@ -5,7 +5,43 @@ Format: [Keep a Changelog](https://keepachangelog.com) | Versioning: Major.Minor
 
 ## [Unreleased]
 
-_（待 v1.5+ 累积）_
+_（待 v1.6+ 累积）_
+
+---
+
+## [1.5.0] — 2026-06-03
+
+**重要修复 + 命名模板。v1.3.0 和 v1.4.0 用户请务必升级**——前两版在 Eagle webview 里**面板会全空**（issue [#2](https://github.com/lc4t/copy2eagle/issues/2)）。
+
+### Fixed
+
+- **[#2] 修复 v1.3.0 以来面板空白的回归**
+  - 根因：v1.3.0 把 `js/plugin.js` 拆为 `js/lib/*` 共 12 个模块，运行时用 `require('./lib/xxx')` 加载。
+  - 实测 Eagle 4.x webview 不支持 `<script src>` 加载的脚本里调用相对路径 `require()`——require 抛错 → `window.ClipboardWatcher` 没建起来 → UI 渲染全跳过。
+  - 修法：新增 `build/bundle.js` 本地 bundler，build 时把 `js/lib/*` + `js/plugin.js` + `js/ui.js` 按依赖顺序拼成单个 `js/bundle.js`。运行时 `index.html` 只加载这一个文件。
+  - 源码保持模块化（开发体验不退化），ship 单文件（绕开 Eagle webview 限制）。
+  - 新 `npm run build`；`npm run pack` 自动先 build 再打包。
+
+### Added
+
+- **自定义命名模板（F13）**：保存到 Eagle 的 item name 可自定义
+  - 配置：`nameTemplate`，默认 `{source} {dims} {timestamp}`（还原 v1.4 行为）
+  - 支持占位符：`{source}` / `{dims}` / `{timestamp}` / `{date}` / `{time}` / `{hostname}` / `{count}` / `{lifetime}`
+  - 多文件批量导入**不走模板**，仍用源文件名（保持向后兼容）
+  - UI：高级设置加输入框 + 实时预览 + 「恢复默认」链接
+  - 输入时不立即保存（不打断编辑），失焦或回车提交
+  - 模板为空时自动回退默认（不会让 item 没名字）
+
+### Changed
+
+- 项目结构：新增 `build/`、`js/lib/`、`js/bundle.js`（gitignored）；`index.html` 单一 script 入口
+- `package.json` 加 `build` script；`pack` 自动先 build
+- `.gitignore` 加 `js/bundle.js`（每次 build 重新生成）
+
+### Notes
+
+- 升级路径：直接覆盖安装 v1.5.0 `.eagleplugin`，配置不会丢（localStorage 不变）
+- 如果 v1.5.0 仍有空白问题，请在 issue [#2](https://github.com/lc4t/copy2eagle/issues/2) 留言，附 Eagle 日志面板的 `[bundle]` 开头错误（如有）
 
 ---
 
