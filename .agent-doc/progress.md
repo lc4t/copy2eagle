@@ -23,6 +23,7 @@
 | M11 | v1.3.0 架构重构：plugin.js 拆 12 个 lib 模块 + i18n bootstrap | ✅ Released | 2026-06-02 | - |
 | M12 | v1.4.0：多文件夹路由 + 全期计数 + EN 翻译完整化 | ✅ Released | 2026-06-02 | - |
 | M13 + M14 | v1.5.0：bundle 修 [#2]（v1.3 起面板空白）+ 命名模板（F13） | ✅ Released | 2026-06-03 | #2 |
+| M15 | v1.5.1 hotfix：manifest fullscreenable: false 防 macOS 全屏黑屏 | ✅ Released | 2026-06-03 | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 

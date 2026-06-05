@@ -9,6 +9,27 @@ _（待 v1.6+ 累积）_
 
 ---
 
+## [1.5.1] — 2026-06-03
+
+Hotfix：macOS 全屏 Eagle 下打开插件面板会跟着全屏 + 关闭时黑屏一闪。
+
+### Fixed
+
+- **manifest 加 `fullscreenable: false`**
+  - 之前 manifest 没声明这个字段 → Eagle 用默认值 `true` → 插件窗口被 macOS 当成"可全屏"
+  - 当 Eagle 在 full-screen Space 时，插件窗口跟随 Eagle Space 触发 fullscreen 转场动画 → 用户看到面板全屏、关闭时黑屏
+  - 显式 `fullscreenable: false` 后窗口不再支持全屏，macOS 把它当作普通浮动面板处理
+- **manifest 加 `maximizable: false`**（防御）
+  - macOS 上 fullscreenable: false 后，绿色按钮的行为退化为 maximize；显式禁掉避免任何尺寸跳变
+  - 配合现有 maxWidth: 460 / maxHeight: 640，彻底锁死窗口尺寸不会膨胀
+
+### Eagle manifest 字段参考（K15 新沉淀）
+
+完整可用键（v1.5.1 实测确认）：
+`url / width / height / minWidth / minHeight / maxWidth / maxHeight / alwaysOnTop / frame / fullscreenable / maximizable / minimizable / resizable / backgroundColor / childWindow / followCursor / multiple / runAfterInstall / serviceMode / devTools`
+
+---
+
 ## [1.5.0] — 2026-06-03
 
 **重要修复 + 命名模板。v1.3.0 和 v1.4.0 用户请务必升级**——前两版在 Eagle webview 里**面板会全空**（issue [#2](https://github.com/lc4t/copy2eagle/issues/2)）。

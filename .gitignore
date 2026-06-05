@@ -19,6 +19,14 @@ __MACOSX/
 # Build artifact（每次 npm run build 重新生成）
 js/bundle.js
 
+# 其他工具在工作目录里产生的残留（playwright session 日志、图表 / 截图等），
+# 不属于本项目，禁止入库
+.playwright-mcp/
+/barchart_*.json
+/map-*.png
+/polish-*.png
+/ux-*.png
+
 # Eagle 调试残留
 *.log
 

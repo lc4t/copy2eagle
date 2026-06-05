@@ -36,6 +36,49 @@
 - **项目影响**：M3 实现时 `eagle.item.get({ folders: [folderId] })` 是回填的主要入口。
 - **时效性**：长期有效。
 
+### K15: Eagle manifest 全键清单 + macOS 全屏陷阱（v1.5.1）
+
+- **来源**：
+  - https://developer.eagle.cool/plugin-api/llms-full.txt（已 fetch 验证）
+  - v1.5.0 用户反馈：macOS 下 Eagle 全屏时插件面板跟着全屏 + 关闭黑屏
+- **获取时间**：2026-06-03
+- **知识摘要**：
+
+  **Eagle 插件 manifest `main` 完整字段（v1.5.1 实测确认）**：
+  | 字段 | 类型 | 默认 | 说明 |
+  |---|---|---|---|
+  | `url` | string | — | 入口 html |
+  | `width` / `height` | number | — | 窗口初始尺寸 |
+  | `minWidth` / `minHeight` | number | — | 最小尺寸 |
+  | `maxWidth` / `maxHeight` | number | — | 最大尺寸 |
+  | `alwaysOnTop` | bool | false | 置顶 |
+  | `frame` | bool | true | 系统边框 |
+  | `fullscreenable` | bool | **true** | **可全屏（macOS 陷阱）** |
+  | `maximizable` | bool | true | 可最大化 |
+  | `minimizable` | bool | true | 可最小化 |
+  | `resizable` | bool | true | 可调整大小 |
+  | `backgroundColor` | string | #FFF | 背景色 |
+  | `childWindow` | bool | false | 附在主窗（继承 macOS Space）|
+  | `followCursor` | bool | false | 跟随光标位置 |
+  | `multiple` | bool | false | 允许多开 |
+  | `runAfterInstall` | bool | false | 装完自启 |
+  | `serviceMode` | bool | false | 后台常驻 |
+  | `devTools` | bool | false | 开 DevTools |
+
+  **macOS 全屏陷阱（v1.5.1 修）**：
+  - `fullscreenable` 默认 true → macOS 上 Eagle 进全屏 Space 时，插件窗口跟随父 Space → 转场动画 → 关闭时黑屏一闪
+  - 修法：插件类窗口（特别是 service mode 浮动面板）**应显式 `fullscreenable: false`**
+  - 配套：`maximizable: false` 避免 macOS 绿色按钮退化的 maximize 行为也触发尺寸跳变
+  - 再配合 `maxWidth` / `maxHeight` 数值约束彻底锁死
+
+  **不在文档里的字段**：
+  - `transparent` / `modal` / `parent` / `type` / `hasShadow` / `focusable` / `skipTaskbar` / `simpleFullscreen` / `kiosk` — 未列出，不要在 manifest 里写（Eagle 可能忽略也可能报错）
+
+- **项目影响**：
+  - v1.5.1 修复
+  - 后续新建 Eagle 插件 manifest 时，**默认加** `fullscreenable: false` + `maximizable: false`
+- **时效性**：长期有效；除非 Eagle 修改默认行为（不太可能）。
+
 ### K14: 剪贴板图片来源 APP 无法识别 + 多文件路径需 shell-out
 
 - **来源**：

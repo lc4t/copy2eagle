@@ -1,6 +1,6 @@
 {
   "id": "CLIPBOARD_WATCHER_001",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "platform": "all",
   "arch": "all",
   "name": "Clipboard Watcher",
@@ -17,6 +17,8 @@
     "maxWidth": 460,
     "maxHeight": 640,
     "resizable": true,
+    "fullscreenable": false,
+    "maximizable": false,
     "backgroundColor": "#ffffff"
   }
 }
