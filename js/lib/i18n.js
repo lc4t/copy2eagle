@@ -19,6 +19,8 @@ const zh = {
     POLL_FAILED: '暂时读不到剪贴板，5 秒后再试。',
     IMPORT_FAILED: '保存到 Eagle 失败，目标文件夹是不是被删了？',
     TMP_WRITE_FAILED: '写入临时文件失败，磁盘是不是满了？',
+    INSTANCE_CONFLICT: (otherVersion) =>
+      `检测到另一个 Clipboard Watcher（v${otherVersion}）也在运行。请在 Eagle 插件管理中删掉旧版本，保留一个。`,
     UNKNOWN: '出错了，可以打开 Eagle 日志面板看看详情。',
   },
   status: {
@@ -104,6 +106,8 @@ const en = {
     POLL_FAILED: "Can't read the clipboard right now. Retrying in 5 seconds.",
     IMPORT_FAILED: 'Save to Eagle failed. Was the destination folder deleted?',
     TMP_WRITE_FAILED: 'Could not write a temporary file. Is the disk full?',
+    INSTANCE_CONFLICT: (otherVersion) =>
+      `Another Clipboard Watcher instance (v${otherVersion}) is also running. Please remove the older one in Eagle's Plugins manager and keep only one.`,
     UNKNOWN: 'Something went wrong. Check the Eagle log panel for details.',
   },
   status: {

@@ -44,6 +44,8 @@ function renderError(snapshot) {
     let msg = t(`errors.${snapshot.lastError}`, t('errors.UNKNOWN'))
     if (snapshot.retryRemainingSec > 0 && snapshot.lastError === 'POLL_FAILED') {
       msg = t('status.retry_in', null, snapshot.retryRemainingSec)
+    } else if (snapshot.lastError === 'INSTANCE_CONFLICT' && snapshot.instanceConflict) {
+      msg = t('errors.INSTANCE_CONFLICT', null, snapshot.instanceConflict.otherVersion || 'unknown')
     }
     banner.textContent = msg
     banner.dataset.visible = 'true'

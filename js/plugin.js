@@ -24,6 +24,7 @@ const { refreshFolders, backfillFolder, resetFolderIndex } = require('./lib/fold
 const { startPolling, stopPolling, getEffectiveIntervalMs } = require('./lib/poll')
 const { openItem, buildNameContext } = require('./lib/import')
 const { renderTemplate } = require('./lib/utils')
+const { initInstance } = require('./lib/instance')
 const { triggerScreenshot } = require('./lib/screenshot')
 
 // ─── 用户操作入口（UI 调用）───
@@ -124,6 +125,7 @@ function getSnapshot() {
     retryRemainingSec: retryRemainingMs > 0 ? Math.ceil(retryRemainingMs / 1000) : 0,
     adaptiveMode: state.adaptiveMode,
     effectiveIntervalMs: state.config ? getEffectiveIntervalMs() : 0,
+    instanceConflict: state.instanceConflict,
   }
 }
 
@@ -180,6 +182,7 @@ eagle.onPluginCreate(async () => {
   rolloverTodayIfNeeded()
   loadConfig()
   loadStats()
+  initInstance() // v1.5.2 / M16：生成 instanceId，准备心跳锁
   await refreshTheme()
   await refreshFolders()
 

@@ -35,6 +35,7 @@ const LIB_ORDER = [
   'folders',
   'import',
   'screenshot',
+  'instance', // v1.5.2：依赖 state，给 poll 用
   'poll',
 ]
 

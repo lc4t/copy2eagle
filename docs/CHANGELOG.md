@@ -9,6 +9,31 @@ _（待 v1.6+ 累积）_
 
 ---
 
+## [1.5.2] — 2026-06-06
+
+防御性 hotfix：处理用户在 Eagle 里同时装了两个 Clipboard Watcher 时的"重复图片"误告警。
+
+### Fixed
+
+- **双实例并存导致 Eagle 报"重复图片"**
+  - 现象：用户依次 `.eagleplugin` 装了 v1 + v2，Eagle 没按 manifest.id 去重，两个 serviceMode 实例并存。两个实例都轮询剪贴板，都调 `addFromPath` → Eagle 自己拦截第二个为 duplicate → 弹通知。
+  - 修：心跳锁（`lib/instance.js`）
+    - 每个实例生成随机 `instanceId`，每轮 poll 写 `localStorage['clipboardWatcher.heartbeat'] = { instanceId, ts, version }`
+    - 每轮 poll 前先 read：看到别人的 instanceId 且 ts < 3s → 跳过本轮 import，UI 显示 `检测到另一个 Clipboard Watcher（v{version}）也在运行...`
+    - 一个被用户删掉/重启后，另一个会在下一轮 poll 自动恢复
+    - 假设：Eagle 让同 id 的多实例共享 localStorage origin。若 Eagle 不共享，本机制退化为无害 no-op（每个实例只看到自己），用户仍可走文档指引手动清理
+  - 同时提示用户：去 Eagle → 菜单 → 插件 → 管理插件，把旧的 Clipboard Watcher 删掉
+
+### Added
+
+- 新模块 `js/lib/instance.js`（initInstance / writeHeartbeat / checkConflict / PLUGIN_VERSION）
+- ERROR_CODES.INSTANCE_CONFLICT
+- i18n: `errors.INSTANCE_CONFLICT(otherVersion)` 函数式消息（zh + en）
+- bundler 加 `'instance'` 到 LIB_ORDER（位于 poll 之前）
+- snapshot 暴露 `instanceConflict: { otherInstanceId, otherVersion }`
+
+---
+
 ## [1.5.1] — 2026-06-03
 
 Hotfix：macOS 全屏 Eagle 下打开插件面板会跟着全屏 + 关闭时黑屏一闪。

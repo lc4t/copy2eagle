@@ -22,7 +22,9 @@ const {
   scheduleRender,
   setRuntimeStatus,
   setLastError,
+  clearLastError,
 } = require('./state')
+const { checkConflict, writeHeartbeat } = require('./instance')
 const {
   probeImageFormat,
   probeAnyFormat,
@@ -114,6 +116,25 @@ async function runPoll() {
   try {
     if (!state.config.enabled || !state.config.folderId) return
 
+    // v1.5.2 / M16：心跳锁——双实例时跳过 import，避免 Eagle 自己抛 duplicate
+    const conflict = checkConflict()
+    state.instanceConflict = conflict
+    if (conflict) {
+      if (state.lastError !== ERROR_CODES.INSTANCE_CONFLICT) {
+        setLastError(ERROR_CODES.INSTANCE_CONFLICT)
+        setRuntimeStatus('error')
+        scheduleRender()
+      }
+      writeHeartbeat() // 仍然写自己的，让对方也能 detect
+      return
+    }
+    if (state.lastError === ERROR_CODES.INSTANCE_CONFLICT) {
+      // 旧实例消失，自动恢复
+      clearLastError()
+      setRuntimeStatus('running')
+      scheduleRender()
+    }
+
     const probe = probeImageFormat()
     if (!probe.available) throw new Error('eagle.clipboard.has is unavailable')
 
@@ -197,6 +218,9 @@ async function runPoll() {
       setRuntimeStatus('running')
       scheduleRender()
     }
+
+    // 本轮无冲突，写自己的心跳，让别的实例（如有）能 detect
+    writeHeartbeat()
   } catch (err) {
     const detail = err && err.stack ? err.stack : err && err.message ? err.message : String(err)
     eagle.log.error(`[clipboard-watcher] poll error: ${detail}`)
