@@ -79,6 +79,31 @@
   - 后续新建 Eagle 插件 manifest 时，**默认加** `fullscreenable: false` + `maximizable: false`
 - **时效性**：长期有效；除非 Eagle 修改默认行为（不太可能）。
 
+### K16: Eagle Plugin Center 当前发布要求（2026-06-13 核验）
+
+- **来源**：
+  - https://developer.eagle.cool/plugin-api/distribution/prepare
+  - https://developer.eagle.cool/plugin-api/distribution/package
+  - https://developer.eagle.cool/plugin-api/distribution/publish
+  - https://developer.eagle.cool/plugin-api/distribution/developer-policies
+  - https://community-en.eagle.cool/plugins
+- **获取时间**：2026-06-13
+- **知识摘要**：
+  - 名称应清楚表达单一用途，建议不超过 30 个字符或 6 个单词，以名词为主；英文单词使用标题式大小写。
+  - 商店图标必须使用 PNG，分辨率至少 256x256，并按官方模板留出内边距。
+  - 建议详情页至少提供 3 张真实功能图片。
+  - 若插件需要额外配置、系统设置或启动外部进程，应在提交包根目录放 README，供审核人员测试。
+  - 官方发布流程：导出 `.eagleplugin` → Plugin Center 右上角 Submit → Submit Plugin → 上传 → 填介绍与版本更新 → 提交审核。
+  - 提交时必须提供用户支持联系方式。
+  - 审核政策要求功能完整可测试、准确披露限制、不得混淆或压缩代码，并应兼容 macOS 与 Windows。
+  - 2026-06-13 检查英文 Plugin Center 列表，未发现名为 `Clipboard Watcher` 的现有插件；改名不是避让重名的硬要求。
+- **项目影响**：
+  - 当前 128x128、无透明通道的占位 `logo.png` 不满足商店资产要求。
+  - 当前打包脚本只包含 manifest/index/logo/bundle，但插件会调用 `screencapture`、`osascript`、PowerShell 等系统进程；最终审核包应加入面向 reviewer 的 README。
+  - `Clipboard Watcher` 符合长度与大小写规则，但 `Clipboard Image Importer` 更直接描述“剪贴板图片自动入库”的用途，可作为改名首选。
+  - 上架前必须先完成 macOS/Windows 真机验证与至少 3 张真实截图，不能只依赖静态构建检查。
+- **时效性**：Plugin Center 政策可能更新；每次正式提交前重新核验。
+
 ### K14: 剪贴板图片来源 APP 无法识别 + 多文件路径需 shell-out
 
 - **来源**：

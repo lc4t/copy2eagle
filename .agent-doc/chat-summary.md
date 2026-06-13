@@ -18,6 +18,9 @@
 - M5 Session：adaptive polling 的实现选了「2 档模式 + streak 计数」最简方案，没用复杂的指数退避——同 hash 持续 N 次就 idle，hash 变就 normal。可读性优先。
 - 重试 ticker 跟 setTimeout 解耦：ticker 只刷 UI 文案，真正的重启 logic 还在原 setTimeout 里。否则两边状态机会撞车。
 - 用户反馈"设置太开发者视角"——以后写 hint 时别再写 osascript / format / 索引 / hash 这种实现词，按"用户在意的动作和结果"写。
+- 2026-06-13 发布审计：关闭 GitHub issue 只能证明跟踪项已关闭，不能代替代码路径审查和 Eagle 真机证据。尤其是互斥锁、去重、路由回填这类状态机，需要逐个检查提前返回、启动恢复和配置变更入口。
+- 心跳锁的冲突方不能覆盖当前 owner，否则两个实例会交替抢写并一起停工；应采用稳定 lease owner，由 owner 续期、非 owner 只观察。
+- Plugin Center 材料必须跟当前 release 同步。版本、仓库可见性、Issues 状态、平台声明、图标规格和 reviewer README 都应在每次提交前重新核验官方文档。
 
 ## 规则修正
 

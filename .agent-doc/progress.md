@@ -509,3 +509,16 @@
 - [ ] `logo.png` 为占位（M7 换正式版）
 - [ ] M7 阶段确认：Eagle Plugin Center 是否接受非商业 license
 - [ ] frontend-design Skill 安装时机：M5 UI 精修前装
+
+## 2026-06-13 发布准备度审计
+
+**结论：尚不能直接提交 Eagle Plugin Center。**
+
+- GitHub 当前无开放 issue，#1/#2 均已关闭，最新 release 为 v1.5.2。
+- 静态构建、打包和 JS 语法检查通过。
+- 发现 6 个尚未完成真修复的行为问题：双实例 heartbeat 互锁、heartbeat 提前失效、allow 重复策略失效、额外路由启动不回填、运行中改路由不回填、命名计数少 1。
+- 上架阻塞：正式 Plugin ID、至少 256x256 正式图标、封面与至少 3 张真实截图、Eagle 端到端验收证据、reviewer README。
+- README、提交材料和发布清单仍停在 v1.0.0，且包含“仓库 private / Issues 待开放”等已过时信息。
+- 名称 `Clipboard Watcher` 未发现商店重名，改名不是硬要求；为提高功能表达，首选候选为 `Clipboard Image Importer`。
+
+详细证据与影响见 `.agent-doc/bugs/bug-003-v1.5.2-release-readiness.md`。建议下一里程碑为 v1.5.3 correctness hotfix + Plugin Center readiness，待用户确认后写入 plan。
