@@ -1,4 +1,4 @@
-# Eagle Clipboard Watcher — 插件需求文档
+# Eagle 剪贴板图片留存 — 插件需求文档
 
 > 面向 Codex 的完整开发需求，版本 v1.0  
 > 目标：开发一个 Eagle Background Service 插件，自动将剪贴板图片和截图导入至用户指定的 Eagle 文件夹
@@ -14,7 +14,7 @@ Eagle 用户，习惯通过截图或复制图片收集素材，希望这些图�
 安装插件后，用户唯一需要做的事是：选好目标文件夹 → 开启监听。此后截图和复制的图片自动出现在 Eagle 里。
 
 ### 1.3 分发目标
-打包为 `.eagleplugin` 文件，发布到 Eagle Plugin Center，面向全平台（macOS + Windows）用户。
+打包为 `.eagleplugin` 文件，发布到 Eagle Plugin Center。v1.x 商店版仅声明支持 macOS。
 
 ---
 
@@ -34,7 +34,6 @@ Eagle 用户，习惯通过截图或复制图片收集素材，希望这些图�
 ##### F2.1 主面板「立即截图」按钮
 - 主面板提供「立即截图（到剪贴板）」按钮
 - macOS：点击后执行 `screencapture -ic`（interactive selection → clipboard）
-- Windows：按钮置灰，提示用户使用 `Win+Shift+S`（系统截图默认即进剪贴板）
 - 截图结果进剪贴板后由 F1 剪贴板轮询自动捕获并导入
 
 ##### F2.2 推荐快捷键
@@ -55,14 +54,14 @@ Eagle 用户，习惯通过截图或复制图片收集素材，希望这些图�
     "name": "Clipboard 1920x1080 YYYY-MM-DD HH:mm:ss",
     "folders": ["<用户配置的 folderId>"],
     "tags": ["clipboard-watcher", "<hostname>"],
-    "annotation": "Source: Clipboard\nSize: 1920x1080\nImported by Clipboard Watcher @ <host>"
+    "annotation": "Source: Clipboard\nSize: 1920x1080\nImported by 剪贴板图片留存 @ <host>"
   }
   ```
 - 命名规则（M4 / #5）：
   - 截图按钮触发后 **5 秒内**的导入 → `Screenshot {WxH} {timestamp}`，annotation 标 `Source: Screenshot (button)`
   - 其他剪贴板复制 → `Clipboard {WxH} {timestamp}`，annotation 标 `Source: Clipboard`
   - `{WxH}` 通过 `NativeImage.getSize()` 获取；失败时省略
-  - **来源 APP 不可识别**（macOS/Windows clipboard 均未透出原始应用，K14）
+  - **来源 APP 不可识别**（macOS clipboard 未透出原始应用，K14）
 - 多文件批量（F10）参数：
   - `name`：源文件名（去扩展名）
   - `annotation`：含 `From: <full path>`
@@ -82,7 +81,7 @@ Eagle 用户，习惯通过截图或复制图片收集素材，希望这些图�
 - 来源：
   - **进程内 hash 集合**：插件运行期间已成功导入过的所有 hash
   - **启动期回填**：插件启动 / 切换文件夹时，调用 `eagle.item.get({ folders: [folderId] })` 拉取该文件夹现有 item，按 item 实际文件路径逐个计算 hash 回填进集合
-- 进程内 hash 集合不持久化（重启时由回填重建，避免 `eagle.extraData` 10KB 上限）
+- 进程内 hash 集合不持久化；重启时从 Eagle 文件夹内容回填，确保 Eagle 本身是去重索引的事实来源
 
 ##### F4.3 重复处理策略（用户可选）
 
@@ -130,10 +129,9 @@ UI 控件：高级设置区下拉 / Radio，字段名 `duplicateStrategy`，可�
 #### F10：多文件复制批量导入（M4 新增，opt-in）
 
 - **触发条件**：用户在高级设置勾选「支持多文件复制」+ 剪贴板探到文件 URL format
-- **format 探测候选**：`public.file-url` / `NSFilenamesPboardType`（macOS）/ `CF_HDROP` / `FileDrop`（Windows）
+- **format 探测候选**：`public.file-url` / `NSFilenamesPboardType`（macOS）
 - **路径读取**（Eagle 没暴露 `readBuffer`/`readURLs`，shell 出去抓）：
   - macOS：`osascript -e '...'` 把 `the clipboard as «class furl»` 转 POSIX 路径列表
-  - Windows：`powershell -Command "Get-Clipboard -Format FileDropList | ForEach-Object { $_.FullName }"`
 - **超时**：2000ms（shell 调用上限）
 - **过滤**：只处理图片扩展名（`.png/.jpg/.jpeg/.gif/.webp/.bmp/.tiff/.tif/.heic/.svg/.avif`）
 - **批次上限**：50 张（防呆）
@@ -141,7 +139,7 @@ UI 控件：高级设置区下拉 / Radio，字段名 `duplicateStrategy`，可�
 - **命名**：以文件原名（去扩展名）作为 Eagle item name；annotation 含来源路径
 - **去重**：沿用 `duplicateStrategy`（skip / allow）
 - **优先级**：单图剪贴板 > 多文件批量。剪贴板同时有图和文件 URL 时，**图优先**
-- **未覆盖**：Linux（保留 hint 不实现）
+- **平台差异**：Windows 支持剪贴板图片、多文件复制与 `Win+Shift+S` 截图入库；内置「立即截图」按钮仅 macOS。Linux 不在 Eagle 正式分发范围。
 
 #### F11：图文混排导入开关（M4 新增）
 
@@ -271,24 +269,28 @@ eagle-clipboard-watcher.eagleplugin（实质是 zip）
   "version": "1.0.0",
   "platform": "all",
   "arch": "all",
-  "name": "Clipboard Watcher",
+  "name": "剪贴板图片留存",
   "logo": "/logo.png",
   "keywords": ["clipboard", "screenshot", "auto", "import", "剪贴板"],
   "devTools": false,
   "main": {
     "serviceMode": true,
     "url": "index.html",
-    "width": 480,
-    "height": 600,
-    "minWidth": 400,
-    "minHeight": 500,
+    "width": 380,
+    "height": 540,
+    "minWidth": 360,
+    "minHeight": 480,
+    "maxWidth": 460,
+    "maxHeight": 960,
     "resizable": true,
+    "fullscreenable": false,
+    "maximizable": false,
     "backgroundColor": "#ffffff"
   }
 }
 ```
 
-> ⚠️ `id` 字段在提交 Eagle Plugin Center 前需替换为通过 Eagle 开发者工具生成的真实唯一 ID。
+> v1.5.3 决定继续使用既有 ID `CLIPBOARD_WATCHER_001`，优先保持升级连续性。
 
 ### 3.4 可用 API 清单（v1.1 修订：实际验证过的接口）
 
@@ -339,25 +341,9 @@ function checkClipboard() {
 
 **为什么不用 `availableFormats()`**：Eagle 的 `eagle.clipboard` 只暴露 `has(format)` 和 `readImage()`，没有 `availableFormats()`（K13）。必须依次试已知 format 候选。
 
-### 3.6 截图目录自动检测（macOS）
+### 3.6 截图目录方案（已弃用）
 
-macOS 截图目录存储在系统偏好设置中，可通过以下方式读取：
-
-```javascript
-const { execSync } = require('child_process')
-
-function getScreenshotDir() {
-  if (require('os').platform() !== 'darwin') return null
-  try {
-    const dir = execSync(
-      'defaults read com.apple.screencapture location 2>/dev/null'
-    ).toString().trim()
-    return dir || require('os').homedir() + '/Desktop'
-  } catch {
-    return require('os').homedir() + '/Desktop'
-  }
-}
-```
+不再读取或监听 macOS 截图目录。截图按钮使用 `screencapture -ic` 写入剪贴板，统一走 F1 导入路径，详见 ADR-011。
 
 ### 3.7 `eagle.item.addFromPath` 参数说明
 
@@ -366,7 +352,7 @@ await eagle.item.addFromPath(filePath, {
   name: 'Clipboard 2026-05-27 14:30:00',
   folders: [folderId],          // 注意是数组，不是单个 folderId
   tags: ['clipboard-watcher'],
-  annotation: 'Auto imported by Clipboard Watcher'
+  annotation: 'Auto imported by 剪贴板图片留存'
 })
 ```
 
@@ -378,14 +364,14 @@ await eagle.item.addFromPath(filePath, {
 
 ### 4.1 整体风格
 - 与 Eagle 主界面风格一致，采用 Eagle 的 CSS 变量（Eagle 注入了 `--eagle-*` 前缀变量）
-- 支持 Eagle 的明暗主题切换（监听 `eagle.app.isDarkMode`）
+- 支持 Eagle 的明暗主题切换（读取 `await eagle.app.theme`，监听 `eagle.onThemeChanged`）
 - 字体：系统默认 `-apple-system, "Segoe UI", sans-serif`
 
 ### 4.2 面板布局（从上到下）
 
 ```
 ┌──────────────────────────────────┐
-│  Clipboard Watcher          v1.0 │
+│  剪贴板图片留存             v1.5 │
 ├──────────────────────────────────┤
 │  ● 监听中        今日导入: 12 张  │
 ├──────────────────────────────────┤
@@ -437,8 +423,8 @@ mv eagle-clipboard-watcher.zip eagle-clipboard-watcher.eagleplugin
 ```
 
 ### 6.2 提交 Eagle Plugin Center 所需材料
-- `manifest.json` 中的唯一 `id`（通过 Eagle 开发者工具生成）
-- 插件名称：`Clipboard Watcher`
+- `manifest.json` 中已在 Plugin Center 提交后台确认的正式唯一 `id`
+- 插件名称：`剪贴板图片留存`（英文别名 `Clipboard Image Archive`）
 - 分类：`Productivity` / `Import Tools`
 - 封面图：1280×800 PNG，展示插件面板截图
 - 描述（英文）：
@@ -469,13 +455,13 @@ mv eagle-clipboard-watcher.zip eagle-clipboard-watcher.eagleplugin
 
 ## 八、已知限制与注意事项
 
-1. **Windows 截图监听**：Windows 使用 `PrintScreen` / `Win+Shift+S` 截图默认进剪贴板，F1 已覆盖；Snipping Tool 存文件的场景暂不处理（v1.2+ 考虑）
+1. **Windows 真机补测**：商店版允许 Windows 安装；当前通过自动模拟覆盖 PowerShell 多文件路径，仍需补齐真实设备上的剪贴板、多文件和生命周期验收
 2. **Eagle 必须运行**：插件是 Eagle 的子进程，Eagle 关闭则监听停止，这是合理预期
 3. **配置存储**：使用 webview 原生 `localStorage`（ADR-010 / K7），容量 10MB+ 远超 PRD 早期写的 10KB；配置 JSON 仍应保持小（< 10KB 量级）以便打印日志
 4. **隐私**：插件只在本地运行，不向任何外部服务器发送数据，需在 Plugin Center 描述中注明
 5. **`clipboard.readImage()` 性能**：每秒调用不会有明显性能问题，但面板关闭期间 `serviceMode` 后台运行时 CPU 占用应低于 0.5%
 6. **剪贴板权限与 macOS Sonoma 横幅（v1.1 / M3.1 修订，K12 / K13）**：
-   - macOS / Windows 都**不需要显式申请权限**——没有"剪贴板访问"开关，插件随 Eagle 进程运行
+   - macOS 不需要插件自行声明 entitlement；系统可能显示“已粘贴自 Eagle”横幅
    - **macOS 14+ (Sonoma) 起读剪贴板内容会触发"已粘贴自 Eagle"系统横幅**
    - 实现策略：
      - 先调 `eagle.clipboard.has(fmt)` 依次探测图片 format 候选（不读 buffer，不触发横幅）

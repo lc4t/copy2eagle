@@ -15,7 +15,7 @@ const POLL_RETRY_MS = 5000                    // poll 错误自动重试间隔
 const NOTIFICATION_MIN_GAP_MS = 1500          // 通知节流，避免连续粘贴刷屏
 const BACKFILL_FRESH_MS = 5000                // onPluginShow 触发回填的节流窗口
 const SCREENSHOT_NAME_WINDOW_MS = 5000        // 截图按钮后多久内的导入命名为 Screenshot
-const SHELL_TIMEOUT_MS = 2000                 // osascript / PowerShell / xclip 单次调用超时
+const SHELL_TIMEOUT_MS = 2000                 // osascript / PowerShell 单次调用超时
 
 // 阈值
 const POLL_ERROR_THRESHOLD = 3                // 连续多少次轮询错误后暂停

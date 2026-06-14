@@ -9,6 +9,41 @@ _（待 v1.6+ 累积）_
 
 ---
 
+## [1.5.3] — 2026-06-13
+
+Correctness hotfix and Plugin Center preflight. Code/package checks and the macOS Eagle installation/clipboard baseline are complete.
+
+### Fixed
+
+- Replaced the v1.5.2 heartbeat race with a single-owner v2 lease.
+  - Same-version instances no longer overwrite each other's ownership.
+  - The owner renews independently of adaptive polling and error retries.
+  - A legacy heartbeat guard keeps v1.5.2 instances paused without letting their writes affect v2 ownership.
+  - Disabling, clearing the main folder, or exiting releases only the current owner's lease.
+- Restored `duplicateStrategy=allow`: the same clipboard image may import again after the 30-second flood-control window.
+- Rebuilt all active route-folder indexes on startup and enable, and rebuilt a new route before polling resumes after a route change.
+- Fixed `{count}` and `{lifetime}` name tokens so they include the current import, including the first import after midnight.
+- Awaited async watcher enable actions so UI errors and completion render consistently.
+- Raised the panel's vertical resize limit from 640 to 960 so advanced settings can use available screen height without enabling maximize or fullscreen.
+
+### Changed
+
+- Added dependency-free regression checks for lease ownership, v1.5.2 compatibility, duplicate policy, serialized route backfill, version synchronization, name counters, and temporary-file cleanup.
+- `npm run pack` now runs tests first and includes `README.md` plus `LICENSE` for Plugin Center reviewers.
+- Updated README and Plugin Center materials to current repository visibility, platform support, v1.5.3 features, and official icon requirements.
+- Renamed the store-facing product to `剪贴板图片留存` (`Clipboard Image Archive`), adopted the MIT License, and retained the existing Plugin ID.
+- Replaced the placeholder icon with a 512×512 transparent production icon.
+- Restored Windows distribution and Explorer multi-file clipboard import via PowerShell FileDropList; the built-in screenshot button remains macOS-only, while Windows screenshots use `Win+Shift+S`.
+- Removed Linux-only `wl-paste` / `xclip` branches because Eagle officially distributes on macOS and Windows.
+
+### Pending before release
+
+- Optional macOS QA for route changes, allow-after-30s, duplicate instances, and error recovery; the updated vertical resize limit is verified.
+- Real-device Windows QA will follow availability and user feedback.
+- Plugin Center cover and at least three real product screenshots.
+
+---
+
 ## [1.5.2] — 2026-06-06
 
 防御性 hotfix：处理用户在 Eagle 里同时装了两个 Clipboard Watcher 时的"重复图片"误告警。

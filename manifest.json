@@ -1,11 +1,11 @@
 {
   "id": "CLIPBOARD_WATCHER_001",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "platform": "all",
   "arch": "all",
-  "name": "Clipboard Watcher",
+  "name": "剪贴板图片留存",
   "logo": "/logo.png",
-  "keywords": ["clipboard", "screenshot", "auto", "import", "剪贴板"],
+  "keywords": ["剪贴板", "图片", "截图", "保存", "归档", "clipboard"],
   "devTools": false,
   "main": {
     "serviceMode": true,
@@ -15,7 +15,7 @@
     "minWidth": 360,
     "minHeight": 480,
     "maxWidth": 460,
-    "maxHeight": 640,
+    "maxHeight": 960,
     "resizable": true,
     "fullscreenable": false,
     "maximizable": false,

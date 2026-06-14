@@ -1,4 +1,4 @@
-# Plan — Eagle Clipboard Watcher
+# Plan — Eagle 剪贴板图片留存
 
 > 里程碑分解。每个里程碑对应一个 Session。完成后执行 `milestone-done`。
 
@@ -16,6 +16,19 @@
 | M5 | adaptive polling + 重试倒计时 + 最近导入列表 | 🔄 In Progress | 同 hash 持续 3 轮放慢到 5s；倒计时 1s tick；recent cap 5 | - |
 | M6 | 用户视角文案 + 打包 + 端到端验证 | ⬜ Todo | 设置文案去开发者用语；`.eagleplugin` 包；安装文档；截图证据 | - |
 | M7 | 开源发布准备 | ⬜ Todo | README 完善、CHANGELOG v1.0.0、Plugin Center 提交材料 | - |
+| M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ Release Candidate Ready | 双实例 lease / allow 去重 / 路由回填 / 命名计数 / 商店身份 / 自动检查 / macOS QA / 商店资产 | - |
+
+## 当前里程碑：M17 — v1.5.3 correctness hotfix
+
+实施范围：
+
+- 修正双实例 heartbeat 互锁与提前失效。
+- 恢复 `duplicateStrategy=allow` 的 30 秒窗口语义。
+- 补齐所有来源路由文件夹在启动、启用、显示面板和改配置时的回填。
+- 修正 `{count}` / `{lifetime}` 命名 token 为含本次值。
+- 增加无依赖自动回归检查，完成构建与打包验证。
+
+后续追加决定：商店中文名为「剪贴板图片留存」、MIT、保留既有 Plugin ID，并采用 F1 正式图标。2026-06-14 将平台改为 macOS / Windows：恢复 Windows 多文件剪贴板处理，内置截图按钮仍仅 macOS。
 
 ## 当前里程碑：M5 — adaptive polling + 重试倒计时 + 最近导入列表
 
@@ -51,10 +64,10 @@ M6 任务（按优先级）：
 
 ## 下一里程碑：M2 — 插件骨架 + 配置面板
 
-**Intent**：搭好可在 Eagle 中本地加载的最小插件结构，能展示 UI 面板、读写 `eagle.extraData`、列出文件夹并选定，但不实际监听。
+**Intent（历史）**：搭好可在 Eagle 中本地加载的最小插件结构，能展示 UI 面板、持久化配置、列出文件夹并选定，但不实际监听。原计划的 `eagle.extraData` 已在 M2.1 改为 `localStorage`。
 **预计产物**：
 - `manifest.json`（`serviceMode: true`，但开发期可临时切普通 Window Plugin 调试，commit 前切回）
-- `logo.png`（占位 128×128 即可，M7 替换正式版）
+- `logo.png`（M2 使用占位图；M17 已替换为 512×512 正式图标）
 - `index.html` + `js/ui.js`：状态行（指示灯+计数）/ 文件夹下拉 / 开关 / 高级设置折叠区
 - 配置 schema：`enabled` / `folderId` / `intervalMs` / `tags` / `screenshotDir` / `notifyOnImport`
 - `eagle.onPluginCreate` 初始化、`eagle.onPluginShow` 刷新
@@ -74,5 +87,6 @@ M6 任务（按优先级）：
 
 ## 遗留问题
 
-- [ ] `manifest.json.id` 临时占位 `CLIPBOARD_WATCHER_001`，M7 提交 Plugin Center 前替换真实 ID
-- [ ] Windows 截图监听（Snipping Tool 文件路径）延后至 v1.1，本期不实现
+- [x] `manifest.json.id` 固定保留 `CLIPBOARD_WATCHER_001`，优先保持升级连续性
+- [ ] Windows 已纳入商店版；发布后补齐真实设备上的剪贴板、多文件和生命周期验收
+- [ ] 补齐 Plugin Center 封面、至少 3 张真实产品截图，以及截图按钮/路由/allow/错误恢复人工矩阵

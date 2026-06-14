@@ -25,6 +25,7 @@
 | M13 + M14 | v1.5.0：bundle 修 [#2]（v1.3 起面板空白）+ 命名模板（F13） | ✅ Released | 2026-06-03 | #2 |
 | M15 | v1.5.1 hotfix：manifest fullscreenable: false 防 macOS 全屏黑屏 | ✅ Released | 2026-06-03 | - |
 | M16 | v1.5.2 心跳锁：双实例并存时跳过 import + UI 警告 + 自动恢复 | ✅ Released | 2026-06-06 | - |
+| M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ Release Candidate Ready | 2026-06-15 | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -212,7 +213,7 @@
 **C. #5 命名增强**
 1. 普通剪贴板复制图 → 名字应是 `Clipboard 1920x1080 2026-05-31 ...`（实际尺寸数字）
 2. 点「立即截图」按钮截一张 → 名字应是 `Screenshot 1920x1080 2026-05-31 ...`
-3. 在 Eagle 里查看 item annotation → 应含 `Source: ...` `Size: ...` `Imported by Clipboard Watcher @ <主机名>`
+3. 在 Eagle 里查看 item annotation → 应含 `Source: ...` `Size: ...` `Imported by 剪贴板图片留存 @ <主机名>`
 
 **D. #2 图文混排开关**
 1. 高级设置默认应**勾选**「允许从图文混排导入图片」
@@ -308,7 +309,7 @@
 
 **未做（M7 才做）**：
 - Eagle Plugin Center 提交材料（封面图 1280×800 / 描述文案 / 分类）
-- 替换 `manifest.json.id` 为 Eagle 开发者工具生成的真实 ID
+- 在 Plugin Center 登录态提交页确认并替换 `manifest.json.id`
 - GitHub Release v1.0.0 with `.eagleplugin` 附件
 - 截图素材生成（README/Plugin Center 用）
 
@@ -331,7 +332,7 @@
 - Logo 128×128 PNG（当前占位）
 - 封面图 1280×800
 - 功能截图 3–5 张
-- Eagle 开发者工具生成正式 Plugin ID → 替换 manifest.json.id
+- 在 Plugin Center 登录态提交页确认正式 Plugin ID → 替换 manifest.json.id
 - License 风险点：邮件 Eagle 官方询问是否接受 PolyForm-NC（ADR-006 fallback 已记）
 - GitHub Release v1.0.0（可选，仓库 private 时 Release 对外不可见）
 - Plugin Center 后台填表 + 上传 `.eagleplugin` + 提交审核
@@ -355,7 +356,7 @@
 - **M7.3 README 安装段写实**：把推荐路径设为「下载 .eagleplugin 双击」，明确标注「私仓须知」；Plugin Center 标「待审核」；开发者模式作兜底
 - **未做（仍待你做）**：见 [docs/release-checklist.md](../docs/release-checklist.md)
   - 设计资产（按 `docs/design-brief.md` 跑 AI 生图或找设计师）
-  - 真正去 Eagle 开发者工具拿正式 Plugin ID
+  - 在 Plugin Center 登录态提交页确认正式 Plugin ID
   - License 接受度问 Eagle 官方
   - Plugin Center 后台提交（材料已就位）
   - 端到端验证
@@ -504,10 +505,10 @@
 
 ## 遗留问题
 
-- [ ] `manifest.json.id` 待替换为 Eagle 开发者工具生成的真实 ID（M7 处理）
-- [ ] Windows 截图监听延后至 v1.1
-- [ ] `logo.png` 为占位（M7 换正式版）
-- [ ] M7 阶段确认：Eagle Plugin Center 是否接受非商业 license
+- [x] 保留 `manifest.json.id = CLIPBOARD_WATCHER_001`；仅在 Plugin Center 明确拒绝时再迁移
+- [ ] Windows 已纳入商店版；发布后补齐真实设备验收
+- [x] `logo.png` 已替换为 512×512 RGBA 正式图标
+- [x] License 已改为 MIT
 - [ ] frontend-design Skill 安装时机：M5 UI 精修前装
 
 ## 2026-06-13 发布准备度审计
@@ -522,3 +523,57 @@
 - 名称 `Clipboard Watcher` 未发现商店重名，改名不是硬要求；为提高功能表达，首选候选为 `Clipboard Image Importer`。
 
 详细证据与影响见 `.agent-doc/bugs/bug-003-v1.5.2-release-readiness.md`。建议下一里程碑为 v1.5.3 correctness hotfix + Plugin Center readiness，待用户确认后写入 plan。
+
+## M17 代码完成回顾（2026-06-13）— v1.5.3 候选
+
+**已修复**：
+
+1. 双实例改为 v2 单 owner lease；新旧 heartbeat 分离，兼容 v1.5.2 旧实例抢写。
+2. lease 独立维护，不再受 adaptive 5 秒轮询或错误重试影响。
+3. `duplicateStrategy=allow` 恢复 30 秒后允许同图再次导入。
+4. 主文件夹与所有来源路由通过共享队列顺序回填；运行中改路由和手动刷新都会暂停、强制回填，并且只有最新操作恢复 polling。
+5. `{count}` / `{lifetime}` 改为含本次值，跨日首张先重置今日计数。
+6. UI 启停操作正确 await 异步 enable；tmp 写入失败会清理可能残留的半文件。
+
+**自动验证**：
+
+- `npm test`：13 checks passed（含 Windows PowerShell FileDropList 模拟）
+- 所有 JS：`node --check` 通过
+- `npm run pack`：通过，bundle 83,666 bytes；候选包 163,821 bytes / 6 文件，含 reviewer README 与 LICENSE
+- manifest/package/index/runtime 版本统一为 1.5.3
+
+**Eagle 4.0.0 macOS 基线验证（2026-06-14）**：
+
+- `.eagleplugin` 安装成功，Eagle 创建 `剪贴板图片留存 1.5.3` 并启动 background service
+- 既有配置被保留，目标文件夹 `COPY2SYNC` 的 130 项启动回填完成
+- 512×512 PNG 从系统剪贴板导入成功，文件名、文件夹、标签和 annotation 正确
+- 文本占位后再次复制同图，短窗口内未产生第二项
+- 测试项已通过 Eagle Local API 移到回收站，目标文件夹恢复为 130 项
+- 插件日志无新增 error/warn
+- 2026-06-15 用户确认按 `P` 可找到「剪贴板图片留存」，面板正常打开且基础使用正常
+- 2026-06-15 用户确认「立即截图」可被监听并成功入库；当场截图因包含主机名、私人文件夹和素材缩略图，仅用于验收后已删除，不得用于发布
+- 发现面板纵向被 `maxHeight: 640` 过早限制，v1.5.3 候选已放宽为 960
+- 2026-06-15 用户重开面板后确认纵向拉伸恢复正常
+
+**仍待完成**：
+
+- 非阻塞人工矩阵：来源路由切换、allow 超过 30 秒、双实例和错误恢复
+- [x] Plugin Center 封面与 3 张 1280×800 脱敏产品截图已生成并通过隐私复查
+
+**发布候选结论（2026-06-15）**：
+
+- 核心代码、自动测试、Eagle 安装/剪贴板/截图/UI/窗口拉伸验收和商店资产均已就绪
+- 最终 `.eagleplugin` 为 163,821 bytes，6 个审核文件，manifest `devTools: false`
+- 可以提交 GitHub Release 与 Eagle Plugin Center；剩余人工矩阵不阻塞首发
+
+## M17 商店身份决策（2026-06-13）
+
+- 中文主名称 / manifest：`剪贴板图片留存`
+- 英文审核别名：`Clipboard Image Archive`
+- License：MIT
+- Plugin ID：保留 `CLIPBOARD_WATCHER_001`，优先保持升级连续性
+- 平台：2026-06-14 改为 macOS / Windows（manifest `platform: all`）
+- 图标：F1 蓝色剪贴板图片流入归档盒，512×512 RGBA，32×32 可读
+- 运行时：恢复 Windows PowerShell FileDropList；保留 macOS `screencapture` / `osascript`，不恢复 Linux shell 分支
+- Windows 功能边界：普通剪贴板图片和多文件复制可用；`Win+Shift+S` 截图入库可用；内置截图按钮仅 macOS
+- Windows 验证状态：自动模拟覆盖 PowerShell 调用，暂无真机证据，发布后按反馈补测和修复

@@ -104,11 +104,12 @@
 
 ---
 
-## ADR-005：配置统一存 `eagle.extraData`，单一 key `clipboardWatcher`
+## ADR-005：配置统一存 `eagle.extraData`（已被 ADR-010 取代）
 
 - **Date**：2026-05-30
-- **Context**：Eagle 提供 `eagle.extraData` 作为插件配置持久化方案，容量上限 10KB。
-- **Decision**：单 JSON 对象，key=`clipboardWatcher`，包含 `enabled / folderId / intervalMs / tags / screenshotDir / notifyOnImport`。
+- **Status**：Superseded by ADR-010。
+- **Context**：初始化阶段曾误以为 Eagle 提供 `eagle.extraData`；真机验证后确认该 API 不存在。
+- **Decision（历史）**：原计划用单 JSON 对象保存配置。当前实现不得再采用此方案。
 - **Consequences**：
   - 读写原子，开发简单。
   - 后续新增字段做兼容默认值即可。
@@ -143,7 +144,7 @@
 
 - **Date**：2026-05-30
 - **Context**：用户要求与 Eagle 官方推荐一致。Eagle 文档明确说 npm 是「the official package management tool for Node.js」，并以 `npm install xxx --save` 作示例（developer.eagle.cool/plugin-api/tutorial/3rd-modules）。
-- **Decision**：使用 npm；禁止 pnpm/yarn 锁文件；不引入构建工具（webpack/vite/tsc）。
+- **Decision**：使用 npm；禁止 pnpm/yarn 锁文件；不引入 webpack/vite/tsc。issue #2 后允许项目内无依赖 bundler `build/bundle.js` 生成可读单文件。
 - **Consequences**：
   - 与 Eagle 文档示例可逐字对照，新人接手成本低
   - `package.json` 仅承担元数据 + scripts 角色，依赖（如有）可直接 `require()`
@@ -165,9 +166,10 @@
 
 ---
 
-## ADR-006：License 选 PolyForm Noncommercial 1.0.0（非商用 + 署名）
+## ADR-006：License 选 PolyForm Noncommercial 1.0.0（已被 ADR-013 取代）
 
 - **Date**：2026-05-30
+- **Status**：Superseded by ADR-013。
 - **Context**：作者希望「别人引用必须声明来源 + 禁止商业使用」。
 - **Decision**：使用 **PolyForm Noncommercial License 1.0.0**，LICENSE 文件保留官方原文 + 顶部 `Required Notice` 行（作者署名 + 项目地址）。
 - **Consequences**：
@@ -182,3 +184,58 @@
   - **GPL-3.0**：允许商用（强 copyleft 不等于禁商用），不符合意图
   - **BUSL（Business Source License）**：到期自动转 open source，作者未表达此需求
 - **Why**：PolyForm Noncommercial 是专为代码起草、条款清晰、有真实生态采用（Sourcegraph 等）的非商用许可证。
+
+---
+
+## ADR-012：双实例互斥使用独立 owner lease，并保留旧 heartbeat 兼容层
+
+- **Date**：2026-06-13
+- **Context**：v1.5.2 的实例各自在发现冲突后仍覆盖同一个 heartbeat，可能让两个实例交替认为对方存活并同时停止；业务轮询的 early return、adaptive 5 秒间隔和错误重试也会让 heartbeat 失效。
+- **Decision**：
+  - 用 `clipboardWatcher.lease.v2` 作为新版本唯一 owner 的选举与续租记录。
+  - 新鲜 lease 属于其他实例时只观察，不覆盖；owner 停用或退出时只删除自己的 lease。
+  - 用独立 2 秒 timer 续租，TTL 为 12 秒，不依赖业务 polling。
+  - 继续写 `clipboardWatcher.heartbeat` 仅用于压制 v1.5.2；旧实例覆盖该 key 时，由当前 v2 owner 恢复，但旧 key 不参与新 owner 选举。
+- **Consequences**：
+  - 同版本实例稳定收敛为单 owner；owner 消失后 contender 可自动接管。
+  - v1.5.2 与 v1.5.3 并存时，新协议不会被旧 heartbeat 污染。
+  - 若 Eagle 为重复安装分配了互不共享的 localStorage origin，本机制无法跨 origin 协调，仍需用户卸载重复版本。
+- **Why**：把互斥状态与向后兼容信号分离，才能同时保证单 owner 选举和旧版本抑制。
+
+---
+
+## ADR-013：商店版采用中文名称、MIT、既有 ID 与 macOS-only（平台部分已由 ADR-014 取代）
+
+- **Date**：2026-06-13
+- **Context**：v1.5.3 correctness 修复完成后，需要冻结首次 Eagle Plugin Center 提交的产品身份与支持边界。当前没有 Windows 真机设备，原 PolyForm Noncommercial 会限制商业用户并增加审核不确定性。
+- **Decision**：
+  - 中文主名称与 manifest 名称使用 **剪贴板图片留存**；英文审核别名为 **Clipboard Image Archive**。
+  - License 改为 **MIT**。
+  - 继续使用既有 Plugin ID `CLIPBOARD_WATCHER_001`，优先保持升级连续性；仅在提交后台明确拒绝时再迁移。
+  - `manifest.platform` 改为 `mac`，v1.x 商店版仅声明 macOS 支持。
+  - 正式图标采用 F1 方向：蓝色剪贴板图片流入归档盒，512×512 透明 PNG。
+- **Consequences**：
+  - 商店名称更贴近中文 Eagle 用户的任务语言，内部 npm/repo/log 前缀保持不变。
+  - MIT 允许商用、修改与再分发，不再保留非商用限制。
+  - Windows/Linux shell 分支从审核运行时移除；未来恢复 Windows 支持必须有真机验收并另发版本。
+  - 当前 ID 若被后台拒绝，改 ID 会导致旧安装与 localStorage 配置无法原地升级。
+- **Why**：明确、可验证的支持范围比未经测试的跨平台声明更可信；MIT 与稳定 ID 同时降低审核和现有用户升级成本。
+
+---
+
+## ADR-014：恢复 macOS / Windows 跨平台分发
+
+- **Date**：2026-06-14
+- **Context**：用户决定首发不再限制为 macOS-only。普通剪贴板图片读取由 Electron 提供，macOS 与 Windows 共用；Windows 的多文件复制需要恢复 PowerShell `FileDropList` 分支。内置截图按钮仍依赖 macOS `screencapture`。
+- **Decision**：
+  - `manifest.platform` 改为 `all`，商店声明 macOS 与 Windows。
+  - macOS 支持剪贴板图片、Finder 多文件和内置截图按钮。
+  - Windows 支持剪贴板图片、资源管理器多文件，以及 `Win+Shift+S` 截图进入剪贴板后的自动入库。
+  - Windows 不显示可用的内置截图按钮；界面明确提示 `Win+Shift+S`。
+  - 恢复 PowerShell `Get-Clipboard -Format FileDropList`，保留 2 秒超时和失败降级；不恢复 Linux `wl-paste` / `xclip`。
+  - 在没有 Windows 真机的情况下，以自动模拟和准确披露代替“已真机验证”表述，后续按反馈修复。
+- **Consequences**：
+  - 包可在 macOS 和 Windows 安装，审核材料必须说明截图按钮差异。
+  - Windows 多文件路径增加一次本地 PowerShell 子进程调用，不产生网络请求。
+  - Windows 生命周期、Eagle API 兼容性仍有残余风险，需要首批用户反馈补齐。
+- **Why**：核心剪贴板机制跨平台一致，恢复已有 Windows 路径处理的成本可控；分级披露比完全阻止 Windows 用户安装更符合当前发布策略。

@@ -21,6 +21,10 @@
 - 2026-06-13 发布审计：关闭 GitHub issue 只能证明跟踪项已关闭，不能代替代码路径审查和 Eagle 真机证据。尤其是互斥锁、去重、路由回填这类状态机，需要逐个检查提前返回、启动恢复和配置变更入口。
 - 心跳锁的冲突方不能覆盖当前 owner，否则两个实例会交替抢写并一起停工；应采用稳定 lease owner，由 owner 续期、非 owner 只观察。
 - Plugin Center 材料必须跟当前 release 同步。版本、仓库可见性、Issues 状态、平台声明、图标规格和 reviewer README 都应在每次提交前重新核验官方文档。
+- v1.5.3 双实例修复：新旧协议必须分 key。`clipboardWatcher.lease.v2` 只负责新实例 owner 选举，旧 `clipboardWatcher.heartbeat` 只用于持续压住 v1.5.2；否则旧实例的反向抢写会让新 lease 再次抖动。
+- lease 续租不能绑定业务 polling。adaptive 最慢 5 秒、错误重试也会暂停 polling，因此 owner 维护必须独立；旧协议最短 500ms 轮询时，还需要更快的 legacy guard。
+- Eagle 4.0.0 中开发插件注册可能残留或失效，表现为按 `P` 搜不到；用 `.eagleplugin` 重新安装并以日志中的 `Create plugin` / `onPluginCreate` 确认注册更可靠。
+- serviceMode 插件会在启动时先回填目标文件夹哈希。文件较多时监听暂缓，必须等 `backfill done` 再做剪贴板验收，避免把启动期等待误判为故障。
 
 ## 规则修正
 

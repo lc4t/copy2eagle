@@ -1,4 +1,4 @@
-# Eagle Plugin Center 提交材料 — v1.0.0
+# Eagle Plugin Center 提交材料 — v1.5.3
 
 > 提交时直接复制下方对应段。中英文双版本均已准备。
 > Eagle Plugin Center 后台填表项次序可能调整，按对应字段对号入座即可。
@@ -9,15 +9,15 @@
 
 | 字段 | 内容 |
 |---|---|
-| Plugin Name (English) | Clipboard Watcher |
-| Plugin Name (中文) | 剪贴板自动入库 |
-| Version | 1.0.0 |
+| Plugin Name (English alias) | Clipboard Image Archive |
+| Plugin Name (中文 / manifest) | 剪贴板图片留存 |
+| Version | 1.5.3 |
 | Author | lc4t |
 | Author Email | lc4t0.0@gmail.com |
 | Homepage | https://github.com/lc4t/copy2eagle |
 | Bug Report | https://github.com/lc4t/copy2eagle/issues |
-| License | PolyForm Noncommercial 1.0.0（source-available, 非商用 + 须署名） |
-| Platform | macOS / Windows / Linux（macOS 含截图按钮 / 多文件批量；Windows 含多文件批量；Linux 仅剪贴板） |
+| License | MIT |
+| Platform | macOS / Windows |
 
 ---
 
@@ -27,7 +27,7 @@
 - 一级：`Productivity` / 工具
 - 二级（若有）：`Import Tools` / `Clipboard` / 导入
 
-**Keywords**（5–8 个，逗号分隔）：
+**Keywords**（不超过 6 个，逗号分隔）：
 
 英文：
 ```
@@ -45,11 +45,11 @@ clipboard, screenshot, auto-import, productivity, watcher, batch-import
 
 ### 中文短描述
 
-> 复制图片、截图、Cmd+C 多张图片，都自动保存到你指定的 Eagle 文件夹。开了就忘，专注内容本身。
+> 复制图片、截图、Cmd/Ctrl+C 多张图片，都自动保存到你指定的 Eagle 文件夹。开了就忘，专注内容本身。
 
 ### English short description
 
-> Copy any image, take a screenshot, or Cmd/Ctrl+C multiple files — they auto-appear in your chosen Eagle folder. Set it once, then forget about importing.
+> Automatically save copied images, screenshots, and copied image files into your chosen Eagle folders.
 
 ---
 
@@ -58,11 +58,12 @@ clipboard, screenshot, auto-import, productivity, watcher, batch-import
 ### 中文长描述
 
 ```
-Clipboard Watcher 是一个让 Eagle 自动接管图片归档的插件。
+剪贴板图片留存是一个让 Eagle 自动接管图片归档的 macOS / Windows 插件。
 
 【它做什么】
-- 复制任何图片（截图 / 浏览器右键 / 其他 App 里 Cmd+C 图片），1 秒内自动出现在你指定的 Eagle 文件夹
+- 复制任何图片（截图 / 浏览器右键 / 其他 App 里 Cmd/Ctrl+C 图片），按设置频率自动出现在你指定的 Eagle 文件夹
 - 面板提供「立即截图」按钮（macOS），框选区域后自动入库
+- Windows 使用 Win+Shift+S 截图，截图进入剪贴板后自动入库
 - 复制带文字的图文混排内容（网页 / Word / 微信），里面的图片也会保存（可关）
 - 在 Finder / 资源管理器选中多张图片复制，可一次性全部入库（默认关，按需打开）
 - 智能去重：默认跳过目标文件夹已存在的同图；可改为允许重复
@@ -85,14 +86,17 @@ Clipboard Watcher 是一个让 Eagle 自动接管图片归档的插件。
 ### English long description
 
 ```
-Clipboard Watcher lets Eagle automatically handle your image archiving.
+Clipboard Image Archive lets Eagle automatically handle image archiving on macOS and Windows.
 
 【What it does】
-- Copy any image (screenshot, browser right-click, Cmd+C from any app) — appears in your chosen Eagle folder within 1 second
+- Copy any image (screenshot, browser right-click, Cmd/Ctrl+C from any app) and it appears in your chosen Eagle folder at the configured polling interval
 - "Take Screenshot" button (macOS): drag-select region, auto-import on release
+- On Windows, use Win+Shift+S; the clipboard screenshot is imported automatically
 - Mixed clipboard content (image + text from web pages / Word / chat apps): the image is saved too (toggle to opt out)
-- Select multiple image files in Finder / Explorer and Cmd/Ctrl+C: all imported in one go (off by default, opt-in)
+- Select multiple image files in Finder or Explorer and press Cmd/Ctrl+C: all imported in one go (off by default, opt-in)
 - Smart deduplication: skips images already in the target folder by default; or allow duplicates if you prefer
+- Route screenshots, copied images, and copied files to separate Eagle folders
+- Customize names with source, dimensions, date, time, hostname, and import counters
 - Auto-appends hostname tag — useful when syncing Eagle libraries across machines
 
 【macOS 14+ aware】
@@ -114,34 +118,30 @@ Built for users who just want copied images to land where they belong — and to
 ## 5. 隐私声明（Privacy Policy）
 
 ```
-Clipboard Watcher does not collect, transmit, or share any data.
+剪贴板图片留存 (Clipboard Image Archive) does not collect, transmit, or share any data.
 
 - No external network requests are made by this plugin.
 - No analytics, telemetry, or crash reporting is performed.
 - User settings are stored locally via the webview's localStorage API.
 - Clipboard image data is held in memory only for the duration of import; temporary files are written to the OS temp directory and immediately deleted after successful import to Eagle.
-- The plugin only reads the system clipboard and writes to your selected Eagle folder — no other system access.
+- The plugin reads the system clipboard, imports local image files into the selected Eagle folder, and uses the OS temporary directory while processing clipboard images.
+- For optional multi-file import it invokes the built-in macOS `osascript` command or Windows PowerShell locally.
 
 On macOS 14+ (Sonoma), the system may display a "Pasted from Eagle" banner when the plugin reads the clipboard. This is macOS system behavior, not a privacy concern caused by the plugin. The plugin uses adaptive polling to minimize banner frequency when the clipboard is idle.
 
 Contact: lc4t0.0@gmail.com
-Source code: https://github.com/lc4t/copy2eagle (private until v1.0.0+ feedback)
+Source code: https://github.com/lc4t/copy2eagle
 ```
 
 ---
 
 ## 6. License 声明（提交时需填）
 
-> **PolyForm Noncommercial License 1.0.0**（source-available, non-commercial）
+> **MIT License**
 >
-> Permitted uses: personal, educational, research, public-interest organizations.
-> Prohibited: any commercial use.
-> Attribution required (see Required Notice in LICENSE).
+> Copyright (c) 2026 lc4t
 >
-> Full text: https://polyformproject.org/licenses/noncommercial/1.0.0
-> For commercial licensing, contact lc4t0.0@gmail.com
-
-> ⚠️ 提交时如果 Plugin Center 表单 license 字段只能选预设（MIT / Apache / GPL...），选 `Other` 或 `Custom`，并把上述文字粘到备注栏。
+> Full text is included in the package root `LICENSE` file.
 
 ---
 
@@ -149,30 +149,26 @@ Source code: https://github.com/lc4t/copy2eagle (private until v1.0.0+ feedback)
 
 参见 [release-checklist.md §1](release-checklist.md#1-设计资产必须)：
 
-- [ ] Logo 128×128 PNG（透明背景）
-- [ ] 封面图 1280×800
-- [ ] 功能截图 3–5 张
+- [x] Logo 512×512 PNG（透明背景，32×32 可读）
+- [x] 封面图 1280×800：`assets/plugin-center/cover-1280x800.png`
+- [x] 功能截图 3 张：`assets/plugin-center/screenshot-*.png`
 
 ---
 
 ## 8. 给 reviewer 的备注（提交时可选）
 
 ```
-This plugin uses a source-available license (PolyForm Noncommercial 1.0.0)
-rather than a permissive OSI-approved one. The intent is to keep source open
-for learning and non-commercial use while preventing commercial repackaging
-without explicit licensing.
-
-If Plugin Center policy requires permissive open source licensing, please
-let me know — I am open to discussion.
-
 Tech notes:
+- macOS and Windows; manifest platform is set to "all"
 - Runs in serviceMode (background monitoring)
 - All clipboard / filesystem access is local; no network calls
 - Adaptive polling implementation specifically addresses macOS 14 Sonoma
   "Pasted from" banner concerns
-- Multi-file clipboard support uses osascript (macOS) / PowerShell (Windows)
-  via child_process, both with 2s timeouts; declared in privacy section
+- Multi-file clipboard support uses macOS osascript or Windows PowerShell
+  via child_process with a 2s timeout;
+  declared in the privacy section
+- The built-in "Take Screenshot" button is macOS-only. Windows users use
+  Win+Shift+S and the resulting clipboard image is imported normally.
 
 Thanks for reviewing!
 ```

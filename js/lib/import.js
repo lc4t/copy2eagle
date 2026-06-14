@@ -32,6 +32,7 @@ const {
   setLastError,
   pushRecentImport,
   incrementToday,
+  rolloverTodayIfNeeded,
 } = require('./state')
 const { maybeNotify, maybeNotifyError } = require('./notification')
 const { isImagePath } = require('./clipboard')
@@ -61,7 +62,7 @@ function getImageDimensions(img) {
  */
 function buildItemName(source, dims, ts) {
   const sourceLabel = source === 'screenshot' ? 'Screenshot' : 'Clipboard'
-  const ctx = buildNameContext({ source: sourceLabel, dims, ts })
+  const ctx = buildNameContext({ source: sourceLabel, dims, ts, nextImport: true })
   const tpl = (state.config && state.config.nameTemplate) || '{source} {dims} {timestamp}'
   const rendered = renderTemplate(tpl, ctx)
   if (rendered) return rendered
@@ -69,8 +70,9 @@ function buildItemName(source, dims, ts) {
   return [sourceLabel, dims, nowStamp(ts)].filter(Boolean).join(' ')
 }
 
-function buildNameContext({ source, dims, ts, name }) {
+function buildNameContext({ source, dims, ts, name, nextImport }) {
   const t = ts || new Date()
+  const offset = nextImport ? 1 : 0
   return {
     source: source || '',
     dims: dims || '',
@@ -78,8 +80,8 @@ function buildNameContext({ source, dims, ts, name }) {
     date: shortDate(t),
     time: shortTime(t),
     hostname: getHostname(),
-    count: state.todayCount,
-    lifetime: state.lifetimeCount,
+    count: state.todayCount + offset,
+    lifetime: state.lifetimeCount + offset,
     name: name || '',
   }
 }
@@ -87,7 +89,7 @@ function buildNameContext({ source, dims, ts, name }) {
 function buildAnnotation(source, dims) {
   const parts = [`Source: ${source === 'screenshot' ? 'Screenshot (button)' : 'Clipboard'}`]
   if (dims) parts.push(`Size: ${dims}`)
-  parts.push(`Imported by Clipboard Watcher @ ${getHostname()}`)
+  parts.push(`Imported by 剪贴板图片留存 @ ${getHostname()}`)
   return parts.join('\n')
 }
 
@@ -114,12 +116,14 @@ async function importImage(buffer, hash, folderId, options) {
   const ts = new Date()
   const source = opts.source || detectImageSource()
   const dims = opts.dims || ''
+  rolloverTodayIfNeeded()
   const tmpPath = path.join(tmpRoot, `${source}-${tmpFileStamp(ts)}.png`)
   try {
     fs.writeFileSync(tmpPath, buffer)
   } catch (err) {
     eagle.log.error(`[clipboard-watcher] write tmp failed: ${err.message}`)
     setLastError(ERROR_CODES.TMP_WRITE_FAILED)
+    cleanupTmp(tmpPath)
     maybeNotifyError(require('./i18n').t('notify.tmp_failed'))
     throw err
   }
@@ -206,7 +210,7 @@ async function importFileBatch(paths, folderId) {
           name: baseName,
           folders: [folderId],
           tags,
-          annotation: `Source: Multi-file clipboard\nFrom: ${p}\nImported by Clipboard Watcher @ ${getHostname()}`,
+          annotation: `Source: Multi-file clipboard\nFrom: ${p}\nImported by 剪贴板图片留存 @ ${getHostname()}`,
         })
         const itemId = typeof result === 'string' ? result : null
         let set = state.hashSetByFolder.get(folderId)

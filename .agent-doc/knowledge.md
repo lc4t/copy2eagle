@@ -24,8 +24,8 @@
 
 - **来源**：https://developer.eagle.cool/plugin-api/llms-full.txt 引用 "minWidth, minHeight, maxWidth, maxHeight"
 - **获取时间**：2026-05-30
-- **知识摘要**：M2 反馈"插件窗口全屏"，原 manifest 只写了 width/height/minWidth/minHeight。修订时加入 `maxWidth: 460, maxHeight: 640`，并缩小默认 width: 380, height: 540。Eagle 在 serviceMode 下窗口仍是独立 popup，不约束就会被 Eagle 给出过大默认。
-- **项目影响**：M2.1 manifest.json 已调整。
+- **知识摘要**：M2 反馈"插件窗口全屏"，原 manifest 只写了 width/height/minWidth/minHeight。修订时加入尺寸上限，并缩小默认 width: 380, height: 540。2026-06-15 真机确认 `maxHeight: 640` 会让高级设置面板过早触顶；纵向上限放宽为 960，同时继续用 `fullscreenable: false` / `maximizable: false` 防止全屏与最大化问题。
+- **项目影响**：M2.1 加入窗口约束；v1.5.3 将 `maxHeight` 从 640 调整为 960。
 - **时效性**：长期有效。
 
 ### K10: Eagle 文档明确 `addFromPath` 等方法 options 形态
@@ -69,7 +69,7 @@
   - `fullscreenable` 默认 true → macOS 上 Eagle 进全屏 Space 时，插件窗口跟随父 Space → 转场动画 → 关闭时黑屏一闪
   - 修法：插件类窗口（特别是 service mode 浮动面板）**应显式 `fullscreenable: false`**
   - 配套：`maximizable: false` 避免 macOS 绿色按钮退化的 maximize 行为也触发尺寸跳变
-  - 再配合 `maxWidth` / `maxHeight` 数值约束彻底锁死
+  - 可配合合理的 `maxWidth` / `maxHeight` 防止异常膨胀，但上限不能小到妨碍长表单；本项目纵向使用 960
 
   **不在文档里的字段**：
   - `transparent` / `modal` / `parent` / `type` / `hasShadow` / `focusable` / `skipTaskbar` / `simpleFullscreen` / `kiosk` — 未列出，不要在 manifest 里写（Eagle 可能忽略也可能报错）
@@ -87,6 +87,7 @@
   - https://developer.eagle.cool/plugin-api/distribution/publish
   - https://developer.eagle.cool/plugin-api/distribution/developer-policies
   - https://community-en.eagle.cool/plugins
+  - https://en.eagle.cool/download
 - **获取时间**：2026-06-13
 - **知识摘要**：
   - 名称应清楚表达单一用途，建议不超过 30 个字符或 6 个单词，以名词为主；英文单词使用标题式大小写。
@@ -94,14 +95,18 @@
   - 建议详情页至少提供 3 张真实功能图片。
   - 若插件需要额外配置、系统设置或启动外部进程，应在提交包根目录放 README，供审核人员测试。
   - 官方发布流程：导出 `.eagleplugin` → Plugin Center 右上角 Submit → Submit Plugin → 上传 → 填介绍与版本更新 → 提交审核。
+  - 登录态提交入口为 https://community-en.eagle.cool/my/plugin/publish ；公开文档只把 `manifest.id` 定义为 Plugin ID，没有说明由开发者工具生成或规定 `KXXXXXXXX` 格式，最终 ID 规则需在提交后台确认。
   - 提交时必须提供用户支持联系方式。
   - 审核政策要求功能完整可测试、准确披露限制、不得混淆或压缩代码，并应兼容 macOS 与 Windows。
-  - 2026-06-13 检查英文 Plugin Center 列表，未发现名为 `Clipboard Watcher` 的现有插件；改名不是避让重名的硬要求。
+  - manifest 官方支持 `platform: "mac"` 和 `"all"`；2026-06-14 用户将发布策略改为 macOS / Windows，允许 Windows 用户先用并按反馈修复。
+  - Windows 普通图片剪贴板与 macOS 共用 Electron `readImage()`；资源管理器多文件需 PowerShell `Get-Clipboard -Format FileDropList`；内置截图按钮仍是 macOS 专属。
+  - Eagle 官方下载页当前只提供 Windows 与 macOS 安装包；商店平台材料不应把代码中的 Linux fallback 宣称为正式支持平台。
+  - 2026-06-13 检查英文 Plugin Center 列表，未发现原名 `Clipboard Watcher` 的重名；最终中文商店名决定为「剪贴板图片留存」。
 - **项目影响**：
-  - 当前 128x128、无透明通道的占位 `logo.png` 不满足商店资产要求。
-  - 当前打包脚本只包含 manifest/index/logo/bundle，但插件会调用 `screencapture`、`osascript`、PowerShell 等系统进程；最终审核包应加入面向 reviewer 的 README。
-  - `Clipboard Watcher` 符合长度与大小写规则，但 `Clipboard Image Importer` 更直接描述“剪贴板图片自动入库”的用途，可作为改名首选。
-  - 上架前必须先完成 macOS/Windows 真机验证与至少 3 张真实截图，不能只依赖静态构建检查。
+  - v1.5.2 的 128x128 占位图不满足要求；v1.5.3 已替换为 512x512 RGBA 正式图标。
+  - v1.5.3 起审核包包含 README 与 LICENSE，并明确披露支持平台会调用的 `screencapture` 和 `osascript` 本地系统进程。
+  - manifest 名称使用「剪贴板图片留存」，英文审核别名为 `Clipboard Image Archive`。
+  - macOS 安装与剪贴板导入基线已于 2026-06-14 在 Eagle 4.0.0 完成；上架前仍需至少 3 张真实截图和交互式功能人工矩阵。
 - **时效性**：Plugin Center 政策可能更新；每次正式提交前重新核验。
 
 ### K14: 剪贴板图片来源 APP 无法识别 + 多文件路径需 shell-out

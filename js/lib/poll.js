@@ -24,7 +24,7 @@ const {
   setLastError,
   clearLastError,
 } = require('./state')
-const { checkConflict, writeHeartbeat } = require('./instance')
+const { acquireLease } = require('./instance')
 const {
   probeImageFormat,
   probeAnyFormat,
@@ -44,6 +44,16 @@ const { resolveTargetFolder } = require('./config')
 
 let pollTimer = null
 let pollInFlight = false
+
+function decideClipboardHash({ hash, lastHash, lastImportAt, strategy, now }) {
+  if (hash !== lastHash) return { sameHash: false, shouldImport: true }
+  if (strategy === 'skip') return { sameHash: true, shouldImport: false }
+  const currentTime = typeof now === 'number' ? now : Date.now()
+  return {
+    sameHash: true,
+    shouldImport: currentTime - Number(lastImportAt || 0) >= ALLOW_DEDUP_WINDOW_MS,
+  }
+}
 
 // ─── 重试 ticker（UI 倒计时刷新）───
 let retryTicker = null
@@ -116,18 +126,18 @@ async function runPoll() {
   try {
     if (!state.config.enabled || !state.config.folderId) return
 
-    // v1.5.2 / M16：心跳锁——双实例时跳过 import，避免 Eagle 自己抛 duplicate
-    const conflict = checkConflict()
-    state.instanceConflict = conflict
-    if (conflict) {
+    // v1.5.3 / M17：单 owner lease。非 owner 只观察，不覆盖当前 owner。
+    const lease = acquireLease()
+    state.instanceConflict = lease.conflict
+    if (!lease.owned && lease.conflict) {
       if (state.lastError !== ERROR_CODES.INSTANCE_CONFLICT) {
         setLastError(ERROR_CODES.INSTANCE_CONFLICT)
         setRuntimeStatus('error')
         scheduleRender()
       }
-      writeHeartbeat() // 仍然写自己的，让对方也能 detect
       return
     }
+    if (!lease.owned) return
     if (state.lastError === ERROR_CODES.INSTANCE_CONFLICT) {
       // 旧实例消失，自动恢复
       clearLastError()
@@ -180,13 +190,16 @@ async function runPoll() {
       const hash = computeHash(buffer)
       if (!hash) return
 
-      if (hash === state.lastClipboardHash) {
-        state.lastFormatsKey = probe.format
-        bumpIdleStreak()
-        return
-      }
-      resetIdleStreak()
+      const hashDecision = decideClipboardHash({
+        hash,
+        lastHash: state.lastClipboardHash,
+        lastImportAt: state.lastClipboardAt,
+        strategy: state.config.duplicateStrategy,
+      })
       state.lastFormatsKey = probe.format
+      if (hashDecision.sameHash) bumpIdleStreak()
+      else resetIdleStreak()
+      if (!hashDecision.shouldImport) return
 
       // v1.4：单图按 source（screenshot / clipboard）解析目标文件夹
       const source = detectImageSource()
@@ -196,11 +209,6 @@ async function runPoll() {
         const set = state.hashSetByFolder.get(folderId)
         if (set && set.has(hash)) {
           state.lastClipboardHash = hash
-          return
-        }
-      } else {
-        const now = Date.now()
-        if (state.lastClipboardHash === hash && now - state.lastClipboardAt < ALLOW_DEDUP_WINDOW_MS) {
           return
         }
       }
@@ -218,9 +226,6 @@ async function runPoll() {
       setRuntimeStatus('running')
       scheduleRender()
     }
-
-    // 本轮无冲突，写自己的心跳，让别的实例（如有）能 detect
-    writeHeartbeat()
   } catch (err) {
     const detail = err && err.stack ? err.stack : err && err.message ? err.message : String(err)
     eagle.log.error(`[clipboard-watcher] poll error: ${detail}`)
@@ -257,4 +262,5 @@ module.exports = {
   getEffectiveIntervalMs,
   bumpIdleStreak,
   resetIdleStreak,
+  decideClipboardHash,
 }

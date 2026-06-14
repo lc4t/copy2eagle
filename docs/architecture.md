@@ -2,7 +2,7 @@
 
 > 模块边界、数据流、关键时序。代码落地后随时更新。
 
-## 1. 模块划分（v1.3.0：12 个 lib 模块）
+## 1. 模块划分（v1.5.3：13 个 lib 模块）
 
 ```
 js/
@@ -16,12 +16,15 @@ js/
     ├── i18n.js        # messages.zh 表 + t(path, fallback, ...args) + detectLocale / setLocale
     ├── theme.js       # DARK_THEMES Set + isDarkTheme + refreshTheme + bindThemeListener
     ├── folders.js     # eagle.folder.getAll → flattenFolders / backfillFolder / resetFolderIndex
-    ├── clipboard.js   # eagle.clipboard.has 多 format 探测 / readClipboardFilePaths（osascript/PowerShell/wl-paste/xclip）
+    ├── clipboard.js   # eagle.clipboard.has 多 format 探测 / readClipboardFilePaths（macOS osascript）
     ├── import.js      # importImage / importFileBatch / buildItemName / buildAnnotation / openItem
     ├── screenshot.js  # macOS screencapture -ic → 设 state.lastScreenshotAt → 由轮询接力
     ├── notification.js# maybeNotify / maybeNotifyError + 1.5s 节流
+    ├── instance.js    # v2 单 owner lease + v1.5.2 legacy heartbeat guard
     └── poll.js        # 轮询状态机：setTimeout 链 + adaptive(idle/normal) + 5s 重试 + retry ticker
 ```
+
+源码保持 CommonJS 模块化；`build/bundle.js` 在打包前生成可读的单文件 `js/bundle.js`，运行时 `index.html` 只加载 bundle，以避开 Eagle webview 的相对 `require()` 限制。
 
 ### 模块依赖（无循环）
 
@@ -29,7 +32,7 @@ js/
 ui ──→ i18n
        │
        ▼
-plugin ──→ state ←── config / theme / folders / clipboard / import / screenshot / notification / poll
+plugin ──→ state ←── config / theme / folders / clipboard / import / screenshot / notification / instance / poll
                                     │           │             │            │           │
                                     └───────────┴─────────────┴────────────┴───────────┘
                                                        │
@@ -67,8 +70,8 @@ plugin ──→ state ←── config / theme / folders / clipboard / import /
 │  │ │ screenshot  │ │         ┌───────────────────────────┐  │
 │  │ │  .js (mac)  │ │ ──────▶ │ child_process.execFile    │  │
 │  │ └──────┬──────┘ │         │   screencapture -ic       │  │
-│  │        │        │         │   osascript / PowerShell  │  │
-│  │ ┌──────┴──────┐ │         │   wl-paste / xclip        │  │
+│  │        │        │         │   osascript               │  │
+│  │ ┌──────┴──────┐ │         │                           │  │
 │  │ │  import.js  │ │         └───────────────────────────┘  │
 │  │ └─────────────┘ │         ┌───────────────────────────┐  │
 │  │                 │ ──────▶ │ os.tmpdir() / fs.writeFile│  │
@@ -81,7 +84,9 @@ plugin ──→ state ←── config / theme / folders / clipboard / import /
 ### 2.1 剪贴板触发的导入
 
 ```
-setInterval(intervalMs)
+setTimeout 链（intervalMs）
+  → instance.acquireLease()
+  → clipboard.has(format)
   → clipboard.readImage()
   → 计算 hash
   → 去重判定（见 §2.4）
@@ -103,8 +108,7 @@ setInterval(intervalMs)
   → child_process.execFile('screencapture', ['-ic'])
   → 用户选择截图区域
   → 系统将结果写入剪贴板（不落盘）
-  → §2.1 剪贴板轮询 1s 内捕获 → 走标准导入流程
-（Windows：按钮置灰，提示用户用 Win+Shift+S，效果等价）
+  → §2.1 按当前轮询间隔捕获 → 走标准导入流程
 ```
 
 ### 2.4 去重判定（F4 / ADR-009）
@@ -115,7 +119,7 @@ state:
   hashSetByFolder: Map<folderId, Set<hash>>   # 进程内，非持久
   lastClipboardHash + lastClipboardAt   # 仅用于 allow 模式的 30s 防抖
 
-启动 / 切换 folderId 时：
+启动 / 启用 / 切换 folderId / 修改来源路由时：
   → eagle.item.get({ folders: [folderId] }) 拉取该文件夹现有 item
   → 逐个读 item 文件路径 → 计算 hash → 加入 hashSetByFolder[folderId]
   → item 数 > 1000 时 UI 显示「索引中…」
@@ -144,9 +148,9 @@ import 成功后：
 
 | 文件 | 职责 | 不做 |
 |---|---|---|
-| `index.html` | 静态结构、CSS 变量、加载 ui.js | 任何业务逻辑 |
-| `js/ui.js` | 渲染、用户交互、与 plugin.js 通信 | 直接调 Eagle 业务 API（除 folder.getAll 等只读 API） |
-| `js/plugin.js` | 监听、hash、导入、配置持久化、错误处理 | DOM 操作 |
+| `index.html` | 静态结构、CSS 变量、加载 `js/bundle.js` | 任何业务逻辑 |
+| `js/ui.js` | 渲染、用户交互、与 plugin.js 通信 | 直接调 Eagle 业务 API |
+| `js/plugin.js` | 生命周期、模块编排、向 UI 暴露动作与快照 | DOM 操作、具体导入实现 |
 
 ## 4. 关键状态机
 
@@ -178,14 +182,17 @@ detect → dedupe → write-tmp → addFromPath → cleanup
 | `screencapture` 调用失败 | UI 错误状态 + 提示，不阻塞其他功能 |
 | 配置反序列化失败 | 重置为默认 → 警告日志 + UI 提示 |
 | 启动期回填读取 item 文件失败（部分 item）| 跳过失败 item，记录到日志，不阻塞其他 item 入索引 |
+| 双实例 | v2 lease 只允许一个 owner 导入；非 owner 提示用户清理旧安装 |
 
 ## 6. 隐私边界
 
 - 所有逻辑本地完成，**禁止任何网络请求**
-- `eagle.extraData` 中只存配置，不存图片内容/hash 历史明文
+- `localStorage` 只存配置、累计计数与实例 lease，不存图片内容/hash 历史明文
 - `tmpdir/eagle-cw/` 在每次导入完成后立即删除（成功或失败都清）
 
 ## 7. 演进点
 
-- v1.1：多文件夹路由（按来源区分截图/复制）→ 新增 `routingRules` 配置
-- v1.2：OCR 关键词触发标签 → 依赖 Eagle AI SDK，需评估隐私边界变化
+- Plugin Center：正式 ID、商店名称、License 和视觉资产
+- Windows 支持：`platform: all`；Electron 负责普通图片剪贴板，PowerShell FileDropList 负责多文件，截图使用 `Win+Shift+S`
+- Windows 残余风险：当前无真机覆盖，需通过首批用户反馈补齐生命周期和 Eagle API 兼容验证
+- OCR 关键词触发标签：依赖 Eagle AI SDK，需重新评估隐私边界

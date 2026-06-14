@@ -151,7 +151,6 @@ function renderAdvanced(snapshot) {
   const multiHint = $('cw-multi-file-hint')
   if (snapshot.platform === 'darwin') multiHint.textContent = t('fields.multi_file_hint_mac')
   else if (snapshot.platform === 'win32') multiHint.textContent = t('fields.multi_file_hint_win')
-  else if (snapshot.platform === 'linux') multiHint.textContent = t('fields.multi_file_hint_linux')
   else multiHint.textContent = t('fields.multi_file_hint_unknown')
 
   // v1.4 路由 3 个 select
@@ -291,10 +290,9 @@ function bindEvents() {
     safeAction('selectFolder', () => CW.selectFolder(e.target.value || null))
   })
   $('cw-enabled').addEventListener('change', (e) => {
-    safeAction('toggleEnabled', () => {
-      if (e.target.checked) CW.enableWatcher()
-      else CW.disableWatcher()
-    })
+    safeAction('toggleEnabled', () => (
+      e.target.checked ? CW.enableWatcher() : CW.disableWatcher()
+    ))
   })
   $('cw-screenshot').addEventListener('click', () => {
     safeAction('screenshot', () => CW.triggerScreenshot())
@@ -330,13 +328,13 @@ function bindEvents() {
 
   // v1.4：路由 select
   $('cw-route-screenshot').addEventListener('change', (e) => {
-    safeAction('routeScreenshot', () => CW.saveConfig({ folderIdScreenshot: e.target.value || null }))
+    safeAction('routeScreenshot', () => CW.updateRouteFolder('folderIdScreenshot', e.target.value || null))
   })
   $('cw-route-clipboard').addEventListener('change', (e) => {
-    safeAction('routeClipboard', () => CW.saveConfig({ folderIdClipboard: e.target.value || null }))
+    safeAction('routeClipboard', () => CW.updateRouteFolder('folderIdClipboard', e.target.value || null))
   })
   $('cw-route-files').addEventListener('change', (e) => {
-    safeAction('routeFiles', () => CW.saveConfig({ folderIdFiles: e.target.value || null }))
+    safeAction('routeFiles', () => CW.updateRouteFolder('folderIdFiles', e.target.value || null))
   })
 
   // v1.5：命名模板（M13）

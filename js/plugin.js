@@ -1,5 +1,5 @@
 /*
- * plugin.js — Eagle Clipboard Watcher 入口编排器（v1.3.0 重构）
+ * plugin.js — Eagle 剪贴板图片留存入口编排器（v1.3.0 重构）
  *
  * 本文件只做：
  *   ① 编排各 lib/* 模块
@@ -20,12 +20,34 @@ const { state, setRenderer, scheduleRender, rolloverTodayIfNeeded, setRuntimeSta
 const { buildDefaults, loadConfig, saveConfig, getActiveFolderIds, DEFAULT_NAME_TEMPLATE } = require('./lib/config')
 const { detectLocale, setLocale } = require('./lib/i18n')
 const { refreshTheme, isDarkTheme, bindThemeListener } = require('./lib/theme')
-const { refreshFolders, backfillFolder, resetFolderIndex } = require('./lib/folders')
+const { refreshFolders, backfillFolder, backfillFolders, resetFolderIndex } = require('./lib/folders')
 const { startPolling, stopPolling, getEffectiveIntervalMs } = require('./lib/poll')
 const { openItem, buildNameContext } = require('./lib/import')
 const { renderTemplate } = require('./lib/utils')
-const { initInstance } = require('./lib/instance')
+const {
+  initInstance,
+  releaseLease,
+  startLeaseMaintenance,
+  stopLeaseMaintenance,
+  PLUGIN_VERSION,
+} = require('./lib/instance')
 const { triggerScreenshot } = require('./lib/screenshot')
+
+let pollingTransitionId = 0
+
+function beginPollingTransition() {
+  pollingTransitionId += 1
+  stopPolling()
+  return pollingTransitionId
+}
+
+function canResumePolling(transitionId) {
+  return (
+    transitionId === pollingTransitionId &&
+    state.config.enabled &&
+    state.config.folderId
+  )
+}
 
 // ─── 用户操作入口（UI 调用）───
 
@@ -41,26 +63,19 @@ async function enableWatcher() {
   setRuntimeStatus('running')
   scheduleRender()
 
-  // v1.4：backfill 主 folder 同步等待；其他活跃 folder（每个来源的专属）后台异步 backfill
-  const activeIds = getActiveFolderIds(state.config)
-  const mainId = state.config.folderId
-  if (!state.hashSetByFolder.has(mainId)) {
-    await backfillFolder(mainId)
-  }
-  for (const id of activeIds) {
-    if (id === mainId) continue
-    if (!state.hashSetByFolder.has(id)) {
-      backfillFolder(id).catch(() => {})
-    }
-  }
-  startPolling()
+  const transitionId = beginPollingTransition()
+  startLeaseMaintenance()
+  await backfillFolders(getActiveFolderIds(state.config), { force: true })
+  if (canResumePolling(transitionId)) startPolling()
   eagle.log.info('[clipboard-watcher] watcher enabled')
   return true
 }
 
 function disableWatcher() {
   saveConfig({ enabled: false })
-  stopPolling()
+  beginPollingTransition()
+  stopLeaseMaintenance()
+  releaseLease()
   setRuntimeStatus('idle')
   scheduleRender()
   eagle.log.info('[clipboard-watcher] watcher disabled')
@@ -69,12 +84,14 @@ function disableWatcher() {
 async function selectFolder(folderId) {
   const next = folderId || null
   const wasEnabled = state.config.enabled
-  stopPolling()
+  const transitionId = beginPollingTransition()
   saveConfig({ folderId: next })
 
   if (!next) {
     if (wasEnabled) {
       saveConfig({ enabled: false })
+      stopLeaseMaintenance()
+      releaseLease()
       setRuntimeStatus('idle')
     }
     scheduleRender()
@@ -83,8 +100,8 @@ async function selectFolder(folderId) {
   if (state.config.enabled) {
     setRuntimeStatus('running')
     scheduleRender()
-    await backfillFolder(next)
-    if (state.config.enabled && state.config.folderId === next) startPolling()
+    await backfillFolder(next, { force: true })
+    if (canResumePolling(transitionId) && state.config.folderId === next) startPolling()
   } else {
     scheduleRender()
   }
@@ -93,9 +110,39 @@ async function selectFolder(folderId) {
 async function updateIntervalMs(intervalMs) {
   saveConfig({ intervalMs })
   if (state.config.enabled && state.config.folderId) {
-    stopPolling()
+    if (state.indexingFolderId) return
+    beginPollingTransition()
     startPolling()
   }
+}
+
+async function updateRouteFolder(configKey, folderId) {
+  const allowedKeys = new Set(['folderIdScreenshot', 'folderIdClipboard', 'folderIdFiles'])
+  if (!allowedKeys.has(configKey)) throw new Error(`Unsupported route key: ${configKey}`)
+
+  const next = folderId || null
+  saveConfig({ [configKey]: next })
+  if (!state.config.enabled || !state.config.folderId) {
+    scheduleRender()
+    return
+  }
+
+  const transitionId = beginPollingTransition()
+  if (next) await backfillFolder(next, { force: true })
+  if (
+    canResumePolling(transitionId) &&
+    state.config[configKey] === next
+  ) {
+    startPolling()
+  }
+  scheduleRender()
+}
+
+async function refreshFolderIndex() {
+  if (!state.config || !state.config.folderId) return
+  const transitionId = state.config.enabled ? beginPollingTransition() : null
+  await resetFolderIndex()
+  if (transitionId !== null && canResumePolling(transitionId)) startPolling()
 }
 
 // ─── Snapshot for UI ───
@@ -140,6 +187,7 @@ function previewNameTemplate(template) {
     source: 'Screenshot',
     dims: '1920x1080',
     ts: new Date(),
+    nextImport: true,
   })
   return renderTemplate(template || DEFAULT_NAME_TEMPLATE, ctx)
 }
@@ -150,8 +198,9 @@ window.ClipboardWatcher = {
   disableWatcher,
   selectFolder,
   updateIntervalMs,
+  updateRouteFolder,
   triggerScreenshot,
-  resetFolderIndex,
+  resetFolderIndex: refreshFolderIndex,
   openItem,
   // 配置
   saveConfig,
@@ -167,7 +216,7 @@ window.ClipboardWatcher = {
 // ─── Eagle 生命周期 ───
 
 eagle.onPluginCreate(async () => {
-  eagle.log.info('[clipboard-watcher] onPluginCreate (v1.3.0 modular)')
+  eagle.log.info(`[clipboard-watcher] onPluginCreate (v${PLUGIN_VERSION})`)
 
   // i18n 优先（影响后续报错文案）
   setLocale(detectLocale())
@@ -182,16 +231,17 @@ eagle.onPluginCreate(async () => {
   rolloverTodayIfNeeded()
   loadConfig()
   loadStats()
-  initInstance() // v1.5.2 / M16：生成 instanceId，准备心跳锁
+  initInstance() // v1.5.3 / M17：生成 instanceId，准备单 owner lease
   await refreshTheme()
   await refreshFolders()
 
   if (state.config.enabled && state.config.folderId) {
     setRuntimeStatus('running')
     scheduleRender()
-    backfillFolder(state.config.folderId).then(() => {
-      if (state.config.enabled && state.config.folderId) startPolling()
-    })
+    const transitionId = beginPollingTransition()
+    startLeaseMaintenance()
+    await backfillFolders(getActiveFolderIds(state.config))
+    if (canResumePolling(transitionId)) startPolling()
   } else if (state.config.enabled && !state.config.folderId) {
     saveConfig({ enabled: false })
     setRuntimeStatus('idle')
@@ -209,12 +259,19 @@ eagle.onPluginShow(async () => {
   await refreshFolders()
   scheduleRender()
   if (state.config && state.config.folderId) {
-    backfillFolder(state.config.folderId).catch(() => {})
+    const shouldResume = state.config.enabled
+    const transitionId = shouldResume ? beginPollingTransition() : null
+    await backfillFolders(getActiveFolderIds(state.config))
+    if (transitionId !== null && canResumePolling(transitionId)) startPolling()
   }
 })
 
 bindThemeListener(() => scheduleRender())
 
 if (typeof eagle.onPluginBeforeExit === 'function') {
-  eagle.onPluginBeforeExit(() => stopPolling())
+  eagle.onPluginBeforeExit(() => {
+    beginPollingTransition()
+    stopLeaseMaintenance()
+    releaseLease()
+  })
 }

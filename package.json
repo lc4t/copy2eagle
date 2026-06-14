@@ -1,10 +1,10 @@
 {
   "name": "eagle-clipboard-watcher",
-  "version": "1.5.2",
-  "description": "Eagle plugin that auto-imports clipboard images and macOS screenshots into a chosen Eagle folder.",
+  "version": "1.5.3",
+  "description": "Eagle plugin that auto-imports clipboard images and screenshots into chosen folders on macOS and Windows.",
   "private": true,
   "author": "lc4t <lc4t0.0@gmail.com>",
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "MIT",
   "homepage": "https://github.com/lc4t/copy2eagle",
   "repository": {
     "type": "git",
@@ -19,6 +19,7 @@
     "clipboard",
     "screenshot",
     "macos",
+    "windows",
     "auto-import"
   ],
   "engines": {
@@ -26,7 +27,8 @@
   },
   "scripts": {
     "build": "node build/bundle.js",
-    "pack": "npm run build && rm -f eagle-clipboard-watcher.eagleplugin && zip eagle-clipboard-watcher.zip manifest.json index.html logo.png js/bundle.js -x '*.DS_Store' && mv eagle-clipboard-watcher.zip eagle-clipboard-watcher.eagleplugin",
+    "test": "node tests/run.js",
+    "pack": "npm test && npm run build && rm -f eagle-clipboard-watcher.eagleplugin && zip eagle-clipboard-watcher.zip manifest.json index.html logo.png js/bundle.js README.md LICENSE -x '*.DS_Store' && mv eagle-clipboard-watcher.zip eagle-clipboard-watcher.eagleplugin",
     "clean": "rm -f eagle-clipboard-watcher.eagleplugin eagle-clipboard-watcher.zip js/bundle.js"
   },
   "dependencies": {},

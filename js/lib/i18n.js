@@ -20,7 +20,7 @@ const zh = {
     IMPORT_FAILED: '保存到 Eagle 失败，目标文件夹是不是被删了？',
     TMP_WRITE_FAILED: '写入临时文件失败，磁盘是不是满了？',
     INSTANCE_CONFLICT: (otherVersion) =>
-      `检测到另一个 Clipboard Watcher（v${otherVersion}）也在运行。请在 Eagle 插件管理中删掉旧版本，保留一个。`,
+      `检测到另一个「剪贴板图片留存」（v${otherVersion}）也在运行。请在 Eagle 插件管理中删掉旧版本，保留一个。`,
     UNKNOWN: '出错了，可以打开 Eagle 日志面板看看详情。',
   },
   status: {
@@ -73,7 +73,6 @@ const zh = {
     multi_file_label: '同时选中多张图片复制时也一并保存',
     multi_file_hint_mac: '在 Finder 中选中多张图片 Cmd+C，一次性全部进 Eagle（最多 50 张）',
     multi_file_hint_win: '在资源管理器中选中多张图片 Ctrl+C，一次性全部进 Eagle（最多 50 张）',
-    multi_file_hint_linux: '在文件管理器中选中多张图片 Ctrl+C 即可（需安装 wl-paste 或 xclip，最多 50 张）',
     multi_file_hint_unknown: '此功能在当前系统不可用',
     // v1.4 多文件夹路由
     routing_section_label: '按来源分别保存到不同文件夹（可选）',
@@ -84,8 +83,8 @@ const zh = {
     routing_use_main: '— 跟随主文件夹 —',
   },
   notify: {
-    title_normal: 'Clipboard Watcher',
-    title_error: 'Clipboard Watcher · 出错了',
+    title_normal: '剪贴板图片留存',
+    title_error: '剪贴板图片留存 · 出错了',
     saved_to: (label) => `已保存到 ${label}`,
     multi_saved_to: (label, n) => `已保存到 ${label}（${n} 张）`,
     import_failed: '保存到 Eagle 失败',
@@ -107,7 +106,7 @@ const en = {
     IMPORT_FAILED: 'Save to Eagle failed. Was the destination folder deleted?',
     TMP_WRITE_FAILED: 'Could not write a temporary file. Is the disk full?',
     INSTANCE_CONFLICT: (otherVersion) =>
-      `Another Clipboard Watcher instance (v${otherVersion}) is also running. Please remove the older one in Eagle's Plugins manager and keep only one.`,
+      `Another 剪贴板图片留存 instance (v${otherVersion}) is also running. Please remove the older one in Eagle's Plugins manager and keep only one.`,
     UNKNOWN: 'Something went wrong. Check the Eagle log panel for details.',
   },
   status: {
@@ -130,7 +129,7 @@ const en = {
     enable_label: 'Auto-save copied images',
     screenshot_button: 'Take Screenshot',
     screenshot_hint_default: 'Screenshots appear in Eagle automatically',
-    screenshot_hint_win: 'On Windows, use Win+Shift+S — with auto-save enabled, screenshots show up in Eagle',
+    screenshot_hint_win: 'On Windows, use Win+Shift+S. With auto-save enabled, screenshots appear in Eagle.',
     screenshot_hint_no_folder: 'Pick a folder first; screenshots will then appear in Eagle',
     screenshot_hint_not_running: 'Screenshot goes to clipboard. Toggle "Auto-save" above to import it.',
     screenshot_hint_running: 'Click, drag-select, and the screenshot lands in Eagle',
@@ -159,7 +158,6 @@ const en = {
     multi_file_label: 'Also save when multiple images are copied at once',
     multi_file_hint_mac: 'Select multiple images in Finder and Cmd+C — all imported at once (max 50)',
     multi_file_hint_win: 'Select multiple images in Explorer and Ctrl+C — all imported at once (max 50)',
-    multi_file_hint_linux: 'Select multiple images in your file manager and Ctrl+C (needs wl-paste or xclip, max 50)',
     multi_file_hint_unknown: 'Not available on this OS',
     routing_section_label: 'Route by source (optional)',
     routing_section_hint: "Leave blank to use the main folder above",
@@ -169,8 +167,8 @@ const en = {
     routing_use_main: '— use main folder —',
   },
   notify: {
-    title_normal: 'Clipboard Watcher',
-    title_error: 'Clipboard Watcher · Error',
+    title_normal: '剪贴板图片留存',
+    title_error: '剪贴板图片留存 · Error',
     saved_to: (label) => `Saved to ${label}`,
     multi_saved_to: (label, n) => `Saved to ${label} (${n})`,
     import_failed: 'Save to Eagle failed',

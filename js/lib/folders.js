@@ -12,6 +12,8 @@ const {
 const { sleep, computeHash } = require('./utils')
 const { state, scheduleRender, setLastError, clearLastError } = require('./state')
 
+let backfillQueue = Promise.resolve()
+
 function flattenFolders(folders, parentPath) {
   const list = []
   if (!Array.isArray(folders)) return list
@@ -47,7 +49,7 @@ async function refreshFolders() {
  * 这样 Eagle 里已删的 item 不会残留旧 hash（修 v1.0.x 的 #4）。
  * 节流：非 force 模式下 5s 内已回填过则跳过。
  */
-async function backfillFolder(folderId, options) {
+async function performBackfillFolder(folderId, options) {
   const opts = options || {}
   const force = !!opts.force
   const freshMs = typeof opts.freshMs === 'number' ? opts.freshMs : BACKFILL_FRESH_MS
@@ -105,6 +107,19 @@ async function backfillFolder(folderId, options) {
   }
 }
 
+function backfillFolder(folderId, options) {
+  const task = backfillQueue.then(() => performBackfillFolder(folderId, options))
+  backfillQueue = task.catch(() => {})
+  return task
+}
+
+async function backfillFolders(folderIds, options) {
+  const uniqueIds = Array.from(new Set((Array.isArray(folderIds) ? folderIds : []).filter(Boolean)))
+  for (const folderId of uniqueIds) {
+    await backfillFolder(folderId, options)
+  }
+}
+
 async function resetFolderIndex() {
   if (!state.config || !state.config.folderId) return
   await backfillFolder(state.config.folderId, { force: true })
@@ -114,5 +129,6 @@ module.exports = {
   flattenFolders,
   refreshFolders,
   backfillFolder,
+  backfillFolders,
   resetFolderIndex,
 }

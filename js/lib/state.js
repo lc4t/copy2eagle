@@ -75,7 +75,7 @@ const state = {
   // 全期计数（v1.4）：跨 session 持久化的"保存总数"
   lifetimeCount: 0,
 
-  // 双实例检测（v1.5.2 / M16）
+  // 双实例检测（v1.5.3 / M17）
   instanceId: null,
   instanceConflict: null, // { otherInstanceId, otherVersion } | null
   lastHeartbeatAt: 0,

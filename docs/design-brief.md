@@ -1,10 +1,10 @@
-# 设计 Brief — Eagle Clipboard Watcher v1.0
+# 设计 Brief — Eagle 剪贴板图片留存 v1.5.3
 
 > 给你 / 设计师 / AI 生图工具用的清单。每项资产给多套 prompt 备选，选最顺手的工具跑。
 
 ---
 
-## 1. Plugin Logo（128×128 PNG，必做）
+## 1. Plugin Logo（至少 256×256 PNG，必做）
 
 ### 视觉概念
 
@@ -21,7 +21,7 @@
 
 ### 必须满足
 
-- 128×128 PNG 透明背景
+- 至少 256×256 PNG 透明背景；建议保留 512×512 主文件
 - **缩到 32×32 仍清晰可辨**（不要细线条 / 复杂文字）
 - 没有边框 / 没有底色方块（Eagle 自动加圆角容器）
 
@@ -60,9 +60,9 @@ flat vector icon, clipboard with image flowing into it, blue #1677ff color palet
 
 ### 输出
 
-- 命名：`logo.png`（128×128）
-- 同时建议保留高清原图 `logo@4x.png`（512×512）作未来 retina 备份
-- 放到仓库根替换当前占位
+- 命名：`logo.png`（建议 512×512，至少 256×256）
+- 同时保留可编辑源文件，方便后续按官方模板调整留白
+- 当前正式输出已放到仓库根 `logo.png`；后续调整时覆盖该文件
 
 ---
 
@@ -115,6 +115,14 @@ Soft pastel blue gradient background, abstract floating image cards drifting tow
 ## 3. Plugin Center / README 产品截图（5 张，不能 AI 生）
 
 **这些必须是真实 Eagle 里跑出来的截图**，AI 生图替代不了。
+
+### 隐私准备
+
+- 新建专用演示文件夹 `演示素材`，只放可公开示例图片
+- 插件标签临时改为 `clipboard-demo`，避免自动 hostname 暴露设备名
+- 不展示真实同步路径、用户名、主机名、annotation 或私人历史缩略图
+- 截图前逐项检查插件面板、Eagle 资源网格、桌面和其他窗口
+- 含个人信息的原图不得通过裁切或打码继续作为商店素材，应重新截图
 
 按以下顺序拍：
 
@@ -215,7 +223,7 @@ copy2eagle/
 
 ## 6. 提交前 checklist
 
-- [ ] `logo.png` 替换（透明背景，32×32 仍可读）
+- [x] `logo.png` 已替换（512×512 PNG、透明背景，32×32 可读）
 - [ ] `docs/assets/cover-1280x800.png`
 - [ ] 5 张 `docs/assets/screenshot-*.png`，每张 < 500KB
 - [ ] README 截图引用更新（M7.3 会处理）

@@ -1,5 +1,5 @@
 /*
- * lib/clipboard.js — 剪贴板探测 + 多平台文件 URL 读取
+ * lib/clipboard.js — 剪贴板探测 + macOS/Windows 文件路径读取
  *
  * Eagle 只暴露 has(format) + readImage()，无 availableFormats / changeCount（K13）。
  * 这里实现 has() 多 format 候选探测 + shell-out 读取文件 URL 列表（K14）。
@@ -55,72 +55,21 @@ function parsePathList(stdout) {
     .slice(0, MULTI_FILE_MAX)
 }
 
-/** Linux text/uri-list → POSIX 路径列表 */
-function parseUriList(stdout) {
-  if (typeof stdout !== 'string') return []
-  const out = []
-  for (const line of stdout.split(/\r?\n/)) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#')) continue
-    if (trimmed.startsWith('file://')) {
-      try {
-        const url = new URL(trimmed)
-        out.push(decodeURIComponent(url.pathname))
-      } catch {
-        out.push(decodeURIComponent(trimmed.replace(/^file:\/\//, '')))
-      }
-    } else if (trimmed.startsWith('/')) {
-      out.push(trimmed)
-    }
-  }
-  return out.slice(0, MULTI_FILE_MAX)
-}
-
 /**
- * 跨平台读取剪贴板里的文件路径列表。
- * macOS: osascript / Windows: PowerShell / Linux: wl-paste 或 xclip
+ * 读取剪贴板里的文件路径列表。
+ * macOS 使用 osascript，Windows 使用系统自带 PowerShell。
  */
-function readClipboardFilePaths() {
+function readClipboardFilePaths(options = {}) {
   return new Promise((resolve) => {
-    const platform = os.platform()
-    if (platform === 'darwin') {
-      const script =
-        'try\n' +
-        '  set theItems to the clipboard as «class furl»\n' +
-        'on error\n' +
-        '  return ""\n' +
-        'end try\n' +
-        'set thePaths to {}\n' +
-        'try\n' +
-        '  repeat with f in theItems\n' +
-        '    set end of thePaths to POSIX path of f\n' +
-        '  end repeat\n' +
-        'on error\n' +
-        '  try\n' +
-        '    set end of thePaths to POSIX path of theItems\n' +
-        '  end try\n' +
-        'end try\n' +
-        'set AppleScript\'s text item delimiters to linefeed\n' +
-        'return thePaths as text'
-      execFile(
-        'osascript',
-        ['-e', script],
-        { timeout: SHELL_TIMEOUT_MS },
-        (err, stdout) => {
-          if (err) {
-            eagle.log.warn(`[clipboard-watcher] osascript failed: ${err.message}`)
-            resolve([])
-            return
-          }
-          resolve(parsePathList(stdout))
-        }
-      )
-    } else if (platform === 'win32') {
+    const platform = options.platform || os.platform()
+    const runFile = options.execFile || execFile
+
+    if (platform === 'win32') {
       const script =
         "$ErrorActionPreference='SilentlyContinue';" +
         " Get-Clipboard -Format FileDropList |" +
         ' ForEach-Object { $_.FullName }'
-      execFile(
+      runFile(
         'powershell',
         ['-NoProfile', '-NonInteractive', '-Command', script],
         { timeout: SHELL_TIMEOUT_MS },
@@ -133,52 +82,45 @@ function readClipboardFilePaths() {
           resolve(parsePathList(stdout))
         }
       )
-    } else if (platform === 'linux') {
-      const isWayland = !!process.env.WAYLAND_DISPLAY
-      const tryWlPaste = () =>
-        new Promise((res) => {
-          execFile(
-            'wl-paste',
-            ['--type', 'text/uri-list'],
-            { timeout: SHELL_TIMEOUT_MS },
-            (err, stdout) => {
-              if (err) {
-                res(null)
-                return
-              }
-              res(parseUriList(stdout))
-            }
-          )
-        })
-      const tryXclip = () =>
-        new Promise((res) => {
-          execFile(
-            'xclip',
-            ['-selection', 'clipboard', '-t', 'text/uri-list', '-o'],
-            { timeout: SHELL_TIMEOUT_MS },
-            (err, stdout) => {
-              if (err) {
-                res(null)
-                return
-              }
-              res(parseUriList(stdout))
-            }
-          )
-        })
-      const order = isWayland ? [tryWlPaste, tryXclip] : [tryXclip, tryWlPaste]
-      ;(async () => {
-        for (const fn of order) {
-          const r = await fn()
-          if (r && r.length) {
-            resolve(r)
-            return
-          }
-        }
-        resolve([])
-      })()
-    } else {
-      resolve([])
+      return
     }
+
+    if (platform !== 'darwin') {
+      resolve([])
+      return
+    }
+
+    const script =
+      'try\n' +
+      '  set theItems to the clipboard as «class furl»\n' +
+      'on error\n' +
+      '  return ""\n' +
+      'end try\n' +
+      'set thePaths to {}\n' +
+      'try\n' +
+      '  repeat with f in theItems\n' +
+      '    set end of thePaths to POSIX path of f\n' +
+      '  end repeat\n' +
+      'on error\n' +
+      '  try\n' +
+      '    set end of thePaths to POSIX path of theItems\n' +
+      '  end try\n' +
+      'end try\n' +
+      'set AppleScript\'s text item delimiters to linefeed\n' +
+      'return thePaths as text'
+    runFile(
+      'osascript',
+      ['-e', script],
+      { timeout: SHELL_TIMEOUT_MS },
+      (err, stdout) => {
+        if (err) {
+          eagle.log.warn(`[clipboard-watcher] osascript failed: ${err.message}`)
+          resolve([])
+          return
+        }
+        resolve(parsePathList(stdout))
+      }
+    )
   })
 }
 
@@ -192,7 +134,6 @@ module.exports = {
   probeAnyFormat,
   readClipboardFilePaths,
   parsePathList,
-  parseUriList,
   isImagePath,
   // 重新导出常量便于其他模块少 import 一次
   IMAGE_FORMAT_CANDIDATES,

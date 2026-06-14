@@ -1,4 +1,4 @@
-# Eagle Clipboard Watcher — Project Context
+# Eagle 剪贴板图片留存 — Project Context
 
 > Full project rules and context are in AGENTS.md.
 > Read AGENTS.md and .agent-doc/progress.md before starting any task.

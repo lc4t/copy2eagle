@@ -1,4 +1,4 @@
-# Eagle Clipboard Watcher
+# Eagle 剪贴板图片留存
 
 > 一个 Eagle 插件：复制图片和截图自动出现在你指定的 Eagle 文件夹。
 
@@ -6,11 +6,13 @@
 
 ## 它做什么
 
-- **复制图片自动入库**：每秒检查一次系统剪贴板，新图片直接进 Eagle，无需手动拖入
+- **复制图片自动入库**：按设置频率检查系统剪贴板，新图片直接进 Eagle，无需手动拖入
 - **一键截图**：面板里点「立即截图」（macOS），框选区域自动入库
 - **图文混排**：从网页 / Word / 微信复制带文字的内容，里面的图自动保存（可关）
 - **多文件批量**（可选）：Finder / 资源管理器选中多张图片复制，一次全进 Eagle
 - **去重**：默认跳过文件夹里已有的同图；可改为允许重复
+- **按来源分流**：截图、普通复制和多文件可分别进入不同 Eagle 文件夹
+- **自定义命名**：支持来源、尺寸、时间、主机名和计数等命名占位符
 - **离线本地**：不发起任何网络请求，所有处理在你本机完成
 
 ## 平台
@@ -18,27 +20,25 @@
 | 平台 | 复制图片 | 截图按钮 | 多文件复制 |
 |---|---|---|---|
 | macOS | ✅ | ✅ `screencapture -ic` | ✅ AppleScript |
-| Windows | ✅ | 用 `Win+Shift+S`（系统截图） | ✅ PowerShell |
-| Linux | ✅ | 用系统截图 | ❌ |
+| Windows | ✅ | 使用 `Win+Shift+S`，截图进剪贴板后自动保存 | ✅ PowerShell FileDropList |
+
+> macOS 和 Windows 均可安装。当前没有 Windows 真机验收设备；Windows 问题会按用户反馈持续修复。
 
 ## 安装
 
 ### 推荐：下载 `.eagleplugin` 双击安装
 
-1. 打开 [Releases v1.0.0](https://github.com/lc4t/copy2eagle/releases/tag/v1.0.0)
-2. 下载附件里的 `eagle-clipboard-watcher.eagleplugin`（约 18 KB）
+1. 打开 [最新 Release](https://github.com/lc4t/copy2eagle/releases/latest)
+2. 下载附件里的 `eagle-clipboard-watcher.eagleplugin`
 3. **双击下载的文件**，Eagle 会弹出安装确认 → 同意即可
 
-> ⚠️ **私仓须知**：此仓库目前是 **private**，Release 页和下载链接需要登录 GitHub 且对仓库有读权限。你自己当然可以下载；要分享给别人，请等仓库切 public 或 Eagle Plugin Center 通过审核。
-
-### 候选：Eagle Plugin Center（待审核）
+### Eagle Plugin Center（准备提交）
 
 ```
-状态：v1.0.0 已准备好提交材料，等设计资产（logo / 封面 / 截图）就位后提交
-预计：审核 1–7 天
+状态：v1.5.3 已通过 macOS 安装与剪贴板导入基线验收，正在准备商店截图资产
 ```
 
-通过后可直接 `Eagle → 插件中心 → 搜 "Clipboard Watcher" → 安装`。
+通过后可直接 `Eagle → 插件中心 → 搜 "剪贴板图片留存" → 安装`。
 
 ### 兜底：开发者模式 / 自己构建
 
@@ -57,12 +57,13 @@ Eagle → 菜单 → 插件 → 开发插件 → 选这个 clone 下来的目录
 
 ## 使用
 
-1. 在 Eagle 里点开 Clipboard Watcher 面板
+1. 在 Eagle 里点开「剪贴板图片留存」面板
 2. **选「保存到 Eagle 的哪个文件夹」**（必填）
 3. **打开「自动保存复制的图片」开关**
 4. 之后任何时候：
-   - 复制图片（截图 / 浏览器右键 / 别的 App 里 Cmd+C 图） → 1 秒内自动进 Eagle
-   - 点「立即截图」按钮 → 选区截图，自动进 Eagle
+   - 复制图片（截图 / 浏览器右键 / 别的 App 里 Cmd/Ctrl+C 图） → 通常 1–5 秒内自动进 Eagle
+   - macOS 点「立即截图」按钮 → 选区截图，自动进 Eagle
+   - Windows 按 `Win+Shift+S` → 截图进入剪贴板后自动进 Eagle
 5. 把面板关掉也没关系，监听在后台继续
 
 ## 高级设置（默认即可用）
@@ -75,7 +76,9 @@ Eagle → 菜单 → 插件 → 开发插件 → 选这个 clone 下来的目录
 | 刷新已保存记录 | — | 在 Eagle 里手动删图后点一下，下次复制同图就能重新保存 |
 | 保存成功时发送系统通知 | ✅ | 关掉就完全静默 |
 | 复制带文字的内容时也保存图片 | ✅ | 关掉后只保存纯图片复制 |
-| 同时选中多张图片复制时也一并保存 | ❌ | 打开后 Finder/资源管理器选多张图 Cmd/Ctrl+C 一次性入库 |
+| 同时选中多张图片复制时也一并保存 | ❌ | 打开后 Finder / 资源管理器选多张图 Cmd/Ctrl+C 一次性入库 |
+| 自定义保存名称 | `{source} {dims} {timestamp}` | 支持 `{source}`、`{dims}`、`{date}`、`{time}`、`{hostname}`、`{count}`、`{lifetime}` |
+| 按来源选择文件夹 | 跟随主文件夹 | 截图、普通复制、多文件可分别指定目标文件夹 |
 
 ## 关于 macOS 14+ 的「已粘贴自 Eagle」通知
 
@@ -97,9 +100,13 @@ macOS 14 Sonoma 起，读剪贴板内容会出系统横幅。本插件采用以�
 
 ## 反馈
 
-发现 bug 或想要新功能：[GitHub Issues](https://github.com/lc4t/copy2eagle/issues)（待开放）
+发现 bug 或想要新功能：[GitHub Issues](https://github.com/lc4t/copy2eagle/issues)
 
 也可以直接邮件 lc4t0.0@gmail.com
+
+## 升级与重复安装
+
+请保留一个已安装实例。若 Eagle 插件管理中同时存在旧版和新版，v1.5.3 会尝试只让一个实例导入；仍应手动卸载重复版本。本项目继续使用既有 Plugin ID `CLIPBOARD_WATCHER_001`，以保留升级连续性。
 
 ## 开发
 
@@ -107,8 +114,4 @@ macOS 14 Sonoma 起，读剪贴板内容会出系统横幅。本插件采用以�
 
 ## License
 
-**[PolyForm Noncommercial License 1.0.0](LICENSE)** © 2026 [lc4t](mailto:lc4t0.0@gmail.com)
-
-源代码可见（source-available），允许个人、教育、研究、非营利组织使用与修改，**禁止任何商业用途**。引用、二次发布需保留 LICENSE 中的 `Required Notice` 行（作者署名与项目地址）。
-
-如需商业授权，请通过邮件联系作者。
+**[MIT License](LICENSE)** © 2026 [lc4t](mailto:lc4t0.0@gmail.com)

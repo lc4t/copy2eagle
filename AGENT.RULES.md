@@ -1,4 +1,4 @@
-# Eagle Clipboard Watcher — Governance Rules
+# Eagle 剪贴板图片留存 — Governance Rules
 
 > 完整治理规范。`AGENTS.md` 是日常摘要，本文件是审计 + 补全依据。每条规则附 Why。
 > 模板出处：`AGENT.template.md v3.0`
@@ -10,7 +10,7 @@
 照搬 `AGENT.template.md §1`。本项目额外强调：
 
 - **Eagle API 是黑盒**：能查官方文档/MCP 时优先查证，不要凭训练数据猜参数键名。PRD 已踩过的坑（如 `folders` 是数组而非 `folderId`）记入 `knowledge.md`。
-- **macOS first**：v1.x 阶段所有验证以 macOS 为准；Windows 兼容性仅做剪贴板路径回归，不阻塞 macOS 发布。
+- **macOS + Windows**：macOS 提供完整功能；Windows 支持剪贴板图片、Win+Shift+S 截图入库与资源管理器多文件复制，内置截图按钮仅 macOS。
 
 ---
 
@@ -19,7 +19,7 @@
 ### 2.1 Eagle 插件运行时
 
 - 插件类型：Background Service（`manifest.json` 必含 `main.serviceMode: true`）
-- 入口：`index.html` → `js/ui.js`（面板）+ `js/plugin.js`（后台逻辑）
+- 入口：`index.html` → `js/bundle.js`；源码由 `js/plugin.js` + `js/ui.js` + `js/lib/*` 组成
 - 生命周期 hook：`eagle.onPluginCreate` 用于初始化轮询；`eagle.onPluginShow` 用于刷新 UI 状态
 
 **Why**：`serviceMode` 保证面板关闭后监听继续，是 PRD F1/F2 的硬前提。
@@ -27,35 +27,36 @@
 ### 2.2 剪贴板 hash 去重
 
 - 算法：`buffer.length + '_' + buffer.slice(0, 256).toString('base64').slice(0, 32)`
-- 状态：`lastImageHash` + `lastImportAt` 二元组，30 秒滑动窗口
+- 状态：`hashSetByFolder`（skip）+ `lastClipboardHash / lastClipboardAt`（allow 的 30 秒防抖）
 - **不引入 crypto 库**
 
 **Why**：PRD §3.5/§2.1 F4。避免依赖膨胀，hash 仅用于去重而非安全。
 
-### 2.3 截图监听节流
+### 2.3 截图入口
 
-- 文件出现后延迟 500ms 再 `addFromPath`
-- 监听目录通过 `defaults read com.apple.screencapture location` 自动检测；失败回退 `~/Desktop`
-- 仅监听 macOS 系统截图命名格式（中文/英文两种）
+- 所有截图走剪贴板单路径，不监听截图目录
+- macOS 面板按钮调用 `screencapture -ic`，结果由标准剪贴板轮询接力
 
-**Why**：PRD §2.1 F2。500ms 是 macOS 截图写盘的经验阈值，避免读到半截文件。
+**Why**：ADR-011。避免目录检测、文件名语言和半写入文件等不稳定因素。
 
 ### 2.4 导入参数硬约束
 
 - `eagle.item.addFromPath(path, opts)` 中 `folders` 必须为数组，**不是 `folderId` 字符串**
 - 剪贴板路径：先写 `os.tmpdir()/eagle-cw/` 再 `addFromPath`，导入完成后删除
-- 截图路径：直接传原文件，不复制
+- 多文件路径：直接传原文件，不复制
 
 **Why**：PRD §3.7 明示踩坑点，必须固化到代码与代码审查清单。
 
 ### 2.5 配置持久化
 
-- `eagle.extraData` key：`clipboardWatcher`
-- JSON 体积 ≤ 10KB
-- 必含字段：`enabled` / `folderId` / `intervalMs` / `tags` / `screenshotDir` / `notifyOnImport`
+- 配置使用 `localStorage` key：`clipboardWatcher`
+- 统计使用 `clipboardWatcher.stats`
+- 双实例 lease 使用 `clipboardWatcher.lease.v2`；旧版兼容 heartbeat 使用 `clipboardWatcher.heartbeat`
+- 必含字段：`enabled` / `folderId` / `intervalMs` / `tags` / `notifyOnImport` / `duplicateStrategy` / `importMixedContent` / `importMultipleFiles` / `nameTemplate`
+- 可选路由字段：`folderIdScreenshot` / `folderIdClipboard` / `folderIdFiles`
 - 插件启动时读取并恢复 `enabled` 状态
 
-**Why**：PRD §2.2/§8。容量上限是 Eagle 平台约束。
+**Why**：Eagle 当前公开 API 没有 `eagle.extraData`；ADR-010 已改用 webview 原生 localStorage。
 
 ### 2.6 日志规范
 
@@ -72,11 +73,12 @@
   - 体积影响（最终 `.eagleplugin` 包大小）
   - 是否引入网络请求（违反隐私承诺，§2.8）
   - License 兼容（MIT/Apache/BSD 友好；GPL 需评审）
-- `package.json` 的 `engines.node` 跟随 Eagle 内置 Electron 的 Node 版本（当前 `>=18`）
-- 不引入构建步骤（webpack/vite/tsc）除非有强需求；当前 MVP 全程纯 JS/HTML
+- `package.json` 的 `engines.node` 保持项目开发与打包基线（当前 `>=18`）；Eagle 宿主兼容性以真机验证为准
+- 不引入 webpack/vite/tsc；保留项目内无依赖 bundler `build/bundle.js`
+- `npm run pack` 必须先执行 `npm test`，再生成可读 `js/bundle.js`
 - `node_modules/` 不入 git，但若有运行时依赖，打包前必须 `npm install --omit=dev` 后纳入 `.eagleplugin`
 
-**Why**：Eagle 插件运行时直接 `require()` 文件路径，无 bundler。保持极简栈让安装/调试/分发链路最短。
+**Why**：Eagle webview 无法稳定解析 `<script>` 中的相对 `require()`；issue #2 已证明必须 ship 单文件 bundle，同时源码继续模块化。
 
 ### 2.8 隐私与安全
 
@@ -187,16 +189,19 @@ copy2eagle/
 ├── CLAUDE.md
 ├── AGENT.RULES.md
 ├── README.md                     # 项目说明（开源用，引导用户安装/使用）
-├── LICENSE                       # PolyForm Noncommercial 1.0.0（非商用 + 署名）
+├── LICENSE                       # MIT License
 ├── package.json                  # npm 元数据 + pack/clean scripts
 ├── .gitignore
 │
 ├── manifest.json                 # [M2 创建] Eagle 插件清单
 ├── index.html                    # [M2 创建] 面板入口
-├── logo.png                      # [M2 创建] 128×128
+├── logo.png                      # Plugin Center 至少 256×256 PNG
 ├── js/
-│   ├── plugin.js                 # [M2/M3 创建] 主逻辑
-│   └── ui.js                     # [M2/M3 创建] UI 交互
+│   ├── plugin.js                 # 生命周期与模块编排
+│   ├── ui.js                     # UI 交互
+│   └── lib/                      # 13 个职责模块
+├── build/bundle.js               # 无依赖本地 bundler
+├── tests/run.js                  # 无依赖自动回归
 │
 ├── .entire/                      # entire CLI 配置（settings.json）
 ├── .claude/agents/               # entire 注入的 Claude Code subagent
@@ -234,7 +239,7 @@ copy2eagle/
 
 - [x] entire CLI 已 enable（`entire enable --agent claude-code`），生成 `.entire/settings.json` 与 `.claude/agents/entire-search.md`
 - [x] npm 项目初始化：`package.json` 含 author/license/repository/scripts(pack, clean)
-- [x] License 选定 PolyForm Noncommercial 1.0.0（含 `Required Notice` 行）
+- [x] License 选定 MIT
 - [x] GitHub Issues 暂不启用（保持 `github-issues: disabled`）
 - [ ] `git add` + 初始 commit `📝 docs: 初始化项目治理文件`
 - [ ] 创建 GitHub 仓库 `lc4t/copy2eagle`（公开），首次推送（推送后 entire 会自动建 checkpoint）
@@ -283,7 +288,7 @@ copy2eagle/
 - 禁 `alert()`
 - 禁付费 API/组件
 - 资源（如有图表）默认 ECharts；本项目暂无图表需求
-- 与 Eagle 主题一致：使用 `--eagle-*` CSS 变量，支持 `eagle.app.isDarkMode`
+- 与 Eagle 主题一致：使用 CSS 变量，读取 `await eagle.app.theme` 并监听 `eagle.onThemeChanged`
 
 ### 11.2 多视角检查
 
