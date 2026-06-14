@@ -25,7 +25,7 @@
 | M13 + M14 | v1.5.0：bundle 修 [#2]（v1.3 起面板空白）+ 命名模板（F13） | ✅ Released | 2026-06-03 | #2 |
 | M15 | v1.5.1 hotfix：manifest fullscreenable: false 防 macOS 全屏黑屏 | ✅ Released | 2026-06-03 | - |
 | M16 | v1.5.2 心跳锁：双实例并存时跳过 import + UI 警告 + 自动恢复 | ✅ Released | 2026-06-06 | - |
-| M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ Release Candidate Ready | 2026-06-15 | - |
+| M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ GitHub Released，待 Plugin Center 提交 | 2026-06-15 | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -564,7 +564,8 @@
 
 - 核心代码、自动测试、Eagle 安装/剪贴板/截图/UI/窗口拉伸验收和商店资产均已就绪
 - 最终 `.eagleplugin` 为 163,821 bytes，6 个审核文件，manifest `devTools: false`
-- 可以提交 GitHub Release 与 Eagle Plugin Center；剩余人工矩阵不阻塞首发
+- GitHub Release 已发布：https://github.com/lc4t/copy2eagle/releases/tag/v1.5.3
+- 下一步仅剩 Eagle Plugin Center 登录态上传与审核；剩余人工矩阵不阻塞首发
 
 ## M17 商店身份决策（2026-06-13）
 

@@ -9,7 +9,7 @@ _（待 v1.6+ 累积）_
 
 ---
 
-## [1.5.3] — 2026-06-13
+## [1.5.3](https://github.com/lc4t/copy2eagle/releases/tag/v1.5.3) — 2026-06-15
 
 Correctness hotfix and Plugin Center preflight. Code/package checks and the macOS Eagle installation/clipboard baseline are complete.
 

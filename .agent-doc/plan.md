@@ -16,7 +16,7 @@
 | M5 | adaptive polling + 重试倒计时 + 最近导入列表 | 🔄 In Progress | 同 hash 持续 3 轮放慢到 5s；倒计时 1s tick；recent cap 5 | - |
 | M6 | 用户视角文案 + 打包 + 端到端验证 | ⬜ Todo | 设置文案去开发者用语；`.eagleplugin` 包；安装文档；截图证据 | - |
 | M7 | 开源发布准备 | ⬜ Todo | README 完善、CHANGELOG v1.0.0、Plugin Center 提交材料 | - |
-| M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ Release Candidate Ready | 双实例 lease / allow 去重 / 路由回填 / 命名计数 / 商店身份 / 自动检查 / macOS QA / 商店资产 | - |
+| M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ Released | 双实例 lease / allow 去重 / 路由回填 / 命名计数 / 商店身份 / 自动检查 / macOS QA / 商店资产 | - |
 
 ## 当前里程碑：M17 — v1.5.3 correctness hotfix
 

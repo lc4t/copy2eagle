@@ -51,12 +51,10 @@
 
 ## 5. GitHub Release
 
-仓库当前 public。完成 Eagle 真机验收后：
-1. `git tag v1.5.3 -m "v1.5.3 — correctness hotfix"`
-2. `git push origin v1.5.3`
-3. GitHub UI → Releases → Draft a new release → 选 tag `v1.5.3`
-4. 上传 `eagle-clipboard-watcher.eagleplugin` 作为附件
-5. Release notes 粘 CHANGELOG 的 `[1.5.3]` 段
+- [x] `v1.5.3` tag 已推送
+- [x] [GitHub Release v1.5.3](https://github.com/lc4t/copy2eagle/releases/tag/v1.5.3) 已发布
+- [x] `eagle-clipboard-watcher.eagleplugin` 已上传（163,821 bytes）
+- [x] SHA-256：`079ab1a8963aef0fcdf59a737912f58ce39b7d7303f806ade11f7d78fa975e2f`
 
 ## 6. Plugin Center 提交
 
