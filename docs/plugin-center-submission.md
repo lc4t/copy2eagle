@@ -1,4 +1,4 @@
-# Eagle Plugin Center 提交材料 — v1.5.3
+# Eagle Plugin Center 提交材料 — v1.5.4
 
 > 提交时直接复制下方对应段。中英文双版本均已准备。
 > Eagle Plugin Center 后台填表项次序可能调整，按对应字段对号入座即可。
@@ -11,7 +11,8 @@
 |---|---|
 | Plugin Name (English alias) | Clipboard Image Archive |
 | Plugin Name (中文 / manifest) | 剪贴板图片留存 |
-| Version | 1.5.3 |
+| Version | 1.5.4 |
+| Plugin ID | 06343a32-d63f-4a04-bdcc-a0ca1e6f12aa |
 | Author | lc4t |
 | Author Email | lc4t0.0@gmail.com |
 | Homepage | https://github.com/lc4t/copy2eagle |

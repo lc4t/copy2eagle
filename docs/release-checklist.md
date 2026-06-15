@@ -1,4 +1,4 @@
-# v1.5.3 Plugin Center 发布前清单
+# v1.5.4 Plugin Center 发布前清单
 
 > 本清单列出代码完成后仍需 GUI、设计资产或账户权限的步骤。
 
@@ -32,9 +32,10 @@
 
 ## 2. Plugin ID
 
-决定继续使用既有 `manifest.json.id = "CLIPBOARD_WATCHER_001"`，以保留现有安装与配置的升级连续性。
-
-提交后台若明确拒绝该 ID 格式，再单独评估迁移；在此之前不主动更换。
+- [x] Plugin Center 后台明确要求 UUID 格式
+- [x] 新 ID：`06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`（UUID v4）
+- [x] 自动测试锁定 UUID v4 格式与固定 ID
+- [ ] 安装商店候选前卸载旧 ID 插件，避免两个 serviceMode 实例并存
 
 ## 3. License
 
@@ -44,23 +45,23 @@
 
 ## 4. CHANGELOG / Release Notes
 
-- [x] `docs/CHANGELOG.md` 已记录 v1.0.0–v1.5.3
+- [x] `docs/CHANGELOG.md` 已记录 v1.0.0–v1.5.4
 - [x] Release notes 摘要：
 
-> v1.5.3 修复双实例互抢、允许重复策略失效、路由文件夹回填缺失和命名计数偏差；新增自动回归检查，采用中文名「剪贴板图片留存」、MIT License 与正式图标，并恢复 Windows 剪贴板图片及资源管理器多文件导入支持。
+> v1.5.4 将 Plugin ID 修正为 Plugin Center 要求的 UUID v4。功能沿用 v1.5.3：修复双实例互抢、允许重复策略、路由回填和命名计数，并支持 macOS / Windows。
 
 ## 5. GitHub Release
 
-- [x] `v1.5.3` tag 已推送
-- [x] [GitHub Release v1.5.3](https://github.com/lc4t/copy2eagle/releases/tag/v1.5.3) 已发布
-- [x] `eagle-clipboard-watcher.eagleplugin` 已上传（163,821 bytes）
-- [x] SHA-256：`079ab1a8963aef0fcdf59a737912f58ce39b7d7303f806ade11f7d78fa975e2f`
+- [ ] `v1.5.4` tag 已推送
+- [ ] GitHub Release v1.5.4 已发布
+- [ ] `eagle-clipboard-watcher.eagleplugin` 已上传（163,812 bytes）
+- [x] SHA-256：`c28af42b3fb0777b9fe4f9dbf7e96792532bda6eea08a027866c2aeef6092904`
 
 ## 6. Plugin Center 提交
 
 按 Eagle 官方[发布流程](https://developer.eagle.cool/plugin-api/distribution/publish)走：
 
-1. `manifest.json.id` 保持 `CLIPBOARD_WATCHER_001`
+1. 确认 `manifest.json.id` 为 `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`
 2. `npm run pack` 完成自动检查并产候选包
 3. 在真实 Eagle 中右键插件执行官方「Pack Plugin」，用官方导出的包做最终上传
 4. 在 [Plugin Center 提交页](https://community-en.eagle.cool/my/plugin/publish)填表：
@@ -72,7 +73,7 @@
 
 ## 7. 提交后立即做
 
-- [ ] 若 Plugin Center 拒绝当前 Plugin ID，记录后台提示后再做迁移决策
+- [x] Plugin Center 的 UUID 格式报错已处理
 - [ ] `docs/CHANGELOG.md` 同步 release 链接（如有）
 - [ ] `.agent-doc/progress.md` 标 M7 Done
 

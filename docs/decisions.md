@@ -204,7 +204,7 @@
 
 ---
 
-## ADR-013：商店版采用中文名称、MIT、既有 ID 与 macOS-only（平台部分已由 ADR-014 取代）
+## ADR-013：商店版采用中文名称、MIT、既有 ID 与 macOS-only（平台由 ADR-014 取代，ID 由 ADR-015 取代）
 
 - **Date**：2026-06-13
 - **Context**：v1.5.3 correctness 修复完成后，需要冻结首次 Eagle Plugin Center 提交的产品身份与支持边界。当前没有 Windows 真机设备，原 PolyForm Noncommercial 会限制商业用户并增加审核不确定性。
@@ -239,3 +239,20 @@
   - Windows 多文件路径增加一次本地 PowerShell 子进程调用，不产生网络请求。
   - Windows 生命周期、Eagle API 兼容性仍有残余风险，需要首批用户反馈补齐。
 - **Why**：核心剪贴板机制跨平台一致，恢复已有 Windows 路径处理的成本可控；分级披露比完全阻止 Windows 用户安装更符合当前发布策略。
+
+---
+
+## ADR-015：Plugin Center 版本改用固定 UUID v4 ID
+
+- **Date**：2026-06-15
+- **Context**：上传 v1.5.3 包时，Plugin Center 后台明确拒绝 `CLIPBOARD_WATCHER_001`，提示 Plugin ID 必须为有效 UUID。该约束未写在公开 manifest 文档中。
+- **Decision**：
+  - 商店版固定使用 UUID v4 `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`。
+  - 版本升为 v1.5.4，不修改已发布的 v1.5.3 tag 和附件。
+  - 自动测试同时锁定固定 ID 与 UUID v4 格式。
+  - 用户安装 v1.5.4 前应卸载旧 ID 插件，并重新选择目标文件夹。
+- **Consequences**：
+  - v1.5.4 会被 Eagle 视为新插件身份，旧安装无法原地升级。
+  - localStorage 配置与 lease 不保证跨 ID 共享；旧新实例并存可能同时导入。
+  - Plugin Center 后续版本必须保持该 UUID 不变。
+- **Why**：提交后台的强制校验优先于此前对升级连续性的假设；以新 patch 版本迁移可以保持既有 GitHub 发布不可变。

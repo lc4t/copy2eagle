@@ -9,6 +9,22 @@ _（待 v1.6+ 累积）_
 
 ---
 
+## [1.5.4] — 2026-06-15
+
+Plugin Center submission compatibility hotfix.
+
+### Fixed
+
+- Replaced the placeholder Plugin ID with UUID v4 `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`, as required by the Plugin Center submission validator.
+- Added a regression check that locks the fixed ID and validates UUID v4 format.
+
+### Upgrade note
+
+- The UUID changes the plugin identity. Users of v1.5.3 or earlier GitHub builds should uninstall the old plugin before installing v1.5.4, then select the target folder again.
+- Old and new IDs may use separate localStorage origins and cannot be relied on to share the single-owner lease.
+
+---
+
 ## [1.5.3](https://github.com/lc4t/copy2eagle/releases/tag/v1.5.3) — 2026-06-15
 
 Correctness hotfix and Plugin Center preflight. Code/package checks and the macOS Eagle installation/clipboard baseline are complete.
@@ -31,7 +47,7 @@ Correctness hotfix and Plugin Center preflight. Code/package checks and the macO
 - Added dependency-free regression checks for lease ownership, v1.5.2 compatibility, duplicate policy, serialized route backfill, version synchronization, name counters, and temporary-file cleanup.
 - `npm run pack` now runs tests first and includes `README.md` plus `LICENSE` for Plugin Center reviewers.
 - Updated README and Plugin Center materials to current repository visibility, platform support, v1.5.3 features, and official icon requirements.
-- Renamed the store-facing product to `剪贴板图片留存` (`Clipboard Image Archive`), adopted the MIT License, and retained the existing Plugin ID.
+- Renamed the store-facing product to `剪贴板图片留存` (`Clipboard Image Archive`) and adopted the MIT License.
 - Replaced the placeholder icon with a 512×512 transparent production icon.
 - Restored Windows distribution and Explorer multi-file clipboard import via PowerShell FileDropList; the built-in screenshot button remains macOS-only, while Windows screenshots use `Win+Shift+S`.
 - Removed Linux-only `wl-paste` / `xclip` branches because Eagle officially distributes on macOS and Windows.

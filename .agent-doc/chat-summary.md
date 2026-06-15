@@ -25,6 +25,7 @@
 - lease 续租不能绑定业务 polling。adaptive 最慢 5 秒、错误重试也会暂停 polling，因此 owner 维护必须独立；旧协议最短 500ms 轮询时，还需要更快的 legacy guard。
 - Eagle 4.0.0 中开发插件注册可能残留或失效，表现为按 `P` 搜不到；用 `.eagleplugin` 重新安装并以日志中的 `Create plugin` / `onPluginCreate` 确认注册更可靠。
 - serviceMode 插件会在启动时先回填目标文件夹哈希。文件较多时监听暂缓，必须等 `backfill done` 再做剪贴板验收，避免把启动期等待误判为故障。
+- Eagle 公开 manifest 文档没有写明 Plugin ID 格式，但 Plugin Center 提交后台会强制校验 UUID。首次商店提交应在发布前用固定 UUID，并通过测试锁定，避免形成旧 ID 安装和配置迁移成本。
 
 ## 规则修正
 

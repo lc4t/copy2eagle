@@ -133,7 +133,7 @@ test('single-owner lease does not let contenders overwrite a fresh owner', () =>
     owned: false,
     conflict: {
       otherInstanceId: 'instance-a',
-      otherVersion: '1.5.3',
+      otherVersion: '1.5.4',
     },
   })
   assert.equal(JSON.parse(storage.get('clipboardWatcher.lease.v2')).instanceId, 'instance-a')
@@ -164,7 +164,12 @@ test('store identity is cross-platform, MIT, and ships a production PNG icon', (
 
   assert.equal(manifest.name, '剪贴板图片留存')
   assert.equal(manifest.platform, 'all')
-  assert.equal(manifest.id, 'CLIPBOARD_WATCHER_001')
+  assert.equal(manifest.id, '06343a32-d63f-4a04-bdcc-a0ca1e6f12aa')
+  assert.match(
+    manifest.id,
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    'Plugin Center requires a UUID v4 plugin ID'
+  )
   assert.equal(manifest.main.resizable, true)
   assert.ok(manifest.main.maxHeight >= 900, 'panel must allow useful vertical resizing')
   assert.equal(manifest.main.fullscreenable, false)
@@ -219,7 +224,7 @@ test('expired lease is claimed after one settling poll and only owner can releas
   assert.equal(storage.has('clipboardWatcher.heartbeat'), false)
 })
 
-test('v1.5.3 lease remains stable when v1.5.2 overwrites the legacy heartbeat', () => {
+test('v1.5.4 lease remains stable when v1.5.2 overwrites the legacy heartbeat', () => {
   storage.clear()
   resetState()
   state.instanceId = 'instance-new'

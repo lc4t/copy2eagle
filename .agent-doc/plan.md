@@ -17,8 +17,18 @@
 | M6 | 用户视角文案 + 打包 + 端到端验证 | ⬜ Todo | 设置文案去开发者用语；`.eagleplugin` 包；安装文档；截图证据 | - |
 | M7 | 开源发布准备 | ⬜ Todo | README 完善、CHANGELOG v1.0.0、Plugin Center 提交材料 | - |
 | M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ Released | 双实例 lease / allow 去重 / 路由回填 / 命名计数 / 商店身份 / 自动检查 / macOS QA / 商店资产 | - |
+| M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 In Progress | 固定 UUID v4 / 版本同步 / 自动检查 / 新发布包 | - |
 
-## 当前里程碑：M17 — v1.5.3 correctness hotfix
+## 当前里程碑：M18 — v1.5.4 Plugin ID UUID 热修复
+
+实施范围：
+
+- 将 Plugin Center 拒绝的可读占位 ID 迁移为固定 UUID v4。
+- 版本升为 v1.5.4，不修改已发布的 v1.5.3 tag 与附件。
+- 自动测试锁定固定 ID、UUID v4 格式和版本同步。
+- 更新发布材料，明确旧 ID 安装需先卸载并重新选择目标文件夹。
+
+## 已完成里程碑：M17 — v1.5.3 correctness hotfix
 
 实施范围：
 
@@ -28,7 +38,7 @@
 - 修正 `{count}` / `{lifetime}` 命名 token 为含本次值。
 - 增加无依赖自动回归检查，完成构建与打包验证。
 
-后续追加决定：商店中文名为「剪贴板图片留存」、MIT、保留既有 Plugin ID，并采用 F1 正式图标。2026-06-14 将平台改为 macOS / Windows：恢复 Windows 多文件剪贴板处理，内置截图按钮仍仅 macOS。
+后续追加决定：商店中文名为「剪贴板图片留存」、MIT，并采用 F1 正式图标。2026-06-14 将平台改为 macOS / Windows：恢复 Windows 多文件剪贴板处理，内置截图按钮仍仅 macOS。原“保留既有 Plugin ID”决定已被 M18 / ADR-015 取代。
 
 ## 当前里程碑：M5 — adaptive polling + 重试倒计时 + 最近导入列表
 
@@ -87,6 +97,6 @@ M6 任务（按优先级）：
 
 ## 遗留问题
 
-- [x] `manifest.json.id` 固定保留 `CLIPBOARD_WATCHER_001`，优先保持升级连续性
+- [x] `manifest.json.id` 已迁移并固定为 UUID v4 `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`
 - [ ] Windows 已纳入商店版；发布后补齐真实设备上的剪贴板、多文件和生命周期验收
 - [ ] 补齐 Plugin Center 封面、至少 3 张真实产品截图，以及截图按钮/路由/allow/错误恢复人工矩阵

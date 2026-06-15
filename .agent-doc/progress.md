@@ -26,6 +26,7 @@
 | M15 | v1.5.1 hotfix：manifest fullscreenable: false 防 macOS 全屏黑屏 | ✅ Released | 2026-06-03 | - |
 | M16 | v1.5.2 心跳锁：双实例并存时跳过 import + UI 警告 + 自动恢复 | ✅ Released | 2026-06-06 | - |
 | M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ GitHub Released，待 Plugin Center 提交 | 2026-06-15 | - |
+| M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 打包与发布中 | - | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -505,7 +506,7 @@
 
 ## 遗留问题
 
-- [x] 保留 `manifest.json.id = CLIPBOARD_WATCHER_001`；仅在 Plugin Center 明确拒绝时再迁移
+- [x] Plugin Center 已明确拒绝旧 ID；`manifest.json.id` 已迁移并固定为 UUID v4 `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`
 - [ ] Windows 已纳入商店版；发布后补齐真实设备验收
 - [x] `logo.png` 已替换为 512×512 RGBA 正式图标
 - [x] License 已改为 MIT
@@ -572,9 +573,31 @@
 - 中文主名称 / manifest：`剪贴板图片留存`
 - 英文审核别名：`Clipboard Image Archive`
 - License：MIT
-- Plugin ID：保留 `CLIPBOARD_WATCHER_001`，优先保持升级连续性
+- Plugin ID：原保留旧 ID 的决定已被 Plugin Center UUID 校验推翻；v1.5.4 起固定为 `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`
 - 平台：2026-06-14 改为 macOS / Windows（manifest `platform: all`）
 - 图标：F1 蓝色剪贴板图片流入归档盒，512×512 RGBA，32×32 可读
 - 运行时：恢复 Windows PowerShell FileDropList；保留 macOS `screencapture` / `osascript`，不恢复 Linux shell 分支
 - Windows 功能边界：普通剪贴板图片和多文件复制可用；`Win+Shift+S` 截图入库可用；内置截图按钮仅 macOS
 - Windows 验证状态：自动模拟覆盖 PowerShell 调用，暂无真机证据，发布后按反馈补测和修复
+
+## M18 进行中（2026-06-15）— v1.5.4 Plugin ID UUID 热修复
+
+**触发**：
+
+- Plugin Center 上传 v1.5.3 包时明确报错：插件 ID 格式不正确，要求有效 UUID。
+
+**决定与改动**：
+
+- 固定 Plugin ID 为 UUID v4 `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`。
+- 版本升为 v1.5.4；不覆盖 v1.5.3 tag、Release 或附件。
+- manifest / package / UI / runtime 版本同步，自动测试锁定固定 ID 与 UUID v4 格式。
+- 旧 ID 与新 ID 可能不共享 localStorage 和 lease；安装 v1.5.4 前必须卸载旧插件，并重新选择目标文件夹。
+
+**待完成**：
+
+- [x] `npm test`：13 checks passed；全部 JavaScript `node --check` 通过
+- [x] `npm run pack`：163,812 bytes / 6 个审核文件
+- [x] 包内 manifest UUID、v1.5.4 与 `devTools: false` 复核通过
+- [x] SHA-256：`c28af42b3fb0777b9fe4f9dbf7e96792532bda6eea08a027866c2aeef6092904`
+- [ ] GitHub v1.5.4 tag / Release
+- [ ] Plugin Center 重新上传

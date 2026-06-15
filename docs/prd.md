@@ -265,8 +265,8 @@ eagle-clipboard-watcher.eagleplugin（实质是 zip）
 
 ```json
 {
-  "id": "CLIPBOARD_WATCHER_001",
-  "version": "1.0.0",
+  "id": "06343a32-d63f-4a04-bdcc-a0ca1e6f12aa",
+  "version": "1.5.4",
   "platform": "all",
   "arch": "all",
   "name": "剪贴板图片留存",
@@ -290,7 +290,7 @@ eagle-clipboard-watcher.eagleplugin（实质是 zip）
 }
 ```
 
-> v1.5.3 决定继续使用既有 ID `CLIPBOARD_WATCHER_001`，优先保持升级连续性。
+> v1.5.4 根据 Plugin Center 提交后台的明确校验，将 Plugin ID 改为 UUID v4 `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`。旧 GitHub 安装需卸载后重新安装并配置。
 
 ### 3.4 可用 API 清单（v1.1 修订：实际验证过的接口）
 

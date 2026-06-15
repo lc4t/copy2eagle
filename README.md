@@ -35,7 +35,7 @@
 ### Eagle Plugin Center（准备提交）
 
 ```
-状态：v1.5.3 已通过 macOS 安装与剪贴板导入基线验收，正在准备商店截图资产
+状态：v1.5.4 已完成 Plugin Center 提交材料与 UUID Plugin ID 修正
 ```
 
 通过后可直接 `Eagle → 插件中心 → 搜 "剪贴板图片留存" → 安装`。
@@ -106,7 +106,7 @@ macOS 14 Sonoma 起，读剪贴板内容会出系统横幅。本插件采用以�
 
 ## 升级与重复安装
 
-请保留一个已安装实例。若 Eagle 插件管理中同时存在旧版和新版，v1.5.3 会尝试只让一个实例导入；仍应手动卸载重复版本。本项目继续使用既有 Plugin ID `CLIPBOARD_WATCHER_001`，以保留升级连续性。
+v1.5.4 为满足 Plugin Center 的 UUID 格式要求，更换了 Plugin ID。若安装过 v1.5.3 或更早的 GitHub 版本，请先在 Eagle 插件管理中卸载旧实例，再安装 v1.5.4，并重新选择一次目标文件夹。不同 Plugin ID 的安装可能无法共享 `localStorage` 配置或双实例 lease。
 
 ## 开发
 

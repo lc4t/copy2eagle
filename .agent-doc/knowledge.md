@@ -95,7 +95,9 @@
   - 建议详情页至少提供 3 张真实功能图片。
   - 若插件需要额外配置、系统设置或启动外部进程，应在提交包根目录放 README，供审核人员测试。
   - 官方发布流程：导出 `.eagleplugin` → Plugin Center 右上角 Submit → Submit Plugin → 上传 → 填介绍与版本更新 → 提交审核。
-  - 登录态提交入口为 https://community-en.eagle.cool/my/plugin/publish ；公开文档只把 `manifest.id` 定义为 Plugin ID，没有说明由开发者工具生成或规定 `KXXXXXXXX` 格式，最终 ID 规则需在提交后台确认。
+  - 登录态提交入口为 https://community-en.eagle.cool/my/plugin/publish ；公开文档只把 `manifest.id` 定义为 Plugin ID，没有说明格式。
+  - 2026-06-15 上传 v1.5.3 包时，提交后台明确要求有效 UUID；v1.5.4 起固定使用 UUID v4 `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`。
+  - 项目影响：商店发布后不得再更换该 UUID；旧可读 ID 安装需先卸载，且不能假设跨 ID 共享 localStorage 或单 owner lease。
   - 提交时必须提供用户支持联系方式。
   - 审核政策要求功能完整可测试、准确披露限制、不得混淆或压缩代码，并应兼容 macOS 与 Windows。
   - manifest 官方支持 `platform: "mac"` 和 `"all"`；2026-06-14 用户将发布策略改为 macOS / Windows，允许 Windows 用户先用并按反馈修复。
