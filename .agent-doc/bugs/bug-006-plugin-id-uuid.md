@@ -26,6 +26,7 @@
 - [x] `npm run pack`：6 个审核文件，163,812 bytes
 - [x] 包内 manifest：ID `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`，version `1.5.4`，`devTools: false`
 - [x] SHA-256：`c28af42b3fb0777b9fe4f9dbf7e96792532bda6eea08a027866c2aeef6092904`
+- [x] GitHub v1.5.4 Release 与附件已发布
 - [ ] 重新上传 Plugin Center
 
 ## Impact

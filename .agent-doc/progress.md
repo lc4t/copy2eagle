@@ -26,7 +26,7 @@
 | M15 | v1.5.1 hotfix：manifest fullscreenable: false 防 macOS 全屏黑屏 | ✅ Released | 2026-06-03 | - |
 | M16 | v1.5.2 心跳锁：双实例并存时跳过 import + UI 警告 + 自动恢复 | ✅ Released | 2026-06-06 | - |
 | M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ GitHub Released，待 Plugin Center 提交 | 2026-06-15 | - |
-| M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 打包与发布中 | - | - |
+| M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 GitHub Released，待 Plugin Center 重新上传 | - | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -599,5 +599,5 @@
 - [x] `npm run pack`：163,812 bytes / 6 个审核文件
 - [x] 包内 manifest UUID、v1.5.4 与 `devTools: false` 复核通过
 - [x] SHA-256：`c28af42b3fb0777b9fe4f9dbf7e96792532bda6eea08a027866c2aeef6092904`
-- [ ] GitHub v1.5.4 tag / Release
+- [x] GitHub v1.5.4 tag / Release：https://github.com/lc4t/copy2eagle/releases/tag/v1.5.4
 - [ ] Plugin Center 重新上传

@@ -9,7 +9,7 @@ _（待 v1.6+ 累积）_
 
 ---
 
-## [1.5.4] — 2026-06-15
+## [1.5.4](https://github.com/lc4t/copy2eagle/releases/tag/v1.5.4) — 2026-06-15
 
 Plugin Center submission compatibility hotfix.
 

@@ -17,7 +17,7 @@
 | M6 | 用户视角文案 + 打包 + 端到端验证 | ⬜ Todo | 设置文案去开发者用语；`.eagleplugin` 包；安装文档；截图证据 | - |
 | M7 | 开源发布准备 | ⬜ Todo | README 完善、CHANGELOG v1.0.0、Plugin Center 提交材料 | - |
 | M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ Released | 双实例 lease / allow 去重 / 路由回填 / 命名计数 / 商店身份 / 自动检查 / macOS QA / 商店资产 | - |
-| M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 In Progress | 固定 UUID v4 / 版本同步 / 自动检查 / 新发布包 | - |
+| M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 GitHub Released，待 Plugin Center | 固定 UUID v4 / 版本同步 / 自动检查 / 新发布包 | - |
 
 ## 当前里程碑：M18 — v1.5.4 Plugin ID UUID 热修复
 
