@@ -8,6 +8,7 @@ struct Crop {
 }
 
 let canvasSize = NSSize(width: 1280, height: 800)
+let coverPixelScale: CGFloat = 1.5
 
 func color(_ hex: UInt32, alpha: CGFloat = 1) -> NSColor {
     NSColor(
@@ -100,11 +101,11 @@ func drawPill(_ text: String, top: CGFloat, left: CGFloat, width: CGFloat) {
     drawText(text, top: top + 7, left: left + 18, width: width - 36, size: 20, weight: .medium, textColor: color(0x0b63ce))
 }
 
-func makeImage(background: NSColor, draw: () -> Void) -> NSBitmapImageRep {
+func makeImage(background: NSColor, pixelScale: CGFloat = 1, draw: () -> Void) -> NSBitmapImageRep {
     let rep = NSBitmapImageRep(
         bitmapDataPlanes: nil,
-        pixelsWide: Int(canvasSize.width),
-        pixelsHigh: Int(canvasSize.height),
+        pixelsWide: Int(canvasSize.width * pixelScale),
+        pixelsHigh: Int(canvasSize.height * pixelScale),
         bitsPerSample: 8,
         samplesPerPixel: 4,
         hasAlpha: true,
@@ -143,7 +144,7 @@ let settings = load(CommandLine.arguments[4])
 let outputDir = CommandLine.arguments[5]
 try! FileManager.default.createDirectory(atPath: outputDir, withIntermediateDirectories: true)
 
-let cover = makeImage(background: color(0xf4f8ff)) {
+let cover = makeImage(background: color(0xf4f8ff), pixelScale: coverPixelScale) {
     drawAspectFill(background, in: NSRect(origin: .zero, size: canvasSize))
     color(0xffffff, alpha: 0.70).setFill()
     NSBezierPath(roundedRect: NSRect(x: 48, y: 82, width: 610, height: 636), xRadius: 32, yRadius: 32).fill()
@@ -160,7 +161,7 @@ let cover = makeImage(background: color(0xf4f8ff)) {
         height: 664
     )
 }
-write(cover, to: "\(outputDir)/cover-1280x800.png")
+write(cover, to: "\(outputDir)/cover-1920x1200.png")
 
 let overviewShot = makeImage(background: color(0xeff5ff)) {
     drawText("复制即保存", top: 140, left: 64, width: 500, size: 54, weight: .bold, textColor: color(0x12233f))

@@ -151,7 +151,7 @@ Source code: https://github.com/lc4t/copy2eagle
 参见 [release-checklist.md §1](release-checklist.md#1-设计资产必须)：
 
 - [x] Logo 512×512 PNG（透明背景，32×32 可读）
-- [x] 封面图 1280×800：`assets/plugin-center/cover-1280x800.png`
+- [x] 首图 / 封面图 1920×1200：`assets/plugin-center/cover-1920x1200.png`
 - [x] 功能截图 3 张：`assets/plugin-center/screenshot-*.png`
 
 ---

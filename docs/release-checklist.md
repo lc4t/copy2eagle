@@ -15,7 +15,7 @@
 | 资产 | 规格 | 当前 | 来源建议 |
 |---|---|---|---|
 | Plugin Logo | 至少 256×256 PNG，透明背景，按官方模板留白 | ✅ `logo.png` 为 512×512 RGBA，32×32 可读 | F1：蓝色剪贴板图片流入归档盒 |
-| Plugin Center 封面图 | 1280×800 PNG/JPG | ✅ `assets/plugin-center/cover-1280x800.png` | 蓝色归档背景 + 真实插件面板 |
+| Plugin Center 首图 / 封面图 | 必须大于 1560×1040 px | ✅ `assets/plugin-center/cover-1920x1200.png` | 蓝色归档背景 + 真实插件面板 |
 | 功能截图（README + Plugin Center） | 1280×800 以上，建议 3–5 张 | ✅ 3 张 1280×800 脱敏成品 | 主面板 / Eagle 导入结果 / 高级设置 |
 
 **建议风格**：

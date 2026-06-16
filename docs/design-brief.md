@@ -66,7 +66,7 @@ flat vector icon, clipboard with image flowing into it, blue #1677ff color palet
 
 ---
 
-## 2. Plugin Center 封面图（1280×800，必做）
+## 2. Plugin Center 首图 / 封面图（1920×1200，必做）
 
 ### 视觉概念
 
@@ -105,7 +105,7 @@ Soft pastel blue gradient background, abstract floating image cards drifting tow
 #### 直接拼图工具（更推荐）
 
 用 [Picsmart](https://picsmart.app/) / [SVGator](https://www.svgator.com/) / 或 Figma 模板：
-1. 1280×800 画布，背景渐变 `#f0f2f5 → #e6f0ff`（斜向 135°）
+1. 1920×1200 画布，背景渐变 `#f0f2f5 → #e6f0ff`（斜向 135°）。后台要求首图必须大于 1560×1040 px。
 2. 左侧粘真实面板截图（带 macOS 窗口圆角阴影）
 3. 右侧打字 + Inter / SF Pro 字体
 4. 不需要 AI 生图，纯排版即可
@@ -201,7 +201,7 @@ copy2eagle/
 ├── logo@4x.png                    # 512×512 可选
 └── docs/
     └── assets/                    # 新建
-        ├── cover-1280x800.png     # ← M7.1 第 2 项
+        ├── cover-1920x1200.png    # ← M7.1 第 2 项，Plugin Center 首图
         ├── screenshot-1-main-panel.png
         ├── screenshot-2-screenshot-button.png
         ├── screenshot-3-multi-file.png
@@ -224,7 +224,7 @@ copy2eagle/
 ## 6. 提交前 checklist
 
 - [x] `logo.png` 已替换（512×512 PNG、透明背景，32×32 可读）
-- [ ] `docs/assets/cover-1280x800.png`
+- [ ] `assets/plugin-center/cover-1920x1200.png`
 - [ ] 5 张 `docs/assets/screenshot-*.png`，每张 < 500KB
 - [ ] README 截图引用更新（M7.3 会处理）
 - [ ] Plugin Center 提交时上传以上资产
