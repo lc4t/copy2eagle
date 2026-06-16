@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.6.1",
+  "checkpoint_id": "31325e909a10",
+  "strategy": "manual-commit",
+  "branch": "dev",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".agent-doc/bugs/bug-007-cover-size.md",
+    ".agent-doc/feats/feat-017-plugin-center-identity.md",
+    ".agent-doc/knowledge.md",
+    ".agent-doc/progress.md",
+    "assets/plugin-center/README.md",
+    "build/store-assets.swift",
+    "docs/design-brief.md",
+    "docs/plugin-center-submission.md",
+    "docs/prd.md",
+    "docs/release-checklist.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/31/325e909a10/0/metadata.json",
+      "transcript": "/31/325e909a10/0/full.jsonl",
+      "content_hash": "/31/325e909a10/0/content_hash.txt",
+      "prompt": "/31/325e909a10/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3143062,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 40026240,
+    "output_tokens": 204034,
+    "api_call_count": 352
+  }
+}
