@@ -1,0 +1,65 @@
+{
+  "cli_version": "0.6.1",
+  "checkpoint_id": "b8c666e15920",
+  "session_id": "019ec107-7815-70a0-97d0-b18ec7e6d6d3",
+  "strategy": "manual-commit",
+  "created_at": "2026-07-03T17:06:26.260988Z",
+  "branch": "dev",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".agent-doc/bugs/bug-007-cover-size.md",
+    ".agent-doc/bugs/bug-008-plugin-center-review-rejection.md",
+    ".agent-doc/feats/feat-017-plugin-center-identity.md",
+    ".agent-doc/knowledge.md",
+    ".agent-doc/plan.md",
+    ".agent-doc/progress.md",
+    "README.md",
+    "assets/plugin-center/README.md",
+    "assets/plugin-center/cover-1280x800.png",
+    "assets/plugin-center/cover-1800x1200.png",
+    "assets/plugin-center/cover-1920x1200.png",
+    "build/store-assets.swift",
+    "docs/CHANGELOG.md",
+    "docs/decisions.md",
+    "docs/design-brief.md",
+    "docs/plugin-center-submission.md",
+    "docs/prd.md",
+    "docs/release-checklist.md",
+    "index.html",
+    "js/lib/instance.js",
+    "manifest.json",
+    "package.json",
+    "tests/run.js"
+  ],
+  "agent": "Codex",
+  "model": "gpt-5.5",
+  "turn_id": "1cd6e34e9173",
+  "token_usage": {
+    "input_tokens": 3420783,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 44031744,
+    "output_tokens": 229158,
+    "api_call_count": 385
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-07-03T17:06:25.884549Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 141,
+    "human_modified": 71,
+    "human_removed": 0,
+    "total_committed": 141,
+    "total_lines_changed": 212,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}

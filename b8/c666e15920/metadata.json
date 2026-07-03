@@ -1,0 +1,47 @@
+{
+  "cli_version": "0.6.1",
+  "checkpoint_id": "b8c666e15920",
+  "strategy": "manual-commit",
+  "branch": "dev",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".agent-doc/bugs/bug-007-cover-size.md",
+    ".agent-doc/bugs/bug-008-plugin-center-review-rejection.md",
+    ".agent-doc/feats/feat-017-plugin-center-identity.md",
+    ".agent-doc/knowledge.md",
+    ".agent-doc/plan.md",
+    ".agent-doc/progress.md",
+    "README.md",
+    "assets/plugin-center/README.md",
+    "assets/plugin-center/cover-1280x800.png",
+    "assets/plugin-center/cover-1800x1200.png",
+    "assets/plugin-center/cover-1920x1200.png",
+    "build/store-assets.swift",
+    "docs/CHANGELOG.md",
+    "docs/decisions.md",
+    "docs/design-brief.md",
+    "docs/plugin-center-submission.md",
+    "docs/prd.md",
+    "docs/release-checklist.md",
+    "index.html",
+    "js/lib/instance.js",
+    "manifest.json",
+    "package.json",
+    "tests/run.js"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b8/c666e15920/0/metadata.json",
+      "transcript": "/b8/c666e15920/0/full.jsonl",
+      "content_hash": "/b8/c666e15920/0/content_hash.txt",
+      "prompt": "/b8/c666e15920/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3420783,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 44031744,
+    "output_tokens": 229158,
+    "api_call_count": 385
+  }
+}
