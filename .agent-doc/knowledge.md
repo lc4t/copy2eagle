@@ -98,7 +98,8 @@
   - 登录态提交入口为 https://community-en.eagle.cool/my/plugin/publish ；公开文档只把 `manifest.id` 定义为 Plugin ID，没有说明格式。
   - 2026-06-15 上传 v1.5.3 包时，提交后台明确要求有效 UUID；v1.5.4 起固定使用 UUID v4 `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`。
   - 项目影响：商店发布后不得再更换该 UUID；旧可读 ID 安装需先卸载，且不能假设跨 ID 共享 localStorage 或单 owner lease。
-  - 2026-06-17 上传封面时，提交后台要求首图必须大于 1560×1040 px；当前首图改为 `assets/plugin-center/cover-1920x1200.png`。
+  - 官方 manifest 文档列出 `platform` 合法值：`all`、`mac`、`win`。当前复审包使用 `platform: "all"`，并在 reviewer notes 中解释为 macOS / Windows 支持。
+  - 2026-06-17 上传封面时，提交后台要求首图必须大于 1560×1040 px；2026-07-04 审核反馈进一步指出错误比例会被退回。当前首图改为 3:2 的 `assets/plugin-center/cover-1800x1200.png`。
   - 提交时必须提供用户支持联系方式。
   - 审核政策要求功能完整可测试、准确披露限制、不得混淆或压缩代码，并应兼容 macOS 与 Windows。
   - manifest 官方支持 `platform: "mac"` 和 `"all"`；2026-06-14 用户将发布策略改为 macOS / Windows，允许 Windows 用户先用并按反馈修复。
@@ -108,7 +109,7 @@
 - **项目影响**：
   - v1.5.2 的 128x128 占位图不满足要求；v1.5.3 已替换为 512x512 RGBA 正式图标。
   - v1.5.3 起审核包包含 README 与 LICENSE，并明确披露支持平台会调用的 `screencapture` 和 `osascript` 本地系统进程。
-  - Plugin Center 首图必须使用 1920×1200 这类大于 1560×1040 px 的尺寸；不要再上传旧的 1280×800 封面。
+  - Plugin Center 首图必须使用 1800×1200 这类大于 1560×1040 px 且符合 3:2 比例的尺寸；不要再上传旧的 1280×800 或 1920×1200 封面。
   - manifest 名称使用「剪贴板图片留存」，英文审核别名为 `Clipboard Image Archive`。
   - macOS 安装与剪贴板导入基线已于 2026-06-14 在 Eagle 4.0.0 完成；上架前仍需至少 3 张真实截图和交互式功能人工矩阵。
 - **时效性**：Plugin Center 政策可能更新；每次正式提交前重新核验。

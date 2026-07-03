@@ -9,6 +9,17 @@ _（待 v1.6+ 累积）_
 
 ---
 
+## [1.5.5] — 2026-07-04
+
+Plugin Center review resubmission.
+
+### Changed
+
+- Adjusted the Plugin Center cover to `1800×1200` at a 3:2 ratio after review feedback said the submitted cover looked incorrectly proportioned.
+- Clarified macOS / Windows support in reviewer materials. The package manifest explicitly keeps `platform: "all"` per Eagle's manifest docs; the built-in screenshot button remains macOS-only, while Windows screenshots use `Win+Shift+S`.
+
+---
+
 ## [1.5.4](https://github.com/lc4t/copy2eagle/releases/tag/v1.5.4) — 2026-06-15
 
 Plugin Center submission compatibility hotfix.

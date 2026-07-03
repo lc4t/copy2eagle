@@ -133,7 +133,7 @@ test('single-owner lease does not let contenders overwrite a fresh owner', () =>
     owned: false,
     conflict: {
       otherInstanceId: 'instance-a',
-      otherVersion: '1.5.4',
+      otherVersion: '1.5.5',
     },
   })
   assert.equal(JSON.parse(storage.get('clipboardWatcher.lease.v2')).instanceId, 'instance-a')
@@ -161,6 +161,7 @@ test('store identity is cross-platform, MIT, and ships a production PNG icon', (
   const license = fs.readFileSync(path.join(root, 'LICENSE'), 'utf8')
   const clipboardSource = fs.readFileSync(path.join(root, 'js/lib/clipboard.js'), 'utf8')
   const logo = fs.readFileSync(path.join(root, 'logo.png'))
+  const cover = fs.readFileSync(path.join(root, 'assets/plugin-center/cover-1800x1200.png'))
 
   assert.equal(manifest.name, '剪贴板图片留存')
   assert.equal(manifest.platform, 'all')
@@ -182,6 +183,8 @@ test('store identity is cross-platform, MIT, and ships a production PNG icon', (
   assert.equal(logo.readUInt32BE(16), 512)
   assert.equal(logo.readUInt32BE(20), 512)
   assert.ok([4, 6].includes(logo[25]), 'logo must include an alpha channel')
+  assert.equal(cover.readUInt32BE(16), 1800)
+  assert.equal(cover.readUInt32BE(20), 1200)
 })
 
 test('Windows multi-file clipboard invokes PowerShell FileDropList safely', async () => {
@@ -224,7 +227,7 @@ test('expired lease is claimed after one settling poll and only owner can releas
   assert.equal(storage.has('clipboardWatcher.heartbeat'), false)
 })
 
-test('v1.5.4 lease remains stable when v1.5.2 overwrites the legacy heartbeat', () => {
+test('v1.5.5 lease remains stable when v1.5.2 overwrites the legacy heartbeat', () => {
   storage.clear()
   resetState()
   state.instanceId = 'instance-new'

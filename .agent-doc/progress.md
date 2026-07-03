@@ -27,6 +27,7 @@
 | M16 | v1.5.2 心跳锁：双实例并存时跳过 import + UI 警告 + 自动恢复 | ✅ Released | 2026-06-06 | - |
 | M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ GitHub Released，待 Plugin Center 提交 | 2026-06-15 | - |
 | M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 GitHub Released，待 Plugin Center 重新上传 | - | - |
+| M19 | v1.5.5 Plugin Center 复审修复 | 🔄 修复与打包中 | - | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -559,7 +560,7 @@
 **仍待完成**：
 
 - 非阻塞人工矩阵：来源路由切换、allow 超过 30 秒、双实例和错误恢复
-- [x] Plugin Center 首图已升级为 1920×1200，满足后台大于 1560×1040 px 要求；3 张 1280×800 脱敏产品截图已生成并通过隐私复查
+- [x] Plugin Center 首图已升级为 1800×1200，满足后台大于 1560×1040 px 与 3:2 比例要求；3 张 1280×800 脱敏产品截图已生成并通过隐私复查
 
 **发布候选结论（2026-06-15）**：
 
@@ -601,3 +602,30 @@
 - [x] SHA-256：`c28af42b3fb0777b9fe4f9dbf7e96792532bda6eea08a027866c2aeef6092904`
 - [x] GitHub v1.5.4 tag / Release：https://github.com/lc4t/copy2eagle/releases/tag/v1.5.4
 - [ ] Plugin Center 重新上传
+
+## M19 进行中（2026-07-04）— v1.5.5 Plugin Center 复审修复
+
+**触发**：
+
+- Eagle Plugin Center 审核退回，指出首图 / 封面比例看起来不符合规范，以及平台支持说明不够明确。
+
+**决定与改动**：
+
+- 首图改为 `assets/plugin-center/cover-1800x1200.png`，3:2 比例，尺寸大于 1560×1040 px。
+- 保留 `manifest.platform = "all"`。官方 manifest 文档列出合法值 `all` / `mac` / `win`，当前插件支持 macOS / Windows 剪贴板图片导入。
+- README 与 reviewer notes 明确：内置「立即截图」按钮仅 macOS，Windows 使用 `Win+Shift+S` 截图进剪贴板后自动入库。
+- 版本升为 v1.5.5，作为复审包。
+
+**验证**：
+
+- [x] `npm test`：13 checks passed；全部 JavaScript `node --check` 通过
+- [x] `swiftc -typecheck build/store-assets.swift` 通过（仅 Xcode 缓存 / FSEvents 警告）
+- [x] `npm run pack`：163,835 bytes / 6 个审核文件
+- [x] 包内 manifest：version `1.5.5`，`platform: "all"`，`devTools: false`
+- [x] 包 SHA-256：`9e2ac18bd43e644c9020cb009a3003c7f5fcb1c488be1e5340cd42c4add53cd0`
+- [x] 首图 SHA-256：`b494e4366e06533e2eccb237d0a950ff785c9ffbab832d26816377c94943951d`
+
+**待完成**：
+
+- [ ] GitHub v1.5.5 tag / Release
+- [ ] Plugin Center 重新提交

@@ -256,3 +256,18 @@
   - localStorage 配置与 lease 不保证跨 ID 共享；旧新实例并存可能同时导入。
   - Plugin Center 后续版本必须保持该 UUID 不变。
 - **Why**：提交后台的强制校验优先于此前对升级连续性的假设；以新 patch 版本迁移可以保持既有 GitHub 发布不可变。
+
+---
+
+## ADR-016：复审包使用 3:2 首图并保持 platform=all
+
+- **Date**：2026-07-04
+- **Context**：Plugin Center 审核退回，指出首图 / 封面比例看起来不符合规范，同时要求如果不能在 Windows 运行就要强调，并检查 manifest platform 设置。
+- **Decision**：
+  - v1.5.5 首图使用 `assets/plugin-center/cover-1800x1200.png`，3:2 比例，尺寸大于 1560×1040 px。
+  - `manifest.platform` 保持 `all`，因为官方 manifest 文档的合法值为 `all` / `mac` / `win`，没有 mac+win 的数组写法。
+  - 审核材料明确：macOS 与 Windows 支持剪贴板图片导入；macOS 有内置截图按钮；Windows 使用 `Win+Shift+S` 后由剪贴板自动入库。
+- **Consequences**：
+  - 复审上传时不得再使用 16:10 的 `cover-1920x1200.png`。
+  - Reviewer notes 必须直说 `platform: "all"`，避免审核员以为 manifest 缺少平台声明。
+- **Why**：审核反馈优先于原设计假设；使用 3:2 首图和明确平台边界能直接回应退回点。

@@ -18,8 +18,17 @@
 | M7 | 开源发布准备 | ⬜ Todo | README 完善、CHANGELOG v1.0.0、Plugin Center 提交材料 | - |
 | M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ Released | 双实例 lease / allow 去重 / 路由回填 / 命名计数 / 商店身份 / 自动检查 / macOS QA / 商店资产 | - |
 | M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 GitHub Released，待 Plugin Center | 固定 UUID v4 / 版本同步 / 自动检查 / 新发布包 | - |
+| M19 | v1.5.5 Plugin Center 复审修复 | 🔄 In Progress | 3:2 首图 / 平台说明 / 复审包 | - |
 
-## 当前里程碑：M18 — v1.5.4 Plugin ID UUID 热修复
+## 当前里程碑：M19 — v1.5.5 Plugin Center 复审修复
+
+实施范围：
+
+- 将首图从 16:10 调整为 3:2 的 1800×1200，回应“图片比例错误”审核意见。
+- 保持 `manifest.platform = "all"`，并在包内 README 与 reviewer notes 中明确 macOS / Windows 支持边界。
+- 版本升为 v1.5.5，重新测试、打包、发布复审包。
+
+## 已完成里程碑：M18 — v1.5.4 Plugin ID UUID 热修复
 
 实施范围：
 

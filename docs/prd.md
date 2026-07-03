@@ -266,7 +266,7 @@ eagle-clipboard-watcher.eagleplugin（实质是 zip）
 ```json
 {
   "id": "06343a32-d63f-4a04-bdcc-a0ca1e6f12aa",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "platform": "all",
   "arch": "all",
   "name": "剪贴板图片留存",
@@ -426,7 +426,7 @@ mv eagle-clipboard-watcher.zip eagle-clipboard-watcher.eagleplugin
 - `manifest.json` 中已在 Plugin Center 提交后台确认的正式唯一 `id`
 - 插件名称：`剪贴板图片留存`（英文别名 `Clipboard Image Archive`）
 - 分类：`Productivity` / `Import Tools`
-- 首图 / 封面图：1920×1200 PNG，展示插件面板截图；Plugin Center 后台要求必须大于 1560×1040 px
+- 首图 / 封面图：1800×1200 PNG，3:2 比例，展示插件面板截图；Plugin Center 后台要求必须大于 1560×1040 px
 - 描述（英文）：
   > Automatically import screenshots and clipboard images into your Eagle library. Set a target folder once, and every image you copy or screenshot will appear there instantly — no drag and drop needed.
 

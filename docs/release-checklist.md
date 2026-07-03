@@ -1,4 +1,4 @@
-# v1.5.4 Plugin Center 发布前清单
+# v1.5.5 Plugin Center 复审清单
 
 > 本清单列出代码完成后仍需 GUI、设计资产或账户权限的步骤。
 
@@ -15,7 +15,7 @@
 | 资产 | 规格 | 当前 | 来源建议 |
 |---|---|---|---|
 | Plugin Logo | 至少 256×256 PNG，透明背景，按官方模板留白 | ✅ `logo.png` 为 512×512 RGBA，32×32 可读 | F1：蓝色剪贴板图片流入归档盒 |
-| Plugin Center 首图 / 封面图 | 必须大于 1560×1040 px | ✅ `assets/plugin-center/cover-1920x1200.png` | 蓝色归档背景 + 真实插件面板 |
+| Plugin Center 首图 / 封面图 | 必须大于 1560×1040 px，按 3:2 比例 | ✅ `assets/plugin-center/cover-1800x1200.png` | 蓝色归档背景 + 真实插件面板 |
 | 功能截图（README + Plugin Center） | 1280×800 以上，建议 3–5 张 | ✅ 3 张 1280×800 脱敏成品 | 主面板 / Eagle 导入结果 / 高级设置 |
 
 **建议风格**：
@@ -45,36 +45,37 @@
 
 ## 4. CHANGELOG / Release Notes
 
-- [x] `docs/CHANGELOG.md` 已记录 v1.0.0–v1.5.4
+- [x] `docs/CHANGELOG.md` 已记录 v1.0.0–v1.5.5
 - [x] Release notes 摘要：
 
-> v1.5.4 将 Plugin ID 修正为 Plugin Center 要求的 UUID v4。功能沿用 v1.5.3：修复双实例互抢、允许重复策略、路由回填和命名计数，并支持 macOS / Windows。
+> v1.5.5 是 Plugin Center 复审版本：将首图调整为 1800×1200 的 3:2 比例，并在包内 README 与审核备注中明确 macOS / Windows 支持边界。manifest 已显式设置 `platform: "all"`。
 
 ## 5. GitHub Release
 
-- [x] `v1.5.4` tag 已推送
-- [x] [GitHub Release v1.5.4](https://github.com/lc4t/copy2eagle/releases/tag/v1.5.4) 已发布
-- [x] `eagle-clipboard-watcher.eagleplugin` 已上传（163,812 bytes）
-- [x] SHA-256：`c28af42b3fb0777b9fe4f9dbf7e96792532bda6eea08a027866c2aeef6092904`
+- [ ] `v1.5.5` tag 已推送
+- [ ] GitHub Release v1.5.5 已发布
+- [ ] `eagle-clipboard-watcher.eagleplugin` 已上传（163,835 bytes）
+- [x] SHA-256：`9e2ac18bd43e644c9020cb009a3003c7f5fcb1c488be1e5340cd42c4add53cd0`
 
 ## 6. Plugin Center 提交
 
 按 Eagle 官方[发布流程](https://developer.eagle.cool/plugin-api/distribution/publish)走：
 
 1. 确认 `manifest.json.id` 为 `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`
-2. `npm run pack` 完成自动检查并产候选包
-3. 在真实 Eagle 中右键插件执行官方「Pack Plugin」，用官方导出的包做最终上传
-4. 在 [Plugin Center 提交页](https://community-en.eagle.cool/my/plugin/publish)填表：
+2. 确认 `manifest.json.platform` 为 `all`，并在 reviewer notes 中说明 macOS / Windows 支持边界
+3. `npm run pack` 完成自动检查并产候选包
+4. 在真实 Eagle 中右键插件执行官方「Pack Plugin」，用官方导出的包做最终上传
+5. 在 [Plugin Center 提交页](https://community-en.eagle.cool/my/plugin/publish)填表：
    - 名称 / 描述 / 关键词 / 分类 → 用 `docs/plugin-center-submission.md` 已写好的文案
    - Logo / 封面 / 截图 → 见 §1
    - License → MIT
-5. 上传 `.eagleplugin`
-6. 等待审核
+6. 上传 `.eagleplugin`
+7. 等待审核
 
 ## 7. 提交后立即做
 
 - [x] Plugin Center 的 UUID 格式报错已处理
-- [x] `docs/CHANGELOG.md` 已同步 v1.5.4 release 链接
+- [ ] `docs/CHANGELOG.md` 同步 v1.5.5 release 链接（发布后）
 - [ ] `.agent-doc/progress.md` 标 M7 Done
 
 ## 8. 用户验证清单（你最后做）

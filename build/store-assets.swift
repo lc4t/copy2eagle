@@ -7,8 +7,9 @@ struct Crop {
     let height: CGFloat
 }
 
-let canvasSize = NSSize(width: 1280, height: 800)
-let coverPixelScale: CGFloat = 1.5
+let baseCanvasSize = NSSize(width: 1280, height: 800)
+let coverCanvasSize = NSSize(width: 1800, height: 1200)
+var canvasSize = baseCanvasSize
 
 func color(_ hex: UInt32, alpha: CGFloat = 1) -> NSColor {
     NSColor(
@@ -93,19 +94,34 @@ func drawText(
     NSString(string: text).draw(with: rect, options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: attributes)
 }
 
-func drawPill(_ text: String, top: CGFloat, left: CGFloat, width: CGFloat) {
-    let height: CGFloat = 44
+func drawPill(_ text: String, top: CGFloat, left: CGFloat, width: CGFloat, scale: CGFloat = 1) {
+    let height: CGFloat = 44 * scale
     let rect = NSRect(x: left, y: canvasSize.height - top - height, width: width, height: height)
     color(0x1677ff, alpha: 0.10).setFill()
-    NSBezierPath(roundedRect: rect, xRadius: 22, yRadius: 22).fill()
-    drawText(text, top: top + 7, left: left + 18, width: width - 36, size: 20, weight: .medium, textColor: color(0x0b63ce))
+    NSBezierPath(roundedRect: rect, xRadius: 22 * scale, yRadius: 22 * scale).fill()
+    drawText(
+        text,
+        top: top + 7 * scale,
+        left: left + 18 * scale,
+        width: width - 36 * scale,
+        size: 20 * scale,
+        weight: .medium,
+        textColor: color(0x0b63ce)
+    )
 }
 
-func makeImage(background: NSColor, pixelScale: CGFloat = 1, draw: () -> Void) -> NSBitmapImageRep {
+func withCanvasSize<T>(_ size: NSSize, _ body: () -> T) -> T {
+    let previous = canvasSize
+    canvasSize = size
+    defer { canvasSize = previous }
+    return body()
+}
+
+func makeImage(background: NSColor, draw: () -> Void) -> NSBitmapImageRep {
     let rep = NSBitmapImageRep(
         bitmapDataPlanes: nil,
-        pixelsWide: Int(canvasSize.width * pixelScale),
-        pixelsHigh: Int(canvasSize.height * pixelScale),
+        pixelsWide: Int(canvasSize.width),
+        pixelsHigh: Int(canvasSize.height),
         bitsPerSample: 8,
         samplesPerPixel: 4,
         hasAlpha: true,
@@ -144,24 +160,33 @@ let settings = load(CommandLine.arguments[4])
 let outputDir = CommandLine.arguments[5]
 try! FileManager.default.createDirectory(atPath: outputDir, withIntermediateDirectories: true)
 
-let cover = makeImage(background: color(0xf4f8ff), pixelScale: coverPixelScale) {
-    drawAspectFill(background, in: NSRect(origin: .zero, size: canvasSize))
-    color(0xffffff, alpha: 0.70).setFill()
-    NSBezierPath(roundedRect: NSRect(x: 48, y: 82, width: 610, height: 636), xRadius: 32, yRadius: 32).fill()
-    drawText("剪贴板图片留存", top: 142, left: 92, width: 520, size: 58, weight: .bold, textColor: color(0x12233f))
-    drawText("复制图片，自动出现在 Eagle", top: 242, left: 92, width: 510, size: 32, weight: .medium, textColor: color(0x38506f))
-    drawPill("剪贴板 · 截图 · 自动归档", top: 342, left: 92, width: 310)
-    drawText("macOS · Windows", top: 420, left: 94, width: 330, size: 23, weight: .regular, textColor: color(0x607896))
-    drawCard(
-        overview,
-        crop: Crop(x: 0, top: 0, width: 838, height: 1030),
-        top: 64,
-        left: 790,
-        width: 430,
-        height: 664
-    )
+let cover = withCanvasSize(coverCanvasSize) {
+    makeImage(background: color(0xf4f8ff)) {
+        let s: CGFloat = 1.5
+        let xOffset: CGFloat = -60
+
+        drawAspectFill(background, in: NSRect(origin: .zero, size: canvasSize))
+        color(0xffffff, alpha: 0.70).setFill()
+        NSBezierPath(
+            roundedRect: NSRect(x: xOffset + 48 * s, y: canvasSize.height - 82 * s - 636 * s, width: 610 * s, height: 636 * s),
+            xRadius: 32 * s,
+            yRadius: 32 * s
+        ).fill()
+        drawText("剪贴板图片留存", top: 142 * s, left: xOffset + 92 * s, width: 520 * s, size: 58 * s, weight: .bold, textColor: color(0x12233f))
+        drawText("复制图片，自动出现在 Eagle", top: 242 * s, left: xOffset + 92 * s, width: 510 * s, size: 32 * s, weight: .medium, textColor: color(0x38506f))
+        drawPill("剪贴板 · 截图 · 自动归档", top: 342 * s, left: xOffset + 92 * s, width: 310 * s, scale: s)
+        drawText("macOS · Windows", top: 420 * s, left: xOffset + 94 * s, width: 330 * s, size: 23 * s, weight: .regular, textColor: color(0x607896))
+        drawCard(
+            overview,
+            crop: Crop(x: 0, top: 0, width: 838, height: 1030),
+            top: 64 * s,
+            left: xOffset + 790 * s,
+            width: 430 * s,
+            height: 664 * s
+        )
+    }
 }
-write(cover, to: "\(outputDir)/cover-1920x1200.png")
+write(cover, to: "\(outputDir)/cover-1800x1200.png")
 
 let overviewShot = makeImage(background: color(0xeff5ff)) {
     drawText("复制即保存", top: 140, left: 64, width: 500, size: 54, weight: .bold, textColor: color(0x12233f))

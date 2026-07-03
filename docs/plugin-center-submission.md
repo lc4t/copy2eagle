@@ -1,4 +1,4 @@
-# Eagle Plugin Center 提交材料 — v1.5.4
+# Eagle Plugin Center 提交材料 — v1.5.5
 
 > 提交时直接复制下方对应段。中英文双版本均已准备。
 > Eagle Plugin Center 后台填表项次序可能调整，按对应字段对号入座即可。
@@ -11,14 +11,14 @@
 |---|---|
 | Plugin Name (English alias) | Clipboard Image Archive |
 | Plugin Name (中文 / manifest) | 剪贴板图片留存 |
-| Version | 1.5.4 |
+| Version | 1.5.5 |
 | Plugin ID | 06343a32-d63f-4a04-bdcc-a0ca1e6f12aa |
 | Author | lc4t |
 | Author Email | lc4t0.0@gmail.com |
 | Homepage | https://github.com/lc4t/copy2eagle |
 | Bug Report | https://github.com/lc4t/copy2eagle/issues |
 | License | MIT |
-| Platform | macOS / Windows |
+| Platform | macOS / Windows (`manifest.platform = "all"`) |
 
 ---
 
@@ -151,7 +151,7 @@ Source code: https://github.com/lc4t/copy2eagle
 参见 [release-checklist.md §1](release-checklist.md#1-设计资产必须)：
 
 - [x] Logo 512×512 PNG（透明背景，32×32 可读）
-- [x] 首图 / 封面图 1920×1200：`assets/plugin-center/cover-1920x1200.png`
+- [x] 首图 / 封面图 1800×1200：`assets/plugin-center/cover-1800x1200.png`
 - [x] 功能截图 3 张：`assets/plugin-center/screenshot-*.png`
 
 ---
@@ -160,7 +160,9 @@ Source code: https://github.com/lc4t/copy2eagle
 
 ```
 Tech notes:
-- macOS and Windows; manifest platform is set to "all"
+- macOS and Windows are supported. The manifest explicitly sets
+  "platform": "all", following Eagle's manifest docs where "all" covers
+  the supported desktop platforms.
 - Runs in serviceMode (background monitoring)
 - All clipboard / filesystem access is local; no network calls
 - Adaptive polling implementation specifically addresses macOS 14 Sonoma
@@ -168,8 +170,12 @@ Tech notes:
 - Multi-file clipboard support uses macOS osascript or Windows PowerShell
   via child_process with a 2s timeout;
   declared in the privacy section
+- Clipboard image import works on both macOS and Windows.
+- Multi-file clipboard import works on macOS via osascript and on Windows
+  via PowerShell FileDropList.
 - The built-in "Take Screenshot" button is macOS-only. Windows users use
   Win+Shift+S and the resulting clipboard image is imported normally.
+- The cover image has been adjusted to 1800×1200 (3:2) for review.
 
 Thanks for reviewing!
 ```

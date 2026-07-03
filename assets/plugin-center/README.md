@@ -2,13 +2,12 @@
 
 ## Final Files
 
-- `cover-1280x800.png` — legacy cover kept for reference; do not upload as the first image
-- `cover-1920x1200.png` — Plugin Center cover for upload; exceeds the current first-image minimum of 1560×1040 px
+- `cover-1800x1200.png` — Plugin Center cover for upload; 3:2 ratio and exceeds the current first-image minimum of 1560×1040 px
 - `screenshot-01-overview.png` — main panel and core workflow
 - `screenshot-02-eagle-result.png` — imported images shown in Eagle
 - `screenshot-03-settings.png` — naming, deduplication, and routing settings
 
-The cover image is 1920×1200 PNG. The three feature screenshots are 1280×800 PNG files.
+The cover image is 1800×1200 PNG. The three feature screenshots are 1280×800 PNG files.
 
 ## Privacy Review
 
