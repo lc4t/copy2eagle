@@ -31,6 +31,7 @@
 - [x] 包内 manifest：version `1.5.5`，`platform: "all"`，`devTools: false`
 - [x] 包 SHA-256：`9e2ac18bd43e644c9020cb009a3003c7f5fcb1c488be1e5340cd42c4add53cd0`
 - [x] 首图 SHA-256：`b494e4366e06533e2eccb237d0a950ff785c9ffbab832d26816377c94943951d`
+- [x] GitHub v1.5.5 Release 与附件已发布
 
 ## Impact
 

@@ -18,7 +18,7 @@
 | M7 | 开源发布准备 | ⬜ Todo | README 完善、CHANGELOG v1.0.0、Plugin Center 提交材料 | - |
 | M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ Released | 双实例 lease / allow 去重 / 路由回填 / 命名计数 / 商店身份 / 自动检查 / macOS QA / 商店资产 | - |
 | M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 GitHub Released，待 Plugin Center | 固定 UUID v4 / 版本同步 / 自动检查 / 新发布包 | - |
-| M19 | v1.5.5 Plugin Center 复审修复 | 🔄 In Progress | 3:2 首图 / 平台说明 / 复审包 | - |
+| M19 | v1.5.5 Plugin Center 复审修复 | 🔄 GitHub Released，待 Plugin Center | 3:2 首图 / 平台说明 / 复审包 | - |
 
 ## 当前里程碑：M19 — v1.5.5 Plugin Center 复审修复
 

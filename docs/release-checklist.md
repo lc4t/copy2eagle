@@ -52,9 +52,9 @@
 
 ## 5. GitHub Release
 
-- [ ] `v1.5.5` tag 已推送
-- [ ] GitHub Release v1.5.5 已发布
-- [ ] `eagle-clipboard-watcher.eagleplugin` 已上传（163,835 bytes）
+- [x] `v1.5.5` tag 已推送
+- [x] [GitHub Release v1.5.5](https://github.com/lc4t/copy2eagle/releases/tag/v1.5.5) 已发布
+- [x] `eagle-clipboard-watcher.eagleplugin` 已上传（163,835 bytes）
 - [x] SHA-256：`9e2ac18bd43e644c9020cb009a3003c7f5fcb1c488be1e5340cd42c4add53cd0`
 
 ## 6. Plugin Center 提交
@@ -75,7 +75,7 @@
 ## 7. 提交后立即做
 
 - [x] Plugin Center 的 UUID 格式报错已处理
-- [ ] `docs/CHANGELOG.md` 同步 v1.5.5 release 链接（发布后）
+- [x] `docs/CHANGELOG.md` 已同步 v1.5.5 release 链接
 - [ ] `.agent-doc/progress.md` 标 M7 Done
 
 ## 8. 用户验证清单（你最后做）

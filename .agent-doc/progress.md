@@ -27,7 +27,7 @@
 | M16 | v1.5.2 心跳锁：双实例并存时跳过 import + UI 警告 + 自动恢复 | ✅ Released | 2026-06-06 | - |
 | M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ GitHub Released，待 Plugin Center 提交 | 2026-06-15 | - |
 | M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 GitHub Released，待 Plugin Center 重新上传 | - | - |
-| M19 | v1.5.5 Plugin Center 复审修复 | 🔄 修复与打包中 | - | - |
+| M19 | v1.5.5 Plugin Center 复审修复 | 🔄 GitHub Released，待 Plugin Center 复审提交 | - | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -627,5 +627,5 @@
 
 **待完成**：
 
-- [ ] GitHub v1.5.5 tag / Release
+- [x] GitHub v1.5.5 tag / Release：https://github.com/lc4t/copy2eagle/releases/tag/v1.5.5
 - [ ] Plugin Center 重新提交
