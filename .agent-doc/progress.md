@@ -28,6 +28,7 @@
 | M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ GitHub Released，待 Plugin Center 提交 | 2026-06-15 | - |
 | M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 GitHub Released，待 Plugin Center 重新上传 | - | - |
 | M19 | v1.5.5 Plugin Center 复审修复 | 🔄 GitHub Released，待 Plugin Center 复审提交 | - | - |
+| M20 | v1.5.6 Windows 剪贴板截图热修复 | 🔄 修复与测试包准备中 | - | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -629,3 +630,29 @@
 
 - [x] GitHub v1.5.5 tag / Release：https://github.com/lc4t/copy2eagle/releases/tag/v1.5.5
 - [ ] Plugin Center 重新提交
+
+## M20 进行中（2026-07-05）— v1.5.6 Windows 剪贴板截图热修复
+
+**触发**：
+
+- 用户在 Windows 测试 `win-test-v1.5.5-20260705`：按 `P` 能看到插件、能选择文件夹、打开开关后显示 running，但 `Win+Shift+S` 截图后没有自动保存。
+
+**判断**：
+
+- 原逻辑要求 `eagle.clipboard.has(image/*)` 命中后才调用 `readImage()`。
+- Windows `Win+Shift+S` 可能产生可被 `readImage()` 读取、但 format probe 识别不到的剪贴板图片。
+
+**改动**：
+
+- v1.5.6 在 Windows 上增加 direct `readImage()` 兜底；macOS 路径保持 format probe 优先，避免系统剪贴板横幅变多。
+- 自动测试新增 Windows 场景：所有 format probe 返回 false，但 `readImage()` 返回非空图片时应导入。
+
+**待完成**：
+
+- [x] `npm test`：14 checks passed
+- [x] 全部 JavaScript `node --check` 通过
+- [x] `npm run pack`：163,907 bytes / 6 个审核文件
+- [x] 包内 manifest：version `1.5.6`，`platform: "all"`，`devTools: false`
+- [x] 包 SHA-256：`b439348047931f55826a1c71a9c66f61760d9103fda997b5a19e47327c01691a`
+- [ ] GitHub Windows test pre-release
+- [ ] 用户 Windows 复测

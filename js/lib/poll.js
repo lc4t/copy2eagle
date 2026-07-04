@@ -8,6 +8,8 @@
  * 不导入系统自动生成的预览 icon。
  */
 
+const os = require('os')
+
 const {
   ALLOW_DEDUP_WINDOW_MS,
   POLL_RETRY_MS,
@@ -145,8 +147,14 @@ async function runPoll() {
       scheduleRender()
     }
 
+    const platform = os.platform()
     const probe = probeImageFormat()
-    if (!probe.available) throw new Error('eagle.clipboard.has is unavailable')
+    if (!probe.available) {
+      if (platform !== 'win32' || !eagle.clipboard || typeof eagle.clipboard.readImage !== 'function') {
+        throw new Error('eagle.clipboard.has is unavailable')
+      }
+      eagle.log.warn('[clipboard-watcher] clipboard.has unavailable; using Windows readImage fallback')
+    }
 
     // 文件 URL 优先（v1.2.1 / #1）：Finder 复制文件时系统会同时塞预览 icon，
     // 见到 file URL 就走多文件路径，icon 整段跳过。
@@ -176,10 +184,11 @@ async function runPoll() {
       return
     }
 
-    if (probe.format) {
+    const shouldReadImage = !!probe.format || platform === 'win32'
+    if (shouldReadImage) {
       // 单图（无 file URL，是真图）
       if (!state.config.importMixedContent && probeAnyFormat(TEXT_FORMAT_CANDIDATES)) {
-        state.lastFormatsKey = probe.format
+        state.lastFormatsKey = probe.format || 'win32-direct-image'
         bumpIdleStreak()
         return
       }
@@ -196,7 +205,7 @@ async function runPoll() {
         lastImportAt: state.lastClipboardAt,
         strategy: state.config.duplicateStrategy,
       })
-      state.lastFormatsKey = probe.format
+      state.lastFormatsKey = probe.format || 'win32-direct-image'
       if (hashDecision.sameHash) bumpIdleStreak()
       else resetIdleStreak()
       if (!hashDecision.shouldImport) return

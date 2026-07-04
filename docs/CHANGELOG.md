@@ -9,6 +9,16 @@ _（待 v1.6+ 累积）_
 
 ---
 
+## [1.5.6] — 2026-07-05
+
+Windows smoke-test hotfix.
+
+### Fixed
+
+- On Windows, fall back to reading `eagle.clipboard.readImage()` directly when format probing does not report an image. This targets `Win+Shift+S` screenshots that enter the clipboard but are not detected by `eagle.clipboard.has(...)`.
+
+---
+
 ## [1.5.5](https://github.com/lc4t/copy2eagle/releases/tag/v1.5.5) — 2026-07-04
 
 Plugin Center review resubmission.

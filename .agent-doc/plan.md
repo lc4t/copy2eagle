@@ -19,8 +19,18 @@
 | M17 | v1.5.3 correctness hotfix + 上架前置修复 | ✅ Released | 双实例 lease / allow 去重 / 路由回填 / 命名计数 / 商店身份 / 自动检查 / macOS QA / 商店资产 | - |
 | M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 GitHub Released，待 Plugin Center | 固定 UUID v4 / 版本同步 / 自动检查 / 新发布包 | - |
 | M19 | v1.5.5 Plugin Center 复审修复 | 🔄 GitHub Released，待 Plugin Center | 3:2 首图 / 平台说明 / 复审包 | - |
+| M20 | v1.5.6 Windows 剪贴板截图热修复 | 🔄 In Progress | Windows readImage 兜底 / 测试包 / 复测证据 | - |
 
-## 当前里程碑：M19 — v1.5.5 Plugin Center 复审修复
+## 当前里程碑：M20 — v1.5.6 Windows 剪贴板截图热修复
+
+实施范围：
+
+- 修复 Windows `Win+Shift+S` 截图进入剪贴板后未自动入库的问题。
+- 在 Windows 上当 format probe 未识别图片时，允许 `readImage()` 直接兜底。
+- 增加自动测试覆盖 Windows `has() = false` 但 `readImage()` 可读的场景。
+- 发布新的 Windows smoke-test pre-release，待用户复测后再决定是否提交 Plugin Center。
+
+## 已完成里程碑：M19 — v1.5.5 Plugin Center 复审修复
 
 实施范围：
 

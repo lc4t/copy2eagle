@@ -3,6 +3,7 @@
 
 const assert = require('assert').strict
 const fs = require('fs')
+const os = require('os')
 const path = require('path')
 
 const storage = new Map()
@@ -85,7 +86,7 @@ const {
   LEASE_TTL_MS,
   PLUGIN_VERSION,
 } = require('../js/lib/instance')
-const { decideClipboardHash } = require('../js/lib/poll')
+const { decideClipboardHash, runPoll } = require('../js/lib/poll')
 const { backfillFolder, backfillFolders } = require('../js/lib/folders')
 const { getActiveFolderIds } = require('../js/lib/config')
 const { importImage } = require('../js/lib/import')
@@ -133,7 +134,7 @@ test('single-owner lease does not let contenders overwrite a fresh owner', () =>
     owned: false,
     conflict: {
       otherInstanceId: 'instance-a',
-      otherVersion: '1.5.5',
+      otherVersion: '1.5.6',
     },
   })
   assert.equal(JSON.parse(storage.get('clipboardWatcher.lease.v2')).instanceId, 'instance-a')
@@ -204,6 +205,64 @@ test('Windows multi-file clipboard invokes PowerShell FileDropList safely', asyn
   assert.deepEqual(paths, ['C:\\Images\\one.png', 'C:\\Images\\two.jpg'])
 })
 
+test('Windows direct readImage fallback imports screenshots when format probing misses', async () => {
+  storage.clear()
+  resetState()
+  addCalls.length = 0
+
+  const originalPlatform = os.platform
+  const originalHas = eagle.clipboard.has
+  const originalReadImage = eagle.clipboard.readImage
+
+  os.platform = () => 'win32'
+  eagle.clipboard.has = () => false
+  eagle.clipboard.readImage = () => ({
+    isEmpty() {
+      return false
+    },
+    toPNG() {
+      return Buffer.from('windows screenshot clipboard image')
+    },
+    getSize() {
+      return { width: 640, height: 360 }
+    },
+  })
+
+  state.config = {
+    version: 2,
+    enabled: true,
+    folderId: 'folder-win',
+    folderIdScreenshot: null,
+    folderIdClipboard: null,
+    folderIdFiles: null,
+    intervalMs: 1000,
+    tags: '',
+    notifyOnImport: false,
+    duplicateStrategy: 'skip',
+    importMixedContent: true,
+    importMultipleFiles: false,
+    nameTemplate: '{source} {dims}',
+  }
+  state.folderIndex = new Map([['folder-win', 'Windows Folder']])
+
+  try {
+    await runPoll()
+  } finally {
+    os.platform = originalPlatform
+    eagle.clipboard.has = originalHas
+    if (originalReadImage) {
+      eagle.clipboard.readImage = originalReadImage
+    } else {
+      delete eagle.clipboard.readImage
+    }
+  }
+
+  assert.equal(addCalls.length, 1)
+  assert.deepEqual(addCalls[0].options.folders, ['folder-win'])
+  assert.equal(addCalls[0].options.name, 'Clipboard 640x360')
+  assert.equal(state.runtimeStatus, 'running')
+})
+
 test('expired lease is claimed after one settling poll and only owner can release it', () => {
   storage.clear()
   resetState()
@@ -227,7 +286,7 @@ test('expired lease is claimed after one settling poll and only owner can releas
   assert.equal(storage.has('clipboardWatcher.heartbeat'), false)
 })
 
-test('v1.5.5 lease remains stable when v1.5.2 overwrites the legacy heartbeat', () => {
+test('v1.5.6 lease remains stable when v1.5.2 overwrites the legacy heartbeat', () => {
   storage.clear()
   resetState()
   state.instanceId = 'instance-new'
