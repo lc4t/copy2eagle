@@ -707,5 +707,5 @@
 - [x] `npm run pack`：164,053 bytes / 6 个审核文件
 - [x] 包内 manifest：version `1.5.8`，`platform: "mac"`，`devTools: false`
 - [x] 包 SHA-256：`8d697ce83227e18f7dfda76b42f0e042ab2bd19f0fb8e5cdc07988b2bdf3d21b`
-- [ ] GitHub v1.5.8 release
+- [x] GitHub v1.5.8 release：https://github.com/lc4t/copy2eagle/releases/tag/v1.5.8
 - [ ] Plugin Center 重新提交

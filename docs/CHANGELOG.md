@@ -9,7 +9,7 @@ _（待 v1.6+ 累积）_
 
 ---
 
-## [1.5.8] — 2026-07-05
+## [1.5.8](https://github.com/lc4t/copy2eagle/releases/tag/v1.5.8) — 2026-07-05
 
 Plugin Center macOS-only release candidate.
 
