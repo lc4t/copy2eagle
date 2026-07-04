@@ -708,4 +708,11 @@
 - [x] 包内 manifest：version `1.5.8`，`platform: "mac"`，`devTools: false`
 - [x] 包 SHA-256：`8d697ce83227e18f7dfda76b42f0e042ab2bd19f0fb8e5cdc07988b2bdf3d21b`
 - [x] GitHub v1.5.8 release：https://github.com/lc4t/copy2eagle/releases/tag/v1.5.8
+- [x] macOS 回归复测（2026-07-05）：
+  - `npm test`：16 checks passed，含 macOS file-url 跳过 Finder 预览图回归
+  - 全部 JavaScript `node --check` 通过
+  - `npm run pack` 通过，包内 6 个审核文件，manifest `version: 1.5.8` / `platform: mac` / `devTools: false`
+  - 本机存在 `/Applications/Eagle.app`，bundle id 为 `tw.ogdesign.eagle`
+  - macOS 截图与多文件依赖命令存在：`/usr/sbin/screencapture`、`/usr/bin/osascript`
+  - 自动 GUI 点选面板受 macOS Accessibility 权限限制，未执行全自动端到端导入；需提交前按人工清单再开面板确认一次
 - [ ] Plugin Center 重新提交
