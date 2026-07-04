@@ -9,7 +9,7 @@
 - **复制图片自动入库**：按设置频率检查系统剪贴板，新图片直接进 Eagle，无需手动拖入
 - **一键截图**：面板里点「立即截图」（macOS），框选区域自动入库
 - **图文混排**：从网页 / Word / 微信复制带文字的内容，里面的图自动保存（可关）
-- **多文件批量**（可选）：Finder / 资源管理器选中多张图片复制，一次全进 Eagle
+- **多文件批量**（可选）：Finder 选中多张图片复制，一次全进 Eagle
 - **去重**：默认跳过文件夹里已有的同图；可改为允许重复
 - **按来源分流**：截图、普通复制和多文件可分别进入不同 Eagle 文件夹
 - **自定义命名**：支持来源、尺寸、时间、主机名和计数等命名占位符
@@ -20,9 +20,9 @@
 | 平台 | 复制图片 | 截图按钮 | 多文件复制 |
 |---|---|---|---|
 | macOS | ✅ | ✅ `screencapture -ic` | ✅ AppleScript |
-| Windows | ✅ | 使用 `Win+Shift+S`，截图进剪贴板后自动保存 | ✅ PowerShell FileDropList |
+| Windows | 暂不支持正式版 | 暂不支持正式版 | 暂不支持正式版 |
 
-> macOS 和 Windows 均可安装。当前没有 Windows 真机验收设备；Windows 问题会按用户反馈持续修复。
+> Plugin Center 正式版先只支持 macOS。Windows 测试发现 Eagle Windows 运行时对 `Win+Shift+S` 剪贴板图片的实时读取存在异常，后续会用独立 test/fix 构建继续排查，不阻塞 macOS 上架。
 
 ## 安装
 
@@ -35,7 +35,7 @@
 ### Eagle Plugin Center（准备提交）
 
 ```
-状态：v1.5.7 正在做 Windows 剪贴板截图修复测试，暂缓 Plugin Center 复审提交
+状态：v1.5.8 macOS-only 发布候选，准备重新提交 Plugin Center
 ```
 
 通过后可直接 `Eagle → 插件中心 → 搜 "剪贴板图片留存" → 安装`。
@@ -63,7 +63,7 @@ Eagle → 菜单 → 插件 → 开发插件 → 选这个 clone 下来的目录
 4. 之后任何时候：
    - 复制图片（截图 / 浏览器右键 / 别的 App 里 Cmd/Ctrl+C 图） → 通常 1–5 秒内自动进 Eagle
    - macOS 点「立即截图」按钮 → 选区截图，自动进 Eagle
-   - Windows 按 `Win+Shift+S` → 截图进入剪贴板后自动进 Eagle
+   - Windows 暂不在正式版支持范围内
 5. 把面板关掉也没关系，监听在后台继续
 
 ## 高级设置（默认即可用）
@@ -76,7 +76,7 @@ Eagle → 菜单 → 插件 → 开发插件 → 选这个 clone 下来的目录
 | 刷新已保存记录 | — | 在 Eagle 里手动删图后点一下，下次复制同图就能重新保存 |
 | 保存成功时发送系统通知 | ✅ | 关掉就完全静默 |
 | 复制带文字的内容时也保存图片 | ✅ | 关掉后只保存纯图片复制 |
-| 同时选中多张图片复制时也一并保存 | ❌ | 打开后 Finder / 资源管理器选多张图 Cmd/Ctrl+C 一次性入库 |
+| 同时选中多张图片复制时也一并保存 | ❌ | 打开后 Finder 选多张图 Cmd+C 一次性入库 |
 | 自定义保存名称 | `{source} {dims} {timestamp}` | 支持 `{source}`、`{dims}`、`{date}`、`{time}`、`{hostname}`、`{count}`、`{lifetime}` |
 | 按来源选择文件夹 | 跟随主文件夹 | 截图、普通复制、多文件可分别指定目标文件夹 |
 
@@ -106,7 +106,7 @@ macOS 14 Sonoma 起，读剪贴板内容会出系统横幅。本插件采用以�
 
 ## 升级与重复安装
 
-v1.5.4 起为满足 Plugin Center 的 UUID 格式要求，更换了 Plugin ID。若安装过 v1.5.3 或更早的 GitHub 版本，请先在 Eagle 插件管理中卸载旧实例，再安装 v1.5.7，并重新选择一次目标文件夹。不同 Plugin ID 的安装可能无法共享 `localStorage` 配置或双实例 lease。
+v1.5.4 起为满足 Plugin Center 的 UUID 格式要求，更换了 Plugin ID。若安装过 v1.5.3 或更早的 GitHub 版本，请先在 Eagle 插件管理中卸载旧实例，再安装 v1.5.8，并重新选择一次目标文件夹。不同 Plugin ID 的安装可能无法共享 `localStorage` 配置或双实例 lease。
 
 ## 开发
 

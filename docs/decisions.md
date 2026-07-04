@@ -226,6 +226,7 @@
 ## ADR-014：恢复 macOS / Windows 跨平台分发
 
 - **Date**：2026-06-14
+- **Status**：Superseded by ADR-017。
 - **Context**：用户决定首发不再限制为 macOS-only。普通剪贴板图片读取由 Electron 提供，macOS 与 Windows 共用；Windows 的多文件复制需要恢复 PowerShell `FileDropList` 分支。内置截图按钮仍依赖 macOS `screencapture`。
 - **Decision**：
   - `manifest.platform` 改为 `all`，商店声明 macOS 与 Windows。
@@ -262,6 +263,7 @@
 ## ADR-016：复审包使用 3:2 首图并保持 platform=all
 
 - **Date**：2026-07-04
+- **Status**：Superseded by ADR-017。
 - **Context**：Plugin Center 审核退回，指出首图 / 封面比例看起来不符合规范，同时要求如果不能在 Windows 运行就要强调，并检查 manifest platform 设置。
 - **Decision**：
   - v1.5.5 首图使用 `assets/plugin-center/cover-1800x1200.png`，3:2 比例，尺寸大于 1560×1040 px。
@@ -271,3 +273,20 @@
   - 复审上传时不得再使用 16:10 的 `cover-1920x1200.png`。
   - Reviewer notes 必须直说 `platform: "all"`，避免审核员以为 manifest 缺少平台声明。
 - **Why**：审核反馈优先于原设计假设；使用 3:2 首图和明确平台边界能直接回应退回点。
+
+---
+
+## ADR-017：Plugin Center 首发回退为 macOS-only，Windows 改用 test/fix 构建
+
+- **Date**：2026-07-05
+- **Context**：Windows 真机 smoke test 连续发现 `Win+Shift+S` 截图无法在插件运行中实时入库；v1.5.6 与 v1.5.7 的两轮推断性修复均未解决，且重启 Eagle 后会导入最后一次截图，说明问题可能在 Eagle Windows 运行时剪贴板事件/读取行为差异。继续声明 Windows 支持会阻塞 macOS 已验证功能上架。
+- **Decision**：
+  - v1.5.8 Plugin Center 发布候选改为 `manifest.platform = "mac"`。
+  - 商店、README、隐私和 reviewer notes 均只声明 macOS 正式支持。
+  - Windows 支持暂缓，不删除源码中的 Windows 实验路径；后续在 Windows 机器上用独立 test/fix 构建继续排查。
+  - Windows 实验构建不再每次 bump patch 版本。约定用 GitHub prerelease/tag 名称区分，例如 `win-fix-20260705-a`、`win-debug-clipboard-event-a`；只有确认可发布时才升正式 semver。
+- **Consequences**：
+  - macOS 可按已验证范围重新提交审核。
+  - Windows 用户不会从 Plugin Center 安装到未验证版本。
+  - 后续 Windows 调试需要额外记录测试包 tag、分支和复现结果，避免实验包混入正式 release。
+- **Why**：发布范围必须与可验证能力一致。macOS 已有本地 Eagle 验收和商店资产，Windows 当前缺乏稳定运行证据，先隔离能降低审核与用户风险。

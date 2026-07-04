@@ -140,7 +140,7 @@ test('single-owner lease does not let contenders overwrite a fresh owner', () =>
     owned: false,
     conflict: {
       otherInstanceId: 'instance-a',
-      otherVersion: '1.5.7',
+      otherVersion: '1.5.8',
     },
   })
   assert.equal(JSON.parse(storage.get('clipboardWatcher.lease.v2')).instanceId, 'instance-a')
@@ -160,7 +160,7 @@ test('runtime and package versions stay synchronized', () => {
   assert.match(html, new RegExp(`>v${PLUGIN_VERSION.replace(/\./g, '\\.')}<`))
 })
 
-test('store identity is cross-platform, MIT, and ships a production PNG icon', () => {
+test('store identity is macOS-only, MIT, and ships a production PNG icon', () => {
   const root = path.join(__dirname, '..')
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'))
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
@@ -171,7 +171,7 @@ test('store identity is cross-platform, MIT, and ships a production PNG icon', (
   const cover = fs.readFileSync(path.join(root, 'assets/plugin-center/cover-1800x1200.png'))
 
   assert.equal(manifest.name, '剪贴板图片留存')
-  assert.equal(manifest.platform, 'all')
+  assert.equal(manifest.platform, 'mac')
   assert.equal(manifest.id, '06343a32-d63f-4a04-bdcc-a0ca1e6f12aa')
   assert.match(
     manifest.id,
@@ -406,7 +406,7 @@ test('expired lease is claimed after one settling poll and only owner can releas
   assert.equal(storage.has('clipboardWatcher.heartbeat'), false)
 })
 
-test('v1.5.7 lease remains stable when v1.5.2 overwrites the legacy heartbeat', () => {
+test('v1.5.8 lease remains stable when v1.5.2 overwrites the legacy heartbeat', () => {
   storage.clear()
   resetState()
   state.instanceId = 'instance-new'

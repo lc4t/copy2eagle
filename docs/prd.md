@@ -138,8 +138,8 @@ UI 控件：高级设置区下拉 / Radio，字段名 `duplicateStrategy`，可�
 - **batchKey 去重**：用 `paths.length|paths[0]|mtimeMs(paths[0])` 做 key，避免同批反复触发
 - **命名**：以文件原名（去扩展名）作为 Eagle item name；annotation 含来源路径
 - **去重**：沿用 `duplicateStrategy`（skip / allow）
-- **优先级**：单图剪贴板 > 多文件批量。剪贴板同时有图和文件 URL 时，**图优先**
-- **平台差异**：Windows 支持剪贴板图片、多文件复制与 `Win+Shift+S` 截图入库；内置「立即截图」按钮仅 macOS。Linux 不在 Eagle 正式分发范围。
+- **优先级**：macOS 文件 URL 优先，避免 Finder 复制文件时误导入系统预览 icon
+- **平台差异**：v1.5.8 Plugin Center 正式包仅支持 macOS；Windows 支持暂缓，后续用 test/fix 构建在真机排查。
 
 #### F11：图文混排导入开关（M4 新增）
 
@@ -266,8 +266,8 @@ eagle-clipboard-watcher.eagleplugin（实质是 zip）
 ```json
 {
   "id": "06343a32-d63f-4a04-bdcc-a0ca1e6f12aa",
-  "version": "1.5.7",
-  "platform": "all",
+  "version": "1.5.8",
+  "platform": "mac",
   "arch": "all",
   "name": "剪贴板图片留存",
   "logo": "/logo.png",
@@ -455,7 +455,7 @@ mv eagle-clipboard-watcher.zip eagle-clipboard-watcher.eagleplugin
 
 ## 八、已知限制与注意事项
 
-1. **Windows 真机补测**：商店版允许 Windows 安装；当前通过自动模拟覆盖 PowerShell 多文件路径，仍需补齐真实设备上的剪贴板、多文件和生命周期验收
+1. **Windows 真机补测**：v1.5.8 商店版暂不支持 Windows；Windows 路径保留为后续实验代码，需按 `docs/windows-debug.md` 在真机继续排查剪贴板生命周期问题
 2. **Eagle 必须运行**：插件是 Eagle 的子进程，Eagle 关闭则监听停止，这是合理预期
 3. **配置存储**：使用 webview 原生 `localStorage`（ADR-010 / K7），容量 10MB+ 远超 PRD 早期写的 10KB；配置 JSON 仍应保持小（< 10KB 量级）以便打印日志
 4. **隐私**：插件只在本地运行，不向任何外部服务器发送数据，需在 Plugin Center 描述中注明

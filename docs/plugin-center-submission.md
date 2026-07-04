@@ -1,4 +1,4 @@
-# Eagle Plugin Center 提交材料 — v1.5.7
+# Eagle Plugin Center 提交材料 — v1.5.8
 
 > 提交时直接复制下方对应段。中英文双版本均已准备。
 > Eagle Plugin Center 后台填表项次序可能调整，按对应字段对号入座即可。
@@ -11,14 +11,14 @@
 |---|---|
 | Plugin Name (English alias) | Clipboard Image Archive |
 | Plugin Name (中文 / manifest) | 剪贴板图片留存 |
-| Version | 1.5.7 |
+| Version | 1.5.8 |
 | Plugin ID | 06343a32-d63f-4a04-bdcc-a0ca1e6f12aa |
 | Author | lc4t |
 | Author Email | lc4t0.0@gmail.com |
 | Homepage | https://github.com/lc4t/copy2eagle |
 | Bug Report | https://github.com/lc4t/copy2eagle/issues |
 | License | MIT |
-| Platform | macOS / Windows (`manifest.platform = "all"`) |
+| Platform | macOS only (`manifest.platform = "mac"`) |
 
 ---
 
@@ -50,7 +50,7 @@ clipboard, screenshot, auto-import, productivity, watcher, batch-import
 
 ### English short description
 
-> Automatically save copied images, screenshots, and copied image files into your chosen Eagle folders.
+> Automatically save copied images, screenshots, and copied image files into your chosen Eagle folders on macOS.
 
 ---
 
@@ -59,14 +59,13 @@ clipboard, screenshot, auto-import, productivity, watcher, batch-import
 ### 中文长描述
 
 ```
-剪贴板图片留存是一个让 Eagle 自动接管图片归档的 macOS / Windows 插件。
+剪贴板图片留存是一个让 Eagle 自动接管图片归档的 macOS 插件。
 
 【它做什么】
 - 复制任何图片（截图 / 浏览器右键 / 其他 App 里 Cmd/Ctrl+C 图片），按设置频率自动出现在你指定的 Eagle 文件夹
 - 面板提供「立即截图」按钮（macOS），框选区域后自动入库
-- Windows 使用 Win+Shift+S 截图，截图进入剪贴板后自动入库
 - 复制带文字的图文混排内容（网页 / Word / 微信），里面的图片也会保存（可关）
-- 在 Finder / 资源管理器选中多张图片复制，可一次性全部入库（默认关，按需打开）
+- 在 Finder 选中多张图片复制，可一次性全部入库（默认关，按需打开）
 - 智能去重：默认跳过目标文件夹已存在的同图；可改为允许重复
 - 自动加主机名标签，多机协作时方便区分图片来自哪台机器
 
@@ -87,14 +86,13 @@ clipboard, screenshot, auto-import, productivity, watcher, batch-import
 ### English long description
 
 ```
-Clipboard Image Archive lets Eagle automatically handle image archiving on macOS and Windows.
+Clipboard Image Archive lets Eagle automatically handle image archiving on macOS.
 
 【What it does】
 - Copy any image (screenshot, browser right-click, Cmd/Ctrl+C from any app) and it appears in your chosen Eagle folder at the configured polling interval
 - "Take Screenshot" button (macOS): drag-select region, auto-import on release
-- On Windows, use Win+Shift+S; the clipboard screenshot is imported automatically
 - Mixed clipboard content (image + text from web pages / Word / chat apps): the image is saved too (toggle to opt out)
-- Select multiple image files in Finder or Explorer and press Cmd/Ctrl+C: all imported in one go (off by default, opt-in)
+- Select multiple image files in Finder and press Cmd+C: all imported in one go (off by default, opt-in)
 - Smart deduplication: skips images already in the target folder by default; or allow duplicates if you prefer
 - Route screenshots, copied images, and copied files to separate Eagle folders
 - Customize names with source, dimensions, date, time, hostname, and import counters
@@ -126,7 +124,7 @@ Built for users who just want copied images to land where they belong — and to
 - User settings are stored locally via the webview's localStorage API.
 - Clipboard image data is held in memory only for the duration of import; temporary files are written to the OS temp directory and immediately deleted after successful import to Eagle.
 - The plugin reads the system clipboard, imports local image files into the selected Eagle folder, and uses the OS temporary directory while processing clipboard images.
-- For optional multi-file import it invokes the built-in macOS `osascript` command or Windows PowerShell locally.
+- For optional multi-file import it invokes the built-in macOS `osascript` command locally.
 
 On macOS 14+ (Sonoma), the system may display a "Pasted from Eagle" banner when the plugin reads the clipboard. This is macOS system behavior, not a privacy concern caused by the plugin. The plugin uses adaptive polling to minimize banner frequency when the clipboard is idle.
 
@@ -160,21 +158,17 @@ Source code: https://github.com/lc4t/copy2eagle
 
 ```
 Tech notes:
-- macOS and Windows are supported. The manifest explicitly sets
-  "platform": "all", following Eagle's manifest docs where "all" covers
-  the supported desktop platforms.
+- This release is macOS-only. The manifest explicitly sets
+  "platform": "mac".
 - Runs in serviceMode (background monitoring)
 - All clipboard / filesystem access is local; no network calls
 - Adaptive polling implementation specifically addresses macOS 14 Sonoma
   "Pasted from" banner concerns
-- Multi-file clipboard support uses macOS osascript or Windows PowerShell
-  via child_process with a 2s timeout;
-  declared in the privacy section
-- Clipboard image import works on both macOS and Windows.
-- Multi-file clipboard import works on macOS via osascript and on Windows
-  via PowerShell FileDropList.
-- The built-in "Take Screenshot" button is macOS-only. Windows users use
-  Win+Shift+S and the resulting clipboard image is imported normally.
+- Multi-file clipboard support uses macOS osascript via child_process
+  with a 2s timeout; declared in the privacy section
+- Windows support is intentionally excluded from this Plugin Center
+  submission because Windows real-device smoke tests found unresolved
+  clipboard runtime behavior. It will be handled in separate test builds.
 - The cover image has been adjusted to 1800×1200 (3:2) for review.
 
 Thanks for reviewing!

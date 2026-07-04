@@ -21,15 +21,25 @@
 | M19 | v1.5.5 Plugin Center 复审修复 | 🔄 GitHub Released，待 Plugin Center | 3:2 首图 / 平台说明 / 复审包 | - |
 | M20 | v1.5.6 Windows 剪贴板截图热修复 | 🔄 In Progress | Windows readImage 兜底 / 测试包 / 复测证据 | - |
 | M21 | v1.5.7 Windows FileDrop 误判热修复 | 🔄 In Progress | Windows 图片优先 / macOS 文件 URL 回归 / 测试包 | - |
+| M22 | v1.5.8 macOS-only Plugin Center 发布候选 | 🔄 In Progress | platform=mac / GitHub release / Plugin Center 材料 | - |
 
-## 当前里程碑：M21 — v1.5.7 Windows FileDrop 误判热修复
+## 当前里程碑：M22 — v1.5.8 macOS-only Plugin Center 发布候选
+
+实施范围：
+
+- 将正式上架包回退为 macOS-only：`manifest.platform = "mac"`。
+- 更新 README、Plugin Center 提交材料、release checklist 和 ADR，明确 Windows 暂缓支持。
+- 生成 v1.5.8 GitHub Release 和 `.eagleplugin` 包，供 Plugin Center 重新提交。
+- 建立后续 Windows test/fix 调试流程，不再用正式 patch 版本号承载每次尝试。
+
+## 暂停里程碑：M21 — v1.5.7 Windows FileDrop 误判热修复
 
 实施范围：
 
 - 修复 v1.5.6 在 Windows 上运行中不导入、重启 Eagle 后才导入最后一张截图的问题。
 - Windows 改成图片读取优先，避免 `CF_HDROP/FileDrop` 误判挡住 `readImage()`。
 - macOS 继续文件 URL 优先，避免 Finder 复制文件时导入预览 icon。
-- 发布新的 Windows smoke-test pre-release，待用户复测后再决定是否提交 Plugin Center。
+- 发布 Windows smoke-test pre-release；用户复测仍未解决，转入后续 Windows 本机 Codex 调试。
 
 ## 已完成里程碑：M20 — v1.5.6 Windows 剪贴板截图热修复
 
@@ -127,5 +137,5 @@ M6 任务（按优先级）：
 ## 遗留问题
 
 - [x] `manifest.json.id` 已迁移并固定为 UUID v4 `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`
-- [ ] Windows 已纳入商店版；发布后补齐真实设备上的剪贴板、多文件和生命周期验收
+- [ ] Windows 暂缓正式支持；后续按 `docs/windows-debug.md` 在 Windows 真机继续排查
 - [ ] 补齐 Plugin Center 封面、至少 3 张真实产品截图，以及截图按钮/路由/allow/错误恢复人工矩阵

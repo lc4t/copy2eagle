@@ -9,6 +9,18 @@ _（待 v1.6+ 累积）_
 
 ---
 
+## [1.5.8] — 2026-07-05
+
+Plugin Center macOS-only release candidate.
+
+### Changed
+
+- Set `manifest.platform` to `mac` for the Plugin Center submission.
+- Removed Windows support claims from store-facing materials while Windows clipboard behavior remains unresolved on real devices.
+- Documented that future Windows debugging builds should use test/fix release names instead of consuming patch versions for each experiment.
+
+---
+
 ## [1.5.7] — 2026-07-05
 
 Windows smoke-test hotfix #2.

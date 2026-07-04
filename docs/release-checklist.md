@@ -1,4 +1,4 @@
-# v1.5.7 Plugin Center 复审清单
+# v1.5.8 Plugin Center 复审清单
 
 > 本清单列出代码完成后仍需 GUI、设计资产或账户权限的步骤。
 
@@ -45,24 +45,24 @@
 
 ## 4. CHANGELOG / Release Notes
 
-- [x] `docs/CHANGELOG.md` 已记录 v1.0.0–v1.5.7
+- [x] `docs/CHANGELOG.md` 已记录 v1.0.0–v1.5.8
 - [x] Release notes 摘要：
 
-> v1.5.7 修复 Windows `Win+Shift+S` 截图进入剪贴板后可能被 `CF_HDROP/FileDrop` 误判挡住的问题：Windows 上会先尝试读取剪贴板图片，再处理文件列表。首图仍为 1800×1200 的 3:2 比例，manifest 显式设置 `platform: "all"`。
+> v1.5.8 是 macOS-only Plugin Center 发布候选：暂时移除 Windows 正式支持声明，manifest 显式设置 `platform: "mac"`，以保证 macOS 已验证功能先通过审核。Windows 问题后续用独立 test/fix 构建继续排查。
 
 ## 5. GitHub Release
 
-- [ ] `v1.5.7` tag 已推送
-- [ ] GitHub Release v1.5.7 已发布
-- [ ] `eagle-clipboard-watcher.eagleplugin` 已上传（164,059 bytes）
-- [x] SHA-256：`73d464fa8eb7e416e42f37b960902c25faef433cae9fe71e8f4f442e663d417c`
+- [ ] `v1.5.8` tag 已推送
+- [ ] GitHub Release v1.5.8 已发布
+- [ ] `eagle-clipboard-watcher.eagleplugin` 已上传（164,053 bytes）
+- [x] SHA-256：`8d697ce83227e18f7dfda76b42f0e042ab2bd19f0fb8e5cdc07988b2bdf3d21b`
 
 ## 6. Plugin Center 提交
 
 按 Eagle 官方[发布流程](https://developer.eagle.cool/plugin-api/distribution/publish)走：
 
 1. 确认 `manifest.json.id` 为 `06343a32-d63f-4a04-bdcc-a0ca1e6f12aa`
-2. 确认 `manifest.json.platform` 为 `all`，并在 reviewer notes 中说明 macOS / Windows 支持边界
+2. 确认 `manifest.json.platform` 为 `mac`，并在 reviewer notes 中说明 Windows 已暂缓支持
 3. `npm run pack` 完成自动检查并产候选包
 4. 在真实 Eagle 中右键插件执行官方「Pack Plugin」，用官方导出的包做最终上传
 5. 在 [Plugin Center 提交页](https://community-en.eagle.cool/my/plugin/publish)填表：
@@ -75,7 +75,7 @@
 ## 7. 提交后立即做
 
 - [x] Plugin Center 的 UUID 格式报错已处理
-- [ ] `docs/CHANGELOG.md` 同步 v1.5.7 release 链接（发布后）
+- [ ] `docs/CHANGELOG.md` 同步 v1.5.8 release 链接（发布后）
 - [ ] `.agent-doc/progress.md` 标 M7 Done
 
 ## 8. 用户验证清单（你最后做）

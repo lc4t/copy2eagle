@@ -1,7 +1,7 @@
 {
   "id": "06343a32-d63f-4a04-bdcc-a0ca1e6f12aa",
-  "version": "1.5.7",
-  "platform": "all",
+  "version": "1.5.8",
+  "platform": "mac",
   "arch": "all",
   "name": "剪贴板图片留存",
   "logo": "/logo.png",

@@ -30,6 +30,7 @@
 | M19 | v1.5.5 Plugin Center 复审修复 | 🔄 GitHub Released，待 Plugin Center 复审提交 | - | - |
 | M20 | v1.5.6 Windows 剪贴板截图热修复 | 🔄 修复与测试包准备中 | - | - |
 | M21 | v1.5.7 Windows FileDrop 误判热修复 | 🔄 修复中 | - | - |
+| M22 | v1.5.8 macOS-only Plugin Center 发布候选 | 🔄 打包发布中 | - | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -683,4 +684,28 @@
 - [x] 包内 manifest：version `1.5.7`，`platform: "all"`，`devTools: false`
 - [x] 包 SHA-256：`73d464fa8eb7e416e42f37b960902c25faef433cae9fe71e8f4f442e663d417c`
 - [x] GitHub Windows test pre-release：https://github.com/lc4t/copy2eagle/releases/tag/win-test-v1.5.7-20260705
-- [ ] 用户 Windows 复测
+- [x] 用户 Windows 复测：仍然不会识别
+
+## M22 进行中（2026-07-05）— v1.5.8 macOS-only Plugin Center 发布候选
+
+**触发**：
+
+- 用户确认 v1.5.7 Windows 测试包仍无法实时识别 `Win+Shift+S` 截图；决定先发布不支持 Windows 的版本，保证 macOS 上架。
+
+**决定与改动**：
+
+- 正式包版本升为 v1.5.8。
+- `manifest.platform` 改为 `mac`。
+- README / Plugin Center 材料 / reviewer notes 改为只声明 macOS 支持。
+- Windows 后续测试改用 test/fix 构建名，不再每次尝试 bump patch 版本。
+- 新增 `docs/windows-debug.md`，给 Windows 机器上用 Codex clone 仓库、复现、修复和反馈的流程。
+
+**待完成**：
+
+- [x] `npm test`：16 checks passed
+- [x] 全部 JavaScript `node --check` 通过
+- [x] `npm run pack`：164,053 bytes / 6 个审核文件
+- [x] 包内 manifest：version `1.5.8`，`platform: "mac"`，`devTools: false`
+- [x] 包 SHA-256：`8d697ce83227e18f7dfda76b42f0e042ab2bd19f0fb8e5cdc07988b2bdf3d21b`
+- [ ] GitHub v1.5.8 release
+- [ ] Plugin Center 重新提交

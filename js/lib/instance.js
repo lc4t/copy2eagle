@@ -27,7 +27,7 @@ const LEASE_TTL_MS = 12000
 const LEASE_RENEW_MS = 2000
 const LEGACY_GUARD_MS = 200
 // 与 manifest.json / package.json 同步——bundler 不会动它，需手动 bump
-const PLUGIN_VERSION = '1.5.7'
+const PLUGIN_VERSION = '1.5.8'
 let leaseTimer = null
 let legacyGuardTimer = null
 

@@ -27,13 +27,15 @@
 - [x] 包内 manifest：version `1.5.7`，`platform: "all"`，`devTools: false`
 - [x] 包 SHA-256：`73d464fa8eb7e416e42f37b960902c25faef433cae9fe71e8f4f442e663d417c`
 - [x] GitHub Windows test pre-release：https://github.com/lc4t/copy2eagle/releases/tag/win-test-v1.5.7-20260705
-- [ ] Windows 复测
+- [x] Windows 复测：v1.5.7 仍不会实时识别 `Win+Shift+S`
+- [x] 决策：Windows 正式支持暂缓，v1.5.8 Plugin Center 包回退为 macOS-only
 
 ## Impact
 
-- Windows 截图应不再被 `CF_HDROP/FileDrop` 误判挡住。
+- v1.5.7 未解决 Windows 真实运行问题，不能作为正式 Windows 支持依据。
+- Windows 截图仍需在 Windows 真机上继续诊断 Eagle 运行时剪贴板行为。
 - Windows 复制文件列表时，如果没有可读图片，仍会走原来的多文件路径。
-- macOS 行为不变。
+- macOS 行为不变，并作为 v1.5.8 正式发布范围。
 
 ## Learnings
 
