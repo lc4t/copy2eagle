@@ -1,0 +1,50 @@
+上传封面图的时候：首图必须大于 1560 x 1040 px
+
+---
+
+需要版本v1.5.4的日志
+
+---
+
+需要版本v1.5.4的日志，因为我上传的是v1.5.4，但是历史上没上传过其他版本，所以日志也不一定非得是这个版本的？
+
+---
+
+您好，很抱歉您投稿的插件「剪贴板图片留存」没有通过审核，原因是：
+
+感谢你提交的插件。我们在审核过程中发现了一些需要你注意的问题，希望你可以改善：
+
+介绍图片／封面未符合规范要求, 图片看起来存在比例错误
+
+如果插件不能在 Windows 运行的话，应该要特别强调。而且 manifest.json 里面没有明确设定 platform 参数。
+请参阅官方 Developer API
+[https://developer.eagle.cool/plugin-api/zh-cn/tutorial/manifest](https://developer.eagle.cool/plugin-api/zh-cn/tutorial/manifest)
+
+我们期待你的插件能够符合我们的标准。如果你在修改过程中遇到任何问题，随时欢迎联系我们。期待看到你插件的新版本！
+
+[https://eagleteam.notion.site/392a4a10f3aa80d58fa3f3d2735e1e0f?source=copy_link](https://eagleteam.notion.site/392a4a10f3aa80d58fa3f3d2735e1e0f?source=copy_link)
+
+请根据上述说明重新调整后再次提交审核，谢谢。
+
+---
+
+不，我还没测试windows，给我一个windows测试过程吧
+
+---
+
+是不是你在github上更新一个win的测试版本，我去测试然后反馈结果给你？
+
+---
+
+1. p可以看到插件
+2. 可以选择文件夹
+
+但是，安装插件后插件一直是未运行状态，而且重启eagle也不行
+
+---
+
+设置文件夹之后，显示运行了，但是我win shift s 截图后没有自动保存，似乎没识别到啊
+
+---
+
+有问题，截图后不会自动添加，插件也没反应，但是重启eagle后会把最后一次截的图添加进来
