@@ -62,6 +62,39 @@ func drawCard(_ image: NSImage, top: CGFloat, left: CGFloat, width: CGFloat, hei
     NSGraphicsContext.restoreGraphicsState()
 }
 
+func drawImageCardAspectFit(_ image: NSImage, top: CGFloat, left: CGFloat, width: CGFloat, height: CGFloat, radius: CGFloat = 24) {
+    let target = rect(top: top, left: left, width: width, height: height)
+
+    NSGraphicsContext.saveGraphicsState()
+    let shadow = NSShadow()
+    shadow.shadowColor = NSColor.black.withAlphaComponent(0.22)
+    shadow.shadowBlurRadius = 34
+    shadow.shadowOffset = NSSize(width: 0, height: -12)
+    shadow.set()
+    color(0xffffff).setFill()
+    NSBezierPath(roundedRect: target, xRadius: radius, yRadius: radius).fill()
+    NSGraphicsContext.restoreGraphicsState()
+
+    let scale = min(target.width / image.size.width, target.height / image.size.height)
+    let drawSize = NSSize(width: image.size.width * scale, height: image.size.height * scale)
+    let imageRect = NSRect(
+        x: target.midX - drawSize.width / 2,
+        y: target.midY - drawSize.height / 2,
+        width: drawSize.width,
+        height: drawSize.height
+    )
+
+    NSGraphicsContext.saveGraphicsState()
+    NSBezierPath(roundedRect: target, xRadius: radius, yRadius: radius).addClip()
+    image.draw(
+        in: imageRect,
+        from: NSRect(origin: .zero, size: image.size),
+        operation: .sourceOver,
+        fraction: 1
+    )
+    NSGraphicsContext.restoreGraphicsState()
+}
+
 func drawText(
     _ text: String,
     top: CGFloat,
@@ -136,14 +169,13 @@ func write(_ rep: NSBitmapImageRep, to path: String) {
     try! data.write(to: URL(fileURLWithPath: path))
 }
 
-guard CommandLine.arguments.count == 5 else {
-    fatalError("Usage: cover-v2.swift <background> <overview-shot> <settings-shot> <output>")
+guard CommandLine.arguments.count == 4 else {
+    fatalError("Usage: cover-v2.swift <background> <overview-shot> <output>")
 }
 
 let background = load(CommandLine.arguments[1])
 let overview = load(CommandLine.arguments[2])
-let settings = load(CommandLine.arguments[3])
-let output = CommandLine.arguments[4]
+let output = CommandLine.arguments[3]
 
 let cover = makeImage(background: color(0xf4f8ff)) {
     drawAspectFill(background, in: NSRect(origin: .zero, size: canvasSize))
@@ -155,10 +187,7 @@ let cover = makeImage(background: color(0xf4f8ff)) {
     drawText("剪贴板图片留存", top: 255, left: 126, width: 640, size: 78, weight: .bold, textColor: color(0x12233f))
     drawText("复制图片，自动出现在 Eagle", top: 380, left: 130, width: 620, size: 40, weight: .medium, textColor: color(0x38506f))
     drawPill("剪贴板 · 截图 · 自动归档", top: 520, left: 130, width: 470)
-    drawText("macOS only", top: 650, left: 132, width: 360, size: 34, weight: .regular, textColor: color(0x607896))
-
-    drawCard(settings, top: 610, left: 1060, width: 620, height: 387.5, radius: 26)
-    drawCard(overview, top: 190, left: 890, width: 820, height: 512.5, radius: 28)
+    drawImageCardAspectFit(overview, top: 180, left: 950, width: 720, height: 720, radius: 34)
 }
 
 write(cover, to: output)

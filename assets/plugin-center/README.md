@@ -2,7 +2,7 @@
 
 ## Final Files
 
-- `cover-1800x1200.png` — Plugin Center cover for upload; 3:2 ratio and exceeds the current first-image minimum of 1560×1040 px. The v2 cover preserves screenshot aspect ratios and labels the release as `macOS only`.
+- `cover-1800x1200.png` — Plugin Center cover for upload; 3:2 ratio and exceeds the current first-image minimum of 1560×1040 px. The v2 cover preserves screenshot aspect ratios and keeps the layout simple.
 - `screenshot-01-overview.png` — main panel and core workflow
 - `screenshot-02-eagle-result.png` — imported images shown in Eagle
 - `screenshot-03-settings.png` — naming, deduplication, and routing settings
@@ -19,7 +19,7 @@ The cover image is 1800×1200 PNG. The three feature screenshots are 1280×800 P
 
 ## Generation
 
-Run `swift build/cover-v2.swift <background> <overview-shot> <settings-shot> <output>` to regenerate the cover.
+Run `swift build/cover-v2.swift <background> <overview-shot> <output>` to regenerate the cover.
 
 Run `swift build/store-assets.swift <background> <overview> <eagle> <settings> <output-dir>` only when regenerating the full screenshot set from the original raw captures.
 
