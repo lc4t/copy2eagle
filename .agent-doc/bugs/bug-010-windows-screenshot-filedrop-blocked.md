@@ -26,7 +26,7 @@
 - [x] `npm run pack`：6 个审核文件，164,059 bytes
 - [x] 包内 manifest：version `1.5.7`，`platform: "all"`，`devTools: false`
 - [x] 包 SHA-256：`73d464fa8eb7e416e42f37b960902c25faef433cae9fe71e8f4f442e663d417c`
-- [ ] GitHub Windows test pre-release
+- [x] GitHub Windows test pre-release：https://github.com/lc4t/copy2eagle/releases/tag/win-test-v1.5.7-20260705
 - [ ] Windows 复测
 
 ## Impact
