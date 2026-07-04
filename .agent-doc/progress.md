@@ -29,6 +29,7 @@
 | M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 GitHub Released，待 Plugin Center 重新上传 | - | - |
 | M19 | v1.5.5 Plugin Center 复审修复 | 🔄 GitHub Released，待 Plugin Center 复审提交 | - | - |
 | M20 | v1.5.6 Windows 剪贴板截图热修复 | 🔄 修复与测试包准备中 | - | - |
+| M21 | v1.5.7 Windows FileDrop 误判热修复 | 🔄 修复中 | - | - |
 | M5(新) | 打包 + 端到端验证 | ⬜ Todo | - | - |
 | M6(新) | 开源发布准备 | ⬜ Todo | - | - |
 
@@ -655,4 +656,31 @@
 - [x] 包内 manifest：version `1.5.6`，`platform: "all"`，`devTools: false`
 - [x] 包 SHA-256：`b439348047931f55826a1c71a9c66f61760d9103fda997b5a19e47327c01691a`
 - [x] GitHub Windows test pre-release：https://github.com/lc4t/copy2eagle/releases/tag/win-test-v1.5.6-20260705
+- [ ] 用户 Windows 复测
+
+## M21 进行中（2026-07-05）— v1.5.7 Windows FileDrop 误判热修复
+
+**触发**：
+
+- 用户反馈 v1.5.6：Windows `Win+Shift+S` 截图后不会自动添加，插件面板无明显反应；但重启 Eagle 后会把最后一次截图添加进来。
+
+**判断**：
+
+- v1.5.6 已证明 Windows 截图最终可被 `readImage()` 读取。
+- 运行中未导入、重启后导入的现象，符合剪贴板早期格式被 `CF_HDROP/FileDrop` 类候选误判，导致代码先进入文件 URL 分支并跳过图片读取的路径。
+
+**改动**：
+
+- Windows 改为图片读取优先：先尝试 `readImage()`，读不到图片时再处理文件列表。
+- macOS 仍保持文件 URL 优先，避免 Finder 复制文件时导入系统预览 icon。
+- 自动测试新增 Windows false-positive FileDrop 场景和 macOS Finder 保护回归场景。
+
+**待完成**：
+
+- [x] `npm test`：16 checks passed
+- [x] 全部 JavaScript `node --check` 通过
+- [x] `npm run pack`：164,059 bytes / 6 个审核文件
+- [x] 包内 manifest：version `1.5.7`，`platform: "all"`，`devTools: false`
+- [x] 包 SHA-256：`73d464fa8eb7e416e42f37b960902c25faef433cae9fe71e8f4f442e663d417c`
+- [ ] GitHub Windows test pre-release
 - [ ] 用户 Windows 复测

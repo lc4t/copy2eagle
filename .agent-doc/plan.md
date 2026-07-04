@@ -20,15 +20,25 @@
 | M18 | v1.5.4 Plugin ID UUID 热修复 | 🔄 GitHub Released，待 Plugin Center | 固定 UUID v4 / 版本同步 / 自动检查 / 新发布包 | - |
 | M19 | v1.5.5 Plugin Center 复审修复 | 🔄 GitHub Released，待 Plugin Center | 3:2 首图 / 平台说明 / 复审包 | - |
 | M20 | v1.5.6 Windows 剪贴板截图热修复 | 🔄 In Progress | Windows readImage 兜底 / 测试包 / 复测证据 | - |
+| M21 | v1.5.7 Windows FileDrop 误判热修复 | 🔄 In Progress | Windows 图片优先 / macOS 文件 URL 回归 / 测试包 | - |
 
-## 当前里程碑：M20 — v1.5.6 Windows 剪贴板截图热修复
+## 当前里程碑：M21 — v1.5.7 Windows FileDrop 误判热修复
+
+实施范围：
+
+- 修复 v1.5.6 在 Windows 上运行中不导入、重启 Eagle 后才导入最后一张截图的问题。
+- Windows 改成图片读取优先，避免 `CF_HDROP/FileDrop` 误判挡住 `readImage()`。
+- macOS 继续文件 URL 优先，避免 Finder 复制文件时导入预览 icon。
+- 发布新的 Windows smoke-test pre-release，待用户复测后再决定是否提交 Plugin Center。
+
+## 已完成里程碑：M20 — v1.5.6 Windows 剪贴板截图热修复
 
 实施范围：
 
 - 修复 Windows `Win+Shift+S` 截图进入剪贴板后未自动入库的问题。
 - 在 Windows 上当 format probe 未识别图片时，允许 `readImage()` 直接兜底。
 - 增加自动测试覆盖 Windows `has() = false` 但 `readImage()` 可读的场景。
-- 发布新的 Windows smoke-test pre-release，待用户复测后再决定是否提交 Plugin Center。
+- 发布 Windows smoke-test pre-release，待用户复测后发现仍存在 FileDrop 误判路径。
 
 ## 已完成里程碑：M19 — v1.5.5 Plugin Center 复审修复
 

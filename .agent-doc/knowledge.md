@@ -105,6 +105,7 @@
   - manifest 官方支持 `platform: "mac"` 和 `"all"`；2026-06-14 用户将发布策略改为 macOS / Windows，允许 Windows 用户先用并按反馈修复。
   - Windows 普通图片剪贴板与 macOS 共用 Electron `readImage()`；资源管理器多文件需 PowerShell `Get-Clipboard -Format FileDropList`；内置截图按钮仍是 macOS 专属。
   - 2026-07-05 Windows smoke test 发现：`Win+Shift+S` 截图可能无法被 `eagle.clipboard.has(image/*)` 识别，但应尝试 `readImage()` 兜底；Windows 没有 macOS “已粘贴自 Eagle”横幅约束。
+  - 2026-07-05 Windows v1.5.6 复测发现：`Win+Shift+S` 截图运行中不导入、重启后导入，疑似早期命中 `CF_HDROP/FileDrop` 分支；Windows 应图片优先，macOS 仍文件 URL 优先以规避 Finder 预览 icon。
   - Eagle 官方下载页当前只提供 Windows 与 macOS 安装包；商店平台材料不应把代码中的 Linux fallback 宣称为正式支持平台。
   - 2026-06-13 检查英文 Plugin Center 列表，未发现原名 `Clipboard Watcher` 的重名；最终中文商店名决定为「剪贴板图片留存」。
 - **项目影响**：

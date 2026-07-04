@@ -35,7 +35,7 @@
 ### Eagle Plugin Center（准备提交）
 
 ```
-状态：v1.5.6 正在做 Windows 剪贴板截图修复测试，暂缓 Plugin Center 复审提交
+状态：v1.5.7 正在做 Windows 剪贴板截图修复测试，暂缓 Plugin Center 复审提交
 ```
 
 通过后可直接 `Eagle → 插件中心 → 搜 "剪贴板图片留存" → 安装`。
@@ -106,7 +106,7 @@ macOS 14 Sonoma 起，读剪贴板内容会出系统横幅。本插件采用以�
 
 ## 升级与重复安装
 
-v1.5.4 起为满足 Plugin Center 的 UUID 格式要求，更换了 Plugin ID。若安装过 v1.5.3 或更早的 GitHub 版本，请先在 Eagle 插件管理中卸载旧实例，再安装 v1.5.6，并重新选择一次目标文件夹。不同 Plugin ID 的安装可能无法共享 `localStorage` 配置或双实例 lease。
+v1.5.4 起为满足 Plugin Center 的 UUID 格式要求，更换了 Plugin ID。若安装过 v1.5.3 或更早的 GitHub 版本，请先在 Eagle 插件管理中卸载旧实例，再安装 v1.5.7，并重新选择一次目标文件夹。不同 Plugin ID 的安装可能无法共享 `localStorage` 配置或双实例 lease。
 
 ## 开发
 

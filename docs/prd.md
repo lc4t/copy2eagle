@@ -266,7 +266,7 @@ eagle-clipboard-watcher.eagleplugin（实质是 zip）
 ```json
 {
   "id": "06343a32-d63f-4a04-bdcc-a0ca1e6f12aa",
-  "version": "1.5.6",
+  "version": "1.5.7",
   "platform": "all",
   "arch": "all",
   "name": "剪贴板图片留存",

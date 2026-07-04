@@ -115,7 +115,13 @@ function resetState() {
   state.indexingFolderId = null
   state.indexingProgress = 0
   state.indexingTotal = 0
+  state.pollErrorCount = 0
+  state.retryAt = 0
   state.lastBackfillAt = new Map()
+  state.lastScreenshotAt = 0
+  state.lastFileBatchKey = null
+  state.sameHashStreak = 0
+  state.adaptiveMode = 'normal'
   state.instanceId = null
   state.instanceConflict = null
   state.lastHeartbeatAt = 0
@@ -134,7 +140,7 @@ test('single-owner lease does not let contenders overwrite a fresh owner', () =>
     owned: false,
     conflict: {
       otherInstanceId: 'instance-a',
-      otherVersion: '1.5.6',
+      otherVersion: '1.5.7',
     },
   })
   assert.equal(JSON.parse(storage.get('clipboardWatcher.lease.v2')).instanceId, 'instance-a')
@@ -263,6 +269,120 @@ test('Windows direct readImage fallback imports screenshots when format probing 
   assert.equal(state.runtimeStatus, 'running')
 })
 
+test('Windows screenshot fallback is not blocked by false-positive file formats', async () => {
+  storage.clear()
+  resetState()
+  addCalls.length = 0
+
+  const originalPlatform = os.platform
+  const originalHas = eagle.clipboard.has
+  const originalReadImage = eagle.clipboard.readImage
+
+  os.platform = () => 'win32'
+  eagle.clipboard.has = (format) => format === 'CF_HDROP'
+  eagle.clipboard.readImage = () => ({
+    isEmpty() {
+      return false
+    },
+    toPNG() {
+      return Buffer.from('windows screenshot image with filedrop-looking format')
+    },
+    getSize() {
+      return { width: 800, height: 450 }
+    },
+  })
+
+  state.config = {
+    version: 2,
+    enabled: true,
+    folderId: 'folder-win',
+    folderIdScreenshot: null,
+    folderIdClipboard: null,
+    folderIdFiles: null,
+    intervalMs: 1000,
+    tags: '',
+    notifyOnImport: false,
+    duplicateStrategy: 'skip',
+    importMixedContent: true,
+    importMultipleFiles: false,
+    nameTemplate: '{source} {dims}',
+  }
+  state.folderIndex = new Map([['folder-win', 'Windows Folder']])
+
+  try {
+    await runPoll()
+  } finally {
+    os.platform = originalPlatform
+    eagle.clipboard.has = originalHas
+    if (originalReadImage) {
+      eagle.clipboard.readImage = originalReadImage
+    } else {
+      delete eagle.clipboard.readImage
+    }
+  }
+
+  assert.equal(addCalls.length, 1)
+  assert.deepEqual(addCalls[0].options.folders, ['folder-win'])
+  assert.equal(addCalls[0].options.name, 'Clipboard 800x450')
+  assert.equal(state.runtimeStatus, 'running')
+})
+
+test('macOS file-url clipboard still skips preview images when multi-file import is off', async () => {
+  storage.clear()
+  resetState()
+  addCalls.length = 0
+
+  const originalPlatform = os.platform
+  const originalHas = eagle.clipboard.has
+  const originalReadImage = eagle.clipboard.readImage
+
+  os.platform = () => 'darwin'
+  eagle.clipboard.has = (format) => format === 'public.file-url' || format === 'image/png'
+  eagle.clipboard.readImage = () => ({
+    isEmpty() {
+      return false
+    },
+    toPNG() {
+      return Buffer.from('finder preview icon should not be imported')
+    },
+    getSize() {
+      return { width: 128, height: 128 }
+    },
+  })
+
+  state.config = {
+    version: 2,
+    enabled: true,
+    folderId: 'folder-mac',
+    folderIdScreenshot: null,
+    folderIdClipboard: null,
+    folderIdFiles: null,
+    intervalMs: 1000,
+    tags: '',
+    notifyOnImport: false,
+    duplicateStrategy: 'skip',
+    importMixedContent: true,
+    importMultipleFiles: false,
+    nameTemplate: '{source} {dims}',
+  }
+  state.folderIndex = new Map([['folder-mac', 'Mac Folder']])
+
+  try {
+    await runPoll()
+  } finally {
+    os.platform = originalPlatform
+    eagle.clipboard.has = originalHas
+    if (originalReadImage) {
+      eagle.clipboard.readImage = originalReadImage
+    } else {
+      delete eagle.clipboard.readImage
+    }
+  }
+
+  assert.equal(addCalls.length, 0)
+  assert.equal(state.runtimeStatus, 'running')
+})
+
 test('expired lease is claimed after one settling poll and only owner can release it', () => {
   storage.clear()
   resetState()
@@ -286,7 +406,7 @@ test('expired lease is claimed after one settling poll and only owner can releas
   assert.equal(storage.has('clipboardWatcher.heartbeat'), false)
 })
 
-test('v1.5.6 lease remains stable when v1.5.2 overwrites the legacy heartbeat', () => {
+test('v1.5.7 lease remains stable when v1.5.2 overwrites the legacy heartbeat', () => {
   storage.clear()
   resetState()
   state.instanceId = 'instance-new'

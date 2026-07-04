@@ -9,6 +9,17 @@ _（待 v1.6+ 累积）_
 
 ---
 
+## [1.5.7] — 2026-07-05
+
+Windows smoke-test hotfix #2.
+
+### Fixed
+
+- On Windows, read clipboard images before handling file-drop formats. This prevents `Win+Shift+S` screenshots from being skipped when Eagle reports a `CF_HDROP` / `FileDrop`-like format before the bitmap is imported.
+- Kept macOS file-url priority unchanged so Finder copied files still do not import preview icons when multi-file import is disabled.
+
+---
+
 ## [1.5.6] — 2026-07-05
 
 Windows smoke-test hotfix.

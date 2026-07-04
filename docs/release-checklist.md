@@ -1,4 +1,4 @@
-# v1.5.6 Plugin Center 复审清单
+# v1.5.7 Plugin Center 复审清单
 
 > 本清单列出代码完成后仍需 GUI、设计资产或账户权限的步骤。
 
@@ -45,17 +45,17 @@
 
 ## 4. CHANGELOG / Release Notes
 
-- [x] `docs/CHANGELOG.md` 已记录 v1.0.0–v1.5.6
+- [x] `docs/CHANGELOG.md` 已记录 v1.0.0–v1.5.7
 - [x] Release notes 摘要：
 
-> v1.5.6 修复 Windows `Win+Shift+S` 截图进入剪贴板后可能未被 format probe 识别的问题：Windows 上会在 probe 未命中时使用 `readImage()` 兜底。首图仍为 1800×1200 的 3:2 比例，manifest 显式设置 `platform: "all"`。
+> v1.5.7 修复 Windows `Win+Shift+S` 截图进入剪贴板后可能被 `CF_HDROP/FileDrop` 误判挡住的问题：Windows 上会先尝试读取剪贴板图片，再处理文件列表。首图仍为 1800×1200 的 3:2 比例，manifest 显式设置 `platform: "all"`。
 
 ## 5. GitHub Release
 
-- [ ] `v1.5.6` tag 已推送
-- [ ] GitHub Release v1.5.6 已发布
-- [ ] `eagle-clipboard-watcher.eagleplugin` 已上传（163,907 bytes）
-- [x] SHA-256：`b439348047931f55826a1c71a9c66f61760d9103fda997b5a19e47327c01691a`
+- [ ] `v1.5.7` tag 已推送
+- [ ] GitHub Release v1.5.7 已发布
+- [ ] `eagle-clipboard-watcher.eagleplugin` 已上传（164,059 bytes）
+- [x] SHA-256：`73d464fa8eb7e416e42f37b960902c25faef433cae9fe71e8f4f442e663d417c`
 
 ## 6. Plugin Center 提交
 
@@ -75,7 +75,7 @@
 ## 7. 提交后立即做
 
 - [x] Plugin Center 的 UUID 格式报错已处理
-- [ ] `docs/CHANGELOG.md` 同步 v1.5.6 release 链接（发布后）
+- [ ] `docs/CHANGELOG.md` 同步 v1.5.7 release 链接（发布后）
 - [ ] `.agent-doc/progress.md` 标 M7 Done
 
 ## 8. 用户验证清单（你最后做）

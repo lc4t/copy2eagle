@@ -4,8 +4,9 @@
  * adaptive polling（M5）：同 hash 持续 3 轮后切 idle 模式，
  * 间隔放慢到 max(用户设置, 5s)；hash 变化或图片消失立即回 normal。
  *
- * 文件 URL 优先（v1.2.1 / #1）：runPoll 先看 file URL，存在则走多文件路径，
- * 不导入系统自动生成的预览 icon。
+ * 平台分流：
+ * - macOS 文件 URL 优先（v1.2.1 / #1），避免导入 Finder 预览 icon
+ * - Windows 图片优先，避免 Win+Shift+S 被 CF_HDROP/FileDrop 误判挡住
  */
 
 const os = require('os')
@@ -96,6 +97,47 @@ function getEffectiveIntervalMs() {
   return base
 }
 
+function markPollHealthy() {
+  state.pollErrorCount = 0
+  if (state.runtimeStatus !== 'running') {
+    setRuntimeStatus('running')
+    scheduleRender()
+  }
+}
+
+async function handleFileUrlClipboard() {
+  state.lastFormatsKey = null
+  resetIdleStreak()
+  if (!state.config.importMultipleFiles) {
+    markPollHealthy()
+    return
+  }
+
+  const paths = await readClipboardFilePaths()
+  if (!paths.length) {
+    markPollHealthy()
+    return
+  }
+  const imagePaths = paths.filter(isImagePath)
+  if (!imagePaths.length) {
+    markPollHealthy()
+    return
+  }
+  const batchKey = fileBatchKey(imagePaths)
+  if (batchKey && batchKey === state.lastFileBatchKey) {
+    markPollHealthy()
+    return
+  }
+  state.lastFileBatchKey = batchKey
+  // v1.4：多文件按 source='files' 解析
+  const folderId = resolveTargetFolder('files', state.config)
+  const { added, skipped } = await importFileBatch(imagePaths, folderId)
+  eagle.log.info(
+    `[clipboard-watcher] multi-file (from file-url) added=${added} skipped=${skipped} total=${imagePaths.length}`
+  )
+  markPollHealthy()
+}
+
 // ─── 主循环 ───
 function startPolling() {
   stopPolling()
@@ -156,31 +198,12 @@ async function runPoll() {
       eagle.log.warn('[clipboard-watcher] clipboard.has unavailable; using Windows readImage fallback')
     }
 
-    // 文件 URL 优先（v1.2.1 / #1）：Finder 复制文件时系统会同时塞预览 icon，
-    // 见到 file URL 就走多文件路径，icon 整段跳过。
     const hasFileUrl = probeAnyFormat(FILE_URL_FORMAT_CANDIDATES)
-    if (hasFileUrl) {
-      state.lastFormatsKey = null
-      resetIdleStreak()
-      if (!state.config.importMultipleFiles) return
-      const paths = await readClipboardFilePaths()
-      if (!paths.length) return
-      const imagePaths = paths.filter(isImagePath)
-      if (!imagePaths.length) return
-      const batchKey = fileBatchKey(imagePaths)
-      if (batchKey && batchKey === state.lastFileBatchKey) return
-      state.lastFileBatchKey = batchKey
-      // v1.4：多文件按 source='files' 解析
-      const folderId = resolveTargetFolder('files', state.config)
-      const { added, skipped } = await importFileBatch(imagePaths, folderId)
-      eagle.log.info(
-        `[clipboard-watcher] multi-file (from file-url) added=${added} skipped=${skipped} total=${imagePaths.length}`
-      )
-      state.pollErrorCount = 0
-      if (state.runtimeStatus !== 'running') {
-        setRuntimeStatus('running')
-        scheduleRender()
-      }
+    // 文件 URL 优先（v1.2.1 / #1）：macOS Finder 复制文件时系统会同时塞预览 icon，
+    // 见到 file URL 就走多文件路径，icon 整段跳过。
+    // Windows 的 Win+Shift+S 可能误命中 CF_HDROP/FileDrop；Windows 改为先读图。
+    if (hasFileUrl && platform !== 'win32') {
+      await handleFileUrlClipboard()
       return
     }
 
@@ -190,51 +213,62 @@ async function runPoll() {
       if (!state.config.importMixedContent && probeAnyFormat(TEXT_FORMAT_CANDIDATES)) {
         state.lastFormatsKey = probe.format || 'win32-direct-image'
         bumpIdleStreak()
+        markPollHealthy()
         return
       }
 
       const img = eagle.clipboard.readImage()
-      if (!img || typeof img.isEmpty !== 'function' || img.isEmpty()) return
-      const buffer = img.toPNG()
-      const hash = computeHash(buffer)
-      if (!hash) return
-
-      const hashDecision = decideClipboardHash({
-        hash,
-        lastHash: state.lastClipboardHash,
-        lastImportAt: state.lastClipboardAt,
-        strategy: state.config.duplicateStrategy,
-      })
-      state.lastFormatsKey = probe.format || 'win32-direct-image'
-      if (hashDecision.sameHash) bumpIdleStreak()
-      else resetIdleStreak()
-      if (!hashDecision.shouldImport) return
-
-      // v1.4：单图按 source（screenshot / clipboard）解析目标文件夹
-      const source = detectImageSource()
-      const folderId = resolveTargetFolder(source, state.config)
-
-      if (state.config.duplicateStrategy === 'skip') {
-        const set = state.hashSetByFolder.get(folderId)
-        if (set && set.has(hash)) {
-          state.lastClipboardHash = hash
+      if (img && typeof img.isEmpty === 'function' && !img.isEmpty()) {
+        const buffer = img.toPNG()
+        const hash = computeHash(buffer)
+        if (!hash) {
+          markPollHealthy()
           return
         }
+
+        const hashDecision = decideClipboardHash({
+          hash,
+          lastHash: state.lastClipboardHash,
+          lastImportAt: state.lastClipboardAt,
+          strategy: state.config.duplicateStrategy,
+        })
+        state.lastFormatsKey = probe.format || 'win32-direct-image'
+        if (hashDecision.sameHash) bumpIdleStreak()
+        else resetIdleStreak()
+        if (!hashDecision.shouldImport) {
+          markPollHealthy()
+          return
+        }
+
+        // v1.4：单图按 source（screenshot / clipboard）解析目标文件夹
+        const source = detectImageSource()
+        const folderId = resolveTargetFolder(source, state.config)
+
+        if (state.config.duplicateStrategy === 'skip') {
+          const set = state.hashSetByFolder.get(folderId)
+          if (set && set.has(hash)) {
+            state.lastClipboardHash = hash
+            markPollHealthy()
+            return
+          }
+        }
+
+        const dims = getImageDimensions(img)
+        await importImage(buffer, hash, folderId, { source, dims })
+        markPollHealthy()
+        return
       }
-
-      const dims = getImageDimensions(img)
-      await importImage(buffer, hash, folderId, { source, dims })
-    } else {
-      // 既无图也无 file URL：剪贴板空闲或仅文本
-      state.lastFormatsKey = null
-      resetIdleStreak()
     }
 
-    state.pollErrorCount = 0
-    if (state.runtimeStatus !== 'running') {
-      setRuntimeStatus('running')
-      scheduleRender()
+    if (hasFileUrl) {
+      await handleFileUrlClipboard()
+      return
     }
+
+    // 既无图也无 file URL：剪贴板空闲或仅文本
+    state.lastFormatsKey = null
+    resetIdleStreak()
+    markPollHealthy()
   } catch (err) {
     const detail = err && err.stack ? err.stack : err && err.message ? err.message : String(err)
     eagle.log.error(`[clipboard-watcher] poll error: ${detail}`)
