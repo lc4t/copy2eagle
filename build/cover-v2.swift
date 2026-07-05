@@ -38,7 +38,23 @@ func drawAspectFill(_ image: NSImage, in target: NSRect) {
     image.draw(in: target, from: source, operation: .sourceOver, fraction: 1)
 }
 
-func drawCard(_ image: NSImage, top: CGFloat, left: CGFloat, width: CGFloat, height: CGFloat, radius: CGFloat = 24) {
+struct Crop {
+    let x: CGFloat
+    let top: CGFloat
+    let width: CGFloat
+    let height: CGFloat
+}
+
+func sourceRect(for image: NSImage, crop: Crop) -> NSRect {
+    NSRect(
+        x: crop.x,
+        y: image.size.height - crop.top - crop.height,
+        width: crop.width,
+        height: crop.height
+    )
+}
+
+func drawWindowShot(_ image: NSImage, crop: Crop, top: CGFloat, left: CGFloat, width: CGFloat, height: CGFloat, radius: CGFloat = 22) {
     let target = rect(top: top, left: left, width: width, height: height)
 
     NSGraphicsContext.saveGraphicsState()
@@ -47,7 +63,7 @@ func drawCard(_ image: NSImage, top: CGFloat, left: CGFloat, width: CGFloat, hei
     shadow.shadowBlurRadius = 34
     shadow.shadowOffset = NSSize(width: 0, height: -12)
     shadow.set()
-    color(0xffffff).setFill()
+    color(0x1d1d1d).setFill()
     NSBezierPath(roundedRect: target, xRadius: radius, yRadius: radius).fill()
     NSGraphicsContext.restoreGraphicsState()
 
@@ -55,40 +71,7 @@ func drawCard(_ image: NSImage, top: CGFloat, left: CGFloat, width: CGFloat, hei
     NSBezierPath(roundedRect: target, xRadius: radius, yRadius: radius).addClip()
     image.draw(
         in: target,
-        from: NSRect(origin: .zero, size: image.size),
-        operation: .sourceOver,
-        fraction: 1
-    )
-    NSGraphicsContext.restoreGraphicsState()
-}
-
-func drawImageCardAspectFit(_ image: NSImage, top: CGFloat, left: CGFloat, width: CGFloat, height: CGFloat, radius: CGFloat = 24) {
-    let target = rect(top: top, left: left, width: width, height: height)
-
-    NSGraphicsContext.saveGraphicsState()
-    let shadow = NSShadow()
-    shadow.shadowColor = NSColor.black.withAlphaComponent(0.22)
-    shadow.shadowBlurRadius = 34
-    shadow.shadowOffset = NSSize(width: 0, height: -12)
-    shadow.set()
-    color(0xffffff).setFill()
-    NSBezierPath(roundedRect: target, xRadius: radius, yRadius: radius).fill()
-    NSGraphicsContext.restoreGraphicsState()
-
-    let scale = min(target.width / image.size.width, target.height / image.size.height)
-    let drawSize = NSSize(width: image.size.width * scale, height: image.size.height * scale)
-    let imageRect = NSRect(
-        x: target.midX - drawSize.width / 2,
-        y: target.midY - drawSize.height / 2,
-        width: drawSize.width,
-        height: drawSize.height
-    )
-
-    NSGraphicsContext.saveGraphicsState()
-    NSBezierPath(roundedRect: target, xRadius: radius, yRadius: radius).addClip()
-    image.draw(
-        in: imageRect,
-        from: NSRect(origin: .zero, size: image.size),
+        from: sourceRect(for: image, crop: crop),
         operation: .sourceOver,
         fraction: 1
     )
@@ -187,7 +170,15 @@ let cover = makeImage(background: color(0xf4f8ff)) {
     drawText("剪贴板图片留存", top: 255, left: 126, width: 640, size: 78, weight: .bold, textColor: color(0x12233f))
     drawText("复制图片，自动出现在 Eagle", top: 380, left: 130, width: 620, size: 40, weight: .medium, textColor: color(0x38506f))
     drawPill("剪贴板 · 截图 · 自动归档", top: 520, left: 130, width: 470)
-    drawImageCardAspectFit(overview, top: 180, left: 950, width: 720, height: 720, radius: 34)
+    drawWindowShot(
+        overview,
+        crop: Crop(x: 660, top: 44, width: 566, height: 675),
+        top: 115,
+        left: 1010,
+        width: 620,
+        height: 740,
+        radius: 28
+    )
 }
 
 write(cover, to: output)

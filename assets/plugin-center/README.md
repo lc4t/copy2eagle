@@ -2,7 +2,7 @@
 
 ## Final Files
 
-- `cover-1800x1200.png` — Plugin Center cover for upload; 3:2 ratio and exceeds the current first-image minimum of 1560×1040 px. The v2 cover preserves screenshot aspect ratios and keeps the layout simple.
+- `cover-1800x1200.png` — Plugin Center cover for upload; 3:2 ratio and exceeds the current first-image minimum of 1560×1040 px. The v2 cover uses a simple left text panel plus one un-stretched plugin window screenshot on the right.
 - `screenshot-01-overview.png` — main panel and core workflow
 - `screenshot-02-eagle-result.png` — imported images shown in Eagle
 - `screenshot-03-settings.png` — naming, deduplication, and routing settings
